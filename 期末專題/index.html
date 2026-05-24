@@ -157,11 +157,9 @@
 
     <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500 space-y-2">
         <div class="flex justify-center space-x-6">
-            <a href="#" class="hover:text-receiver transition">關於我們</a>
-            <a href="#" class="hover:text-receiver transition">聯絡資訊</a>
-            <a href="#" class="hover:text-receiver transition">著作權宣告</a>
+            <a href="/static/aboutus.html" class="hover:text-receiver transition">關於我們</a>
         </div>
-        <div>&copy; 2026 社區食物共享平台專題小組. All rights reserved.</div>
+        <div>&copy; 2026 中興大學食物共享平台專題小組. All rights reserved.</div>
     </footer>
 
     <script>
@@ -246,7 +244,6 @@
 
             // 使用 forEach 迴圈，有幾筆資料就跑幾次，自動產生 HTML
             dataArray.forEach(item => {
-                // 這裡就是你原本卡片的 Tailwind HTML 結構，但把裡面的內容用 ${item.xxx} 變數替換掉
                 const cardHTML = `
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-200 flex flex-col justify-between">
                         <div>
@@ -262,12 +259,14 @@
                         </div>
                         <div class="px-4 pb-4 pt-2 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500">
                             <span>📍 ${item.pickup_location}</span>
-                            <span class="text-giver font-semibold cursor-pointer" onclick="alert('你點擊了ID為 ${item.id} 的詳細資料')">看詳細</span>
+                            
+                            <a href="/static/detail.html?id=${item.id}" class="text-giver font-semibold hover:text-orange-500 transition px-2 py-1 bg-orange-50 rounded">
+                                看詳細 ➔
+                            </a>
                         </div>
                     </div>
                 `;
                 
-                // 把組合好的卡片 HTML 塞進網頁的 Grid 容器中
                 foodGrid.innerHTML += cardHTML;
             });
         }
