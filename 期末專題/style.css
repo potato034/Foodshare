@@ -1,0 +1,25 @@
+/* 遵照現代化前端標準開發規範 */
+/* stylelint-disable at-rule-no-unknown */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
+
+/* 
+   Papaya 小撇步：
+   在此處你可以定義自訂的微調（例如地圖平滑滾動或特別的字體），
+   但絕大部分的 Flex、Grid、背景色和圓角，都已經用 Tailwind 在 HTML 中實現了！
+*/
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 讓滑動欄擁有更好看、精簡的捲軸樣式 */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 5px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+}
