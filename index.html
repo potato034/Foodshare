@@ -41,7 +41,7 @@
         <!-- 右側: 功能圖示與分享按鈕 -->
         <div class="flex items-center space-x-4">
             <!-- 訊息 Icon -->
-            <a href="static/message.html" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative inline-block" title="私訊">
+            <a href="/static/message.html" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative inline-block" title="私訊">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                 <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </a>
@@ -59,12 +59,14 @@
                 
                 <div id="avatar-menu" class="absolute right-0 pt-2 w-48 invisible opacity-0 transition-all duration-200 z-50">
                     <div class="bg-white rounded-md shadow-lg py-1 border border-gray-100">
-                        <a href="/static/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">個人檔案</a>
-                        <a href="/static/share.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">分享清單</a>
-                        <a href="/static/food.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">覓食清單</a>
+                        <a href="/static/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👤個人檔案</a>
+                        <a href="/static/share.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-100">🎁分享清單</a>
+                        <a href="/static/food.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-teal-100">🍴覓食清單</a>
                         <hr class="my-1">
-                        <a href="/static/setting.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">設定</a>
-                        <a href="/static/teach.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">使用教學</a>
+                        <a href="/static/setting.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">⚙️設定</a>
+                        <a href="/static/teach.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">📚使用教學</a>
+                        <a href="/static/aboutus.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">關於我們</a>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -110,7 +112,7 @@
                             <div class="flex items-center"><span class="font-bold w-12 text-gray-700">地點：</span> 中興大學男生宿舍大廳</div>
                         </div>
                     </div>
-                    
+                     
                     <button class="w-full py-2.5 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition">
                         申請索取
                     </button>
@@ -244,6 +246,7 @@
 
             // 使用 forEach 迴圈，有幾筆資料就跑幾次，自動產生 HTML
             dataArray.forEach(item => {
+                // 這裡就是你原本卡片的 Tailwind HTML 結構，但把裡面的內容用 ${item.xxx} 變數替換掉
                 const cardHTML = `
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-200 flex flex-col justify-between">
                         <div>
@@ -259,14 +262,12 @@
                         </div>
                         <div class="px-4 pb-4 pt-2 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500">
                             <span>📍 ${item.pickup_location}</span>
-                            
-                            <a href="/static/detail.html?id=${item.id}" class="text-giver font-semibold hover:text-orange-500 transition px-2 py-1 bg-orange-50 rounded">
-                                看詳細 ➔
-                            </a>
+                            <span class="text-giver font-semibold cursor-pointer" onclick="alert('你點擊了ID為 ${item.id} 的詳細資料')">看詳細</span>
                         </div>
                     </div>
                 `;
                 
+                // 把組合好的卡片 HTML 塞進網頁的 Grid 容器中
                 foodGrid.innerHTML += cardHTML;
             });
         }
