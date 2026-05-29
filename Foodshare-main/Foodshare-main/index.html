@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校園食物共享與覓食地圖平台</title>
+    <!-- 引入 Tailwind CSS (這裡先使用 CDN 方便你直接雙擊檔案打開預覽) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script>
+        // 在這裡自訂你的兩個專屬色系，方便直接在 class 中使用
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        giver: '#FBB28B',    // 分享者色系 (暖杏橘)
+                        receiver: '#A8CBCB'  // 索取者色系 (鼠尾草綠)
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #campus-map {
+            min-height: 450px;
+        }
+        .food-card-active {
+            box-shadow: 0 0 0 2px rgba(168, 203, 203, 0.65);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- ==================== <header> 導覽列 ==================== -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl font-bold text-receiver">🥦</span>
+        </div>
+
+        <!-- 搜尋引擎 -->
+        <div class="w-1/3 relative">
+            <input type="text" placeholder="搜尋關鍵字或地點..." 
+                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent text-sm">
+            <div class="absolute left-3.5 top-2.5 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
+        </div>
+
+        <!-- 右側: 功能圖示與分享按鈕 -->
+        <div class="flex items-center space-x-4">
+            <!-- 訊息 Icon -->
+            <a href="/static/message.html" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative inline-block" title="私訊">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </a>
+
+            <!-- 鈴鐺 Icon -->
+            <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative" title="系統通知">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+            </button>
+
+            <!-- 頭像 Icon -->
+            <div class="relative">
+                <button id="avatar-btn" class="w-9 h-9 bg-receiver text-white rounded-full flex items-center justify-center font-bold focus:outline-none overflow-hidden border-2 border-transparent hover:border-receiver">
+                    <span class="text-sm">9ana</span>
+                </button>
+                
+                <div id="avatar-menu" class="absolute right-0 pt-2 w-48 invisible opacity-0 transition-all duration-200 z-50">
+                    <div class="bg-white rounded-md shadow-lg py-1 border border-gray-100">
+                        <a href="/static/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👤個人檔案</a>
+                        <a href="/static/share.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-100">🎁分享清單</a>
+                        <a href="/static/food.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-teal-100">🍴覓食清單</a>
+                        <hr class="my-1">
+                        <a href="/static/setting.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">⚙️設定</a>
+                        <a href="/static/teach.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">📚使用教學</a>
+                        <a href="/static/aboutus.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">關於我們</a>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分享按鈕 (使用指定分享者色系 #FBB28B) -->
+            <a href="/static/upload.html" class="bg-giver hover:bg-orange-400 text-white font-medium px-4 py-2 rounded-full text-sm transition shadow-sm inline-block text-center">
+                ＋ 馬上分享
+            </a>
+        </div>
+    </header>
+
+    <!-- ==================== <main> 主要內容 ==================== -->
+    <main class="flex-grow flex flex-col">
+        
+        <!-- 【區塊一：互動式地圖區域】 -->
+        <section class="bg-white p-4 border-b border-gray-200">
+            <!-- 類別篩選器 -->
+            <div class="flex items-center space-x-3 mb-4 overflow-x-auto pb-2">
+                <span class="text-sm font-semibold text-gray-500 shrink-0">食物類別：</span>
+                <button class="px-4 py-1.5 rounded-full bg-receiver text-white text-sm font-medium">全部</button>
+                <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">便當</button>
+                <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">飲料</button>
+                <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">餐盒</button>
+                <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">甜點</button>
+                <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">其他</button>
+            </div>
+
+            <!-- 地圖主體與左側 1/3 詳細資訊區塊 -->
+            <div class="relative w-full h-[450px] bg-slate-100 rounded-xl overflow-hidden border border-gray-200 shadow-inner flex flex-col lg:flex-row">
+                
+                <!-- 地圖左側 1/3 食物細項顯示區 -->
+                <div id="detail-panel" class="w-full lg:w-1/3 h-60 lg:h-full bg-white border-r-0 lg:border-r border-b lg:border-b-0 border-gray-200 p-5 flex flex-col justify-between z-10 shadow-md">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span id="detail-category" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-orange-100 text-orange-600">飲料</span>
+                            <span id="detail-time" class="text-xs text-gray-400">剛剛發布</span>
+                        </div>
+                        <h3 id="detail-title" class="text-lg font-bold text-gray-900 mb-2">多出的黑糖珍珠鮮奶</h3>
+                        <p id="detail-description" class="text-sm text-gray-600 mb-4">微糖微冰、全新未拆封。買一送一多一杯喝不完，送給有緣人！</p>
+                        
+                        <div class="space-y-2 text-xs text-gray-500">
+                            <div class="flex items-center"><span class="font-bold w-12 text-gray-700">時間：</span> <span id="detail-time-window">12:00 - 14:00 之間</span></div>
+                            <div class="flex items-center"><span class="font-bold w-12 text-gray-700">地點：</span> <span id="detail-location">中興大學男生宿舍大廳</span></div>
+                        </div>
+                    </div>
+                     
+                    <button class="w-full py-2.5 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition">
+                        申請索取
+                    </button>
+                </div>
+
+                <!-- 真實地圖 -->
+                <div class="flex-grow relative bg-emerald-50">
+                    <div id="campus-map" class="w-full h-full"></div>
+                    <div class="absolute bottom-3 right-3 z-[500] text-gray-500 text-xs bg-white/85 px-2 py-1 rounded shadow-sm">
+                        🗺️ OpenStreetMap / Leaflet
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 【區塊二：食物卡片列表區域】 -->
+        <section class="p-6 max-w-7xl mx-auto w-full">
+            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="w-3 h-6 bg-giver rounded-full mr-2 inline-block"></span>
+                最新免費食物
+            </h2>
+
+            <div id="food-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500 space-y-2">
+        <div class="flex justify-center space-x-6">
+            <a href="/static/aboutus.html" class="hover:text-receiver transition">關於我們</a>
+        </div>
+        <div>&copy; 2026 中興大學食物共享平台專題小組. All rights reserved.</div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        // 1. 頭像選單點擊切換邏輯 (保留你之前的改動)
+        const avatarBtn = document.getElementById('avatar-btn');
+        const avatarMenu = document.getElementById('avatar-menu');
+
+        if (avatarBtn && avatarMenu) {
+            avatarBtn.addEventListener('click', (event) => {
+                event.stopPropagation(); 
+                avatarMenu.classList.toggle('invisible');
+                avatarMenu.classList.toggle('opacity-0');
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!avatarMenu.contains(event.target)) {
+                    avatarMenu.classList.add('invisible');
+                    avatarMenu.classList.add('opacity-0');
+                }
+            });
+        }
+
+        // ================================================================
+        // 2. 模擬從資料庫（FastAPI）撈出來的食物資料清單
+        // 【注意】這些欄位名稱，就是我們之前設計的 SQL 資料庫 food_posts 表格欄位！
+        // ================================================================
+        const mockDatabaseData = [
+            {
+                id: 1,
+                title: "多出的黑糖珍珠鮮奶",
+                category: "飲料",
+                description: "全新未拆封，微糖微冰。買一送一多一杯喝不完...",
+                pickup_location: "女宿誠軒",
+                time_window: "12:00 - 14:00",
+                time_ago: "5 分鐘前",
+                coords: [24.1209, 120.6762],
+                emoji: "🧋",
+                bg_color: "bg-orange-100",
+                text_color: "text-orange-600",
+                badge_color: "bg-orange-50",
+            },
+            {
+                id: 2,
+                title: "會議多餘的排骨便當",
+                category: "便當",
+                description: "系辦中午開會多出 3 個排骨便當，皆全新未動，歡迎自取。",
+                pickup_location: "社管大樓 4 樓",
+                time_window: "12:30 - 14:00",
+                time_ago: "20 分鐘前",
+                coords: [24.1239, 120.6777],
+                emoji: "🍱",
+                bg_color: "bg-teal-50",
+                text_color: "text-teal-600",
+                badge_color: "bg-teal-50",
+            },
+            {
+                id: 3,
+                title: "巧克力鮮 cream 蛋糕",
+                category: "甜點",
+                description: "慶生切剩下的半個蛋糕，一直冰在冰箱，保存良好。",
+                pickup_location: "女生宿舍交誼廳",
+                time_window: "13:00 - 18:00",
+                time_ago: "1 小時前",
+                coords: [24.1218, 120.6769],
+                emoji: "🍰",
+                bg_color: "bg-yellow-50",
+                text_color: "text-yellow-600",
+                badge_color: "bg-yellow-50",
+            },
+            {
+                id: 4,
+                title: "多買的洪瑞珍三明治",
+                category: "其他",
+                description: "早上不小心重複多買了，期限到今天晚上，希望有人能帶走它。",
+                pickup_location: "綜合大樓一樓",
+                time_window: "11:00 - 21:00",
+                time_ago: "2 小時前",
+                coords: [24.1237, 120.6798],
+                emoji: "🥪",
+                bg_color: "bg-purple-50",
+                text_color: "text-purple-600",
+                badge_color: "bg-purple-50",
+            }
+        ];
+        window.mockDatabaseData = mockDatabaseData;
+
+        const campusMap = L.map('campus-map', { scrollWheelZoom: false }).setView([24.1232, 120.6776], 16);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(campusMap);
+
+        const mapMarkers = new Map();
+        let activeFoodId = null;
+
+        function updateDetailPanel(item) {
+            document.getElementById('detail-category').textContent = item.category;
+            document.getElementById('detail-category').className = `px-2.5 py-1 text-xs font-semibold rounded-md ${item.badge_color.replace('bg-', 'bg-').replace('50', '100')} ${item.text_color}`;
+            document.getElementById('detail-time').textContent = item.time_ago;
+            document.getElementById('detail-title').textContent = item.title;
+            document.getElementById('detail-description').textContent = item.description;
+            document.getElementById('detail-time-window').textContent = item.time_window;
+            document.getElementById('detail-location').textContent = item.pickup_location;
+        }
+
+        function focusFood(item) {
+            activeFoodId = item.id;
+            updateDetailPanel(item);
+
+            const card = document.querySelector(`[data-food-card="${item.id}"]`);
+            document.querySelectorAll('[data-food-card]').forEach((el) => el.classList.remove('food-card-active'));
+            if (card) {
+                card.classList.add('food-card-active');
+            }
+
+            const marker = mapMarkers.get(item.id);
+            if (marker) {
+                campusMap.setView(item.coords, 17, { animate: true });
+                marker.openPopup();
+            }
+        }
+
+        // 3. 撰寫一個函式，把資料庫陣列渲染到網頁畫面上
+        function renderFoodCards(dataArray) {
+            const foodGrid = document.getElementById('food-grid');
+            foodGrid.innerHTML = ""; // 先清空容器
+
+            // 使用 forEach 迴圈，有幾筆資料就跑幾次，自動產生 HTML
+            dataArray.forEach(item => {
+                // 這裡就是你原本卡片的 Tailwind HTML 結構，但把裡面的內容用 ${item.xxx} 變數替換掉
+                const cardHTML = `
+                    <div data-food-card="${item.id}" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-200 flex flex-col justify-between cursor-pointer" onclick="focusFood(window.mockDatabaseData.find(food => food.id === ${item.id}))">
+                        <div>
+                            <div class="w-full h-40 ${item.bg_color} flex items-center justify-center text-4xl">${item.emoji}</div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs font-semibold ${item.text_color} ${item.badge_color} px-2 py-0.5 rounded">${item.category}</span>
+                                    <span class="text-xs text-gray-400">${item.time_ago}</span>
+                                </div>
+                                <h3 class="font-bold text-gray-900 text-base mb-1 truncate">${item.title}</h3>
+                                <p class="text-xs text-gray-500 line-clamp-2">${item.description}</p>
+                            </div>
+                        </div>
+                        <div class="px-4 pb-4 pt-2 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500">
+                            <span>📍 ${item.pickup_location}</span>
+                            <span class="text-giver font-semibold cursor-pointer" onclick="alert('你點擊了ID為 ${item.id} 的詳細資料')">看詳細</span>
+                        </div>
+                    </div>
+                `;
+                
+                // 把組合好的卡片 HTML 塞進網頁的 Grid 容器中
+                foodGrid.innerHTML += cardHTML;
+
+                const marker = L.marker(item.coords).addTo(campusMap);
+                marker.bindPopup(`<b>${item.title}</b><br>${item.pickup_location}`);
+                marker.on('click', () => focusFood(item));
+                mapMarkers.set(item.id, marker);
+            });
+        }
+
+        // 4. 網頁載入完成後，立刻執行渲染
+        window.addEventListener('DOMContentLoaded', () => {
+            renderFoodCards(mockDatabaseData);
+            focusFood(mockDatabaseData[0]);
+        });
+    </script>
+</body>
+</html>
