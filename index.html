@@ -277,5 +277,80 @@
             renderFoodCards(mockDatabaseData);
         });
     </script>
+    <div id="main-view" class="min-h-screen">
+        </div>
+    <script type="module">
+        // 1. 引入 Firebase 核心與 Auth 模組 (CDN 方式)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // 2. 貼上你的 Firebase Config
+        const firebaseConfig = {
+        apiKey: "AIzaSyDYIH5q916EjCrvtaSMSFEDPTgRBFehJws",
+        authDomain: "nchu-foodshare.firebaseapp.com",
+        projectId: "nchu-foodshare",
+        storageBucket: "nchu-foodshare.firebasestorage.app",
+        messagingSenderId: "639230737508",
+        appId: "1:639230737508:web:545dd478442a74f07d3371",
+        measurementId: "G-20P8J9VGDZ"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // 3. 取得你在步驟二、三設定的 DOM 元素
+        const loginView = document.getElementById('login-view');
+        const mainView = document.getElementById('main-view');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userNameDisplay = document.getElementById('user-name-display');
+        const tabBuyer = document.getElementById('tab-buyer');
+        const tabSeller = document.getElementById('tab-seller');
+        const buyerContent = document.getElementById('buyer-content');
+        const sellerContent = document.getElementById('seller-content');
+
+        // 4. 核心邏輯：監聽登入狀態 (決定顯示登入頁還是主頁)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginView.classList.add('hidden');
+                mainView.classList.remove('hidden');
+                userNameDisplay.textContent = `嗨，${user.displayName || '同學'}`;
+            } else {
+                loginView.classList.remove('hidden');
+                mainView.classList.add('hidden');
+            }
+        });
+
+        // 5. 核心邏輯：登入與校園信箱驗證
+        loginBtn.addEventListener('click', async () => {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const email = result.user.email;
+                if (!email.endsWith('@smail.nchu.edu.tw') && !email.endsWith('@nchu.edu.tw')) {
+                    await signOut(auth);
+                    alert("抱歉，僅限使用中興大學校園信箱登入！");
+                }
+            } catch (error) {
+                console.error("登入失敗", error);
+            }
+        });
+
+        // 6. 核心邏輯：登出
+        logoutBtn.addEventListener('click', async () => {
+            await signOut(auth);
+        });
+
+        // 7. 畫面邏輯：買賣家頁籤切換 (透過增減 hidden 類別)
+        tabBuyer.addEventListener('click', () => {
+            buyerContent.classList.remove('hidden');
+            sellerContent.classList.add('hidden');
+            // 這裡可以加上你需要的樣式切換，例如 border 顏色
+        });
+
+        tabSeller.addEventListener('click', () => {
+            sellerContent.classList.remove('hidden');
+            buyerContent.classList.add('hidden');
+        });
+    </script>
 </body>
 </html>
