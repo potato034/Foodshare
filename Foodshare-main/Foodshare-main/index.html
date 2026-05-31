@@ -23,16 +23,22 @@
     <style>
         #campus-map {
             min-height: 450px;
+            position: relative;
+            z-index: 0;
         }
         .food-card-active {
             box-shadow: 0 0 0 2px rgba(168, 203, 203, 0.65);
             transform: translateY(-2px);
         }
+        /* Ensure the header stays above Leaflet map and popups */
+        header {
+            z-index: 9999;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- ==================== <header> 導覽列 ==================== -->
+    <!-- ==================== <header> 導覽列 =================== -->
     <header class="bg-white shadow-sm sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
         <!-- Logo -->
         <div class="flex items-center space-x-2">
@@ -49,7 +55,12 @@
         </div>
 
         <!-- 右側: 功能圖示與分享按鈕 -->
-        <div class="flex items-center space-x-4">
+        <div class="ml-auto flex items-center gap-2 shrink-0">
+            <!-- 分享按鈕 (使用指定分享者色系 #FBB28B) -->
+            <a href="/static/upload.html" class="bg-giver hover:bg-orange-400 text-white font-medium px-4 py-2 rounded-full text-sm transition shadow-sm inline-block text-center whitespace-nowrap">
+                ＋ 馬上分享
+            </a>
+
             <!-- 訊息 Icon -->
             <a href="/static/message.html" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative inline-block" title="私訊">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -80,11 +91,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 分享按鈕 (使用指定分享者色系 #FBB28B) -->
-            <a href="/static/upload.html" class="bg-giver hover:bg-orange-400 text-white font-medium px-4 py-2 rounded-full text-sm transition shadow-sm inline-block text-center">
-                ＋ 馬上分享
-            </a>
         </div>
     </header>
 
