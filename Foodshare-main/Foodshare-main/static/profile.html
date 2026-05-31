@@ -17,14 +17,26 @@
             }
         }
     </script>
+    <style>
+        .avatar-shell {
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+        }
+        .avatar-upload-overlay {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .avatar-upload-zone:hover .avatar-upload-overlay,
+        .avatar-upload-zone:focus-within .avatar-upload-overlay {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
-
     <header class="bg-white shadow-sm sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
-        <button onclick="history.back()" class="text-gray-500 hover:text-giver transition flex items-center text-sm font-medium">
+        <a href="../index.html" class="text-gray-500 hover:text-giver transition flex items-center text-sm font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
             返回
-        </button>
+        </a>
         <span class="text-lg font-bold text-gray-900">個人檔案</span>
         <button class="text-gray-400 hover:text-gray-700 transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -32,26 +44,53 @@
     </header>
 
     <main class="max-w-5xl mx-auto py-8 px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-        
         <div class="md:col-span-1 space-y-6">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-16 bg-gradient-to-r from-orange-100 to-teal-100"></div>
-                
-                <div class="w-24 h-24 rounded-full bg-white border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold text-gray-700 relative z-10 mt-4 mb-3">
-                    😗
+
+                <div class="avatar-upload-zone relative z-10 mt-4 mb-3">
+                    <label for="profile-avatar-input" class="relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white avatar-shell group">
+                        <img id="profile-avatar-image" src="" alt="個人頭貼" class="hidden h-full w-full object-cover">
+                        <div id="profile-avatar-fallback" class="flex h-full w-full items-center justify-center rounded-full bg-white text-3xl font-bold text-gray-700">9</div>
+                        <div class="avatar-upload-overlay absolute inset-0 flex items-center justify-center bg-gray-900/45 text-xs font-semibold text-white">
+                            點擊更換
+                        </div>
+                    </label>
+                    <input id="profile-avatar-input" type="file" accept="image/*" class="hidden">
                 </div>
-                
-                <h1 class="text-2xl font-bold text-gray-900 mb-1">9ana</h1>
-                <p class="text-sm text-gray-500 mb-4">應用經濟學系 三年級</p>
-                
+
+                <h1 id="profile-name-text" class="mb-1 text-2xl font-bold text-gray-900"></h1>
+                <p id="profile-dept-text" class="mb-4 text-sm text-gray-500"></p>
+
+                <div class="mb-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button id="edit-profile-btn" class="rounded-xl bg-teal-50 px-3 py-2 text-sm font-medium text-teal-700 transition hover:bg-teal-100">編輯個人資料</button>
+                </div>
+
+                <div id="edit-panel" class="hidden w-full rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="profile-name-input" class="mb-1 block text-sm font-medium text-gray-700">姓名</label>
+                            <input id="profile-name-input" type="text" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-receiver focus:outline-none" placeholder="輸入姓名">
+                        </div>
+                        <div>
+                            <label for="profile-dept-input" class="mb-1 block text-sm font-medium text-gray-700">系級</label>
+                            <input id="profile-dept-input" type="text" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-receiver focus:outline-none" placeholder="例如：資管二">
+                        </div>
+                        <div class="flex items-center justify-end gap-2">
+                            <button id="cancel-edit-btn" type="button" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">取消</button>
+                            <button id="save-profile-btn" type="button" class="rounded-xl bg-giver px-4 py-2 text-sm font-medium text-white hover:bg-orange-400">儲存資料</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-gray-50 rounded-xl p-3 w-full border border-gray-100 mb-4">
                     <p class="text-xs text-gray-500 mb-1">信用評價</p>
                     <div class="flex justify-center items-center space-x-1 text-yellow-400">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <span>★</span>
+                        <span>★</span>
+                        <span>★</span>
+                        <span>★</span>
+                        <span class="text-gray-300">★</span>
                         <span class="text-gray-700 font-bold ml-1 text-sm">4.8</span>
                     </div>
                 </div>
@@ -61,14 +100,14 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
                     <div>
                         <p class="text-xs font-semibold text-gray-500 mb-1">累積分享</p>
-                        <p class="text-2xl font-extrabold text-giver">14 <span class="text-xs font-normal text-gray-400">次</span></p>
+                        <p id="share-count" class="text-2xl font-extrabold text-giver">0 <span class="text-xs font-normal text-gray-400">次</span></p>
                     </div>
                     <div class="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-xl">🎁</div>
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
                     <div>
                         <p class="text-xs font-semibold text-gray-500 mb-1">成功救援</p>
-                        <p class="text-2xl font-extrabold text-receiver">28 <span class="text-xs font-normal text-gray-400">次</span></p>
+                        <p id="rescue-count" class="text-2xl font-extrabold text-receiver">0 <span class="text-xs font-normal text-gray-400">次</span></p>
                     </div>
                     <div class="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center text-xl">🍱</div>
                 </div>
@@ -76,31 +115,15 @@
         </div>
 
         <div class="md:col-span-2 space-y-6">
-            
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="bg-teal-50/50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                     <h2 class="text-lg font-bold text-gray-900 flex items-center">
                         <span class="w-3 h-6 bg-receiver rounded-full mr-2 inline-block"></span>
                         未取食物 (待前往領取)
                     </h2>
-                    <span class="bg-receiver text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">1 筆待辦</span>
+                    <span id="request-count-badge" class="bg-receiver text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">0 筆待辦</span>
                 </div>
-                
-                <div class="p-4 space-y-3">
-                    <div class="flex items-center justify-between p-3 bg-white border border-gray-100 hover:border-receiver/50 rounded-xl hover:shadow-sm transition group">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center text-2xl shrink-0">🥪</div>
-                            <div>
-                                <h3 class="font-bold text-gray-800 text-sm mb-0.5 group-hover:text-teal-700 transition">多買的洪瑞珍三明治</h3>
-                                <p class="text-xs text-gray-500">📍 綜合大樓一樓 ｜ ⏰ 期限：今天 18:00 前</p>
-                            </div>
-                        </div>
-                        <a href="/static/detail.html?id=4" class="px-4 py-2 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-receiver hover:text-white rounded-lg transition">
-                            查看詳情
-                        </a>
-                    </div>
-                    
-                    </div>
+                <div id="request-list" class="p-4 space-y-3"></div>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -109,45 +132,316 @@
                         <span class="w-3 h-6 bg-giver rounded-full mr-2 inline-block"></span>
                         尚未送完的食物 (分享中)
                     </h2>
-                    <span class="bg-giver text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">2 筆進行中</span>
+                    <span id="share-count-badge" class="bg-giver text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">0 筆進行中</span>
                 </div>
-                
-                <div class="p-4 space-y-3">
-                    <div class="flex items-center justify-between p-3 bg-white border border-gray-100 hover:border-giver/50 rounded-xl hover:shadow-sm transition group">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center text-2xl shrink-0">🧋</div>
-                            <div>
-                                <div class="flex items-center space-x-2 mb-0.5">
-                                    <h3 class="font-bold text-gray-800 text-sm group-hover:text-orange-600 transition">多出的黑糖珍珠鮮奶</h3>
-                                    <span class="px-1.5 py-0.5 bg-orange-100 text-orange-600 text-[10px] rounded font-semibold">剩 1 杯</span>
-                                </div>
-                                <p class="text-xs text-gray-500">📍 男生宿舍大廳 ｜ 🕒 已發布 1 小時</p>
-                            </div>
-                        </div>
-                        <a href="/static/detail.html?id=1" class="px-4 py-2 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-giver hover:text-white rounded-lg transition">
-                            管理狀態
-                        </a>
-                    </div>
-
-                    <div class="flex items-center justify-between p-3 bg-white border border-gray-100 hover:border-giver/50 rounded-xl hover:shadow-sm transition group">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center text-2xl shrink-0">🍱</div>
-                            <div>
-                                <div class="flex items-center space-x-2 mb-0.5">
-                                    <h3 class="font-bold text-gray-800 text-sm group-hover:text-orange-600 transition">會議多餘的排骨便當</h3>
-                                    <span class="px-1.5 py-0.5 bg-orange-100 text-orange-600 text-[10px] rounded font-semibold">剩 2 個</span>
-                                </div>
-                                <p class="text-xs text-gray-500">📍 社管大樓 4 樓 ｜ 🕒 已發布 3 小時</p>
-                            </div>
-                        </div>
-                        <a href="/static/detail.html?id=2" class="px-4 py-2 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-giver hover:text-white rounded-lg transition">
-                            管理狀態
-                        </a>
-                    </div>
-                </div>
+                <div id="share-list" class="p-4 space-y-3"></div>
             </div>
-
         </div>
     </main>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: 'AIzaSyDYIH5q916EjCrvtaSMSFEDPTgRBFehJws',
+            authDomain: 'nchu-foodshare.firebaseapp.com',
+            projectId: 'nchu-foodshare',
+            storageBucket: 'nchu-foodshare.firebasestorage.app',
+            messagingSenderId: '639230737508',
+            appId: '1:639230737508:web:545dd478442a74f07d3371',
+            measurementId: 'G-20P8J9VGDZ'
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const FALLBACK_PROFILE = {
+            displayName: '',
+            department: '',
+            avatarMode: 'email',
+            photoURL: '',
+            shareHistory: [],
+            requestHistory: []
+        };
+
+        const demoRequests = [
+            { id: 4, title: '多買的洪瑞珍三明治', emoji: '🥪', location: '綜合大樓一樓', timeLabel: '待前往領取', href: './detail.html?id=4' }
+        ];
+
+        const demoShares = [
+            { id: 1, title: '多出的黑糖珍珠鮮奶', emoji: '🧋', location: '男生宿舍大廳', timeLabel: '已發布 1 小時', href: './detail.html?id=1' },
+            { id: 2, title: '會議多餘的排骨便當', emoji: '🍱', location: '社管大樓 4 樓', timeLabel: '已發布 3 小時', href: './detail.html?id=2' }
+        ];
+
+        let currentProfile = { ...FALLBACK_PROFILE };
+
+        function getProfileKey(uid) {
+            return `fs_user_${uid}`;
+        }
+
+        function getCurrentUserSnapshot() {
+            try {
+                return JSON.parse(localStorage.getItem('fs_currentUser') || 'null');
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function getInitials(value) {
+            const text = (value || '').trim();
+            if (!text) return '9';
+            const parts = text.split(/\s+/).filter(Boolean);
+            if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function buildAvatarDataUrl(label) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 240;
+            canvas.height = 240;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 240, 240);
+            gradient.addColorStop(0, '#FBB28B');
+            gradient.addColorStop(1, '#A8CBCB');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 240, 240);
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            ctx.beginPath();
+            ctx.arc(120, 120, 104, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 88px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(getInitials(label), 120, 128);
+            return canvas.toDataURL('image/png');
+        }
+
+        function normalizeProfile(rawProfile, firebaseUser) {
+            const displayName = rawProfile?.displayName || firebaseUser?.displayName || (firebaseUser?.email ? firebaseUser.email.split('@')[0] : '');
+            const photoURL = rawProfile?.photoURL || firebaseUser?.photoURL || '';
+            return {
+                ...FALLBACK_PROFILE,
+                ...rawProfile,
+                displayName,
+                photoURL,
+                avatarMode: rawProfile?.avatarMode || (photoURL ? 'email' : 'generated'),
+                shareHistory: Array.isArray(rawProfile?.shareHistory) ? rawProfile.shareHistory : [],
+                requestHistory: Array.isArray(rawProfile?.requestHistory) ? rawProfile.requestHistory : []
+            };
+        }
+
+        function loadUserProfile(uid, firebaseUser) {
+            try {
+                const raw = localStorage.getItem(getProfileKey(uid));
+                if (!raw) {
+                    const profile = normalizeProfile({}, firebaseUser);
+                    localStorage.setItem(getProfileKey(uid), JSON.stringify(profile));
+                    return profile;
+                }
+                return normalizeProfile(JSON.parse(raw), firebaseUser);
+            } catch (error) {
+                return normalizeProfile({}, firebaseUser);
+            }
+        }
+
+        function saveUserProfile(uid, profile) {
+            localStorage.setItem(getProfileKey(uid), JSON.stringify(profile));
+        }
+
+        function getAvatarSource(profile, firebaseUser) {
+            if (profile.avatarMode === 'upload' && profile.photoURL) return profile.photoURL;
+            if (profile.avatarMode === 'email' && firebaseUser?.photoURL) return firebaseUser.photoURL;
+            return buildAvatarDataUrl(profile.displayName || firebaseUser?.email || '9');
+        }
+
+        function renderAvatar(profile, firebaseUser) {
+            const avatarImage = document.getElementById('profile-avatar-image');
+            const avatarFallback = document.getElementById('profile-avatar-fallback');
+            const avatarSource = getAvatarSource(profile, firebaseUser);
+
+            if (!avatarImage || !avatarFallback) return;
+            avatarImage.src = avatarSource;
+            avatarImage.classList.remove('hidden');
+            avatarFallback.classList.add('hidden');
+        }
+
+        function renderSummary(profile) {
+            const shareCount = document.getElementById('share-count');
+            const rescueCount = document.getElementById('rescue-count');
+            const shareBadge = document.getElementById('share-count-badge');
+            const requestBadge = document.getElementById('request-count-badge');
+
+            if (shareCount) shareCount.innerHTML = `${profile.shareHistory.length} <span class="text-xs font-normal text-gray-400">次</span>`;
+            if (rescueCount) rescueCount.innerHTML = `${profile.requestHistory.length} <span class="text-xs font-normal text-gray-400">次</span>`;
+            if (shareBadge) shareBadge.textContent = `${profile.shareHistory.length} 筆進行中`;
+            if (requestBadge) requestBadge.textContent = `${profile.requestHistory.length} 筆待辦`;
+        }
+
+        function getRequestItems(profile) {
+            if (profile.requestHistory.length) {
+                return profile.requestHistory.map((item, index) => ({
+                    id: item.id || `request-${index}`,
+                    title: item.title || '未命名索取項目',
+                    emoji: item.emoji || '🍴',
+                    location: item.location || item.pickup_location || '未填寫地點',
+                    timeLabel: item.timeLabel || item.status || '待前往領取',
+                    href: item.href || `./detail.html?id=${item.id || 4}`
+                }));
+            }
+            return demoRequests;
+        }
+
+        function getShareItems(profile) {
+            if (profile.shareHistory.length) {
+                return profile.shareHistory.map((item, index) => ({
+                    id: item.id || `share-${index}`,
+                    title: item.title || '未命名分享項目',
+                    emoji: item.emoji || '🎁',
+                    location: item.location || item.pickup_location || '未填寫地點',
+                    timeLabel: item.timeLabel || item.status || '進行中',
+                    href: item.href || `./detail.html?id=${item.id || 1}`
+                }));
+            }
+            return demoShares;
+        }
+
+        function renderItemList(listElement, items, tone) {
+            if (!listElement) return;
+            listElement.innerHTML = items.map((item) => `
+                <div class="flex items-center justify-between p-3 bg-white border border-gray-100 hover:border-${tone}/50 rounded-xl hover:shadow-sm transition group">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 ${tone === 'receiver' ? 'bg-teal-50' : 'bg-orange-50'} rounded-lg flex items-center justify-center text-2xl shrink-0">${item.emoji}</div>
+                        <div>
+                            <div class="flex items-center space-x-2 mb-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm group-hover:text-orange-600 transition">${item.title}</h3>
+                            </div>
+                            <p class="text-xs text-gray-500">📍 ${item.location} ｜ 🕒 ${item.timeLabel}</p>
+                        </div>
+                    </div>
+                    <a href="${item.href}" class="px-4 py-2 text-xs font-medium ${tone === 'receiver' ? 'text-teal-600 bg-teal-50 hover:bg-receiver hover:text-white' : 'text-orange-600 bg-orange-50 hover:bg-giver hover:text-white'} rounded-lg transition">
+                        ${tone === 'receiver' ? '查看詳情' : '管理狀態'}
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function applyProfile(profile, firebaseUser) {
+            const nameText = document.getElementById('profile-name-text');
+            const deptText = document.getElementById('profile-dept-text');
+            const nameInput = document.getElementById('profile-name-input');
+            const deptInput = document.getElementById('profile-dept-input');
+
+            currentProfile = profile;
+
+            if (nameText) nameText.textContent = profile.displayName || (firebaseUser?.email ? firebaseUser.email.split('@')[0] : '未設定姓名');
+            if (deptText) deptText.textContent = profile.department || '未設定系級';
+            if (nameInput) nameInput.value = profile.displayName || '';
+            if (deptInput) deptInput.value = profile.department || '';
+
+            renderAvatar(profile, firebaseUser);
+            renderSummary(profile);
+            renderItemList(document.getElementById('request-list'), getRequestItems(profile), 'receiver');
+            renderItemList(document.getElementById('share-list'), getShareItems(profile), 'giver');
+        }
+
+        function readProfileFromForm() {
+            const nameInput = document.getElementById('profile-name-input');
+            const deptInput = document.getElementById('profile-dept-input');
+            const avatarImage = document.getElementById('profile-avatar-image');
+
+            return {
+                ...currentProfile,
+                displayName: nameInput ? nameInput.value.trim() : currentProfile.displayName,
+                department: deptInput ? deptInput.value.trim() : currentProfile.department,
+                photoURL: avatarImage && !avatarImage.classList.contains('hidden') ? avatarImage.src : currentProfile.photoURL
+            };
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            const snapshot = getCurrentUserSnapshot();
+            const activeUser = user || snapshot;
+
+            if (!activeUser?.uid) {
+                applyProfile(normalizeProfile({}, null), null);
+                return;
+            }
+
+            const firebaseUser = user || snapshot;
+            const profile = loadUserProfile(firebaseUser.uid, firebaseUser);
+            applyProfile(profile, firebaseUser);
+
+            const avatarInput = document.getElementById('profile-avatar-input');
+            const editProfileBtn = document.getElementById('edit-profile-btn');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            const saveProfileBtn = document.getElementById('save-profile-btn');
+            const editPanel = document.getElementById('edit-panel');
+
+            if (avatarInput && !avatarInput.dataset.bound) {
+                avatarInput.dataset.bound = 'true';
+                avatarInput.addEventListener('change', () => {
+                    const file = avatarInput.files && avatarInput.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const nextProfile = {
+                            ...currentProfile,
+                            ...readProfileFromForm(),
+                            avatarMode: 'upload',
+                            photoURL: String(reader.result || ''),
+                            shareHistory: currentProfile.shareHistory,
+                            requestHistory: currentProfile.requestHistory
+                        };
+                        saveUserProfile(firebaseUser.uid, nextProfile);
+                        applyProfile(nextProfile, firebaseUser);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (editProfileBtn && editPanel && !editProfileBtn.dataset.bound) {
+                editProfileBtn.dataset.bound = 'true';
+                editProfileBtn.addEventListener('click', () => {
+                    editPanel.classList.toggle('hidden');
+                });
+            }
+
+            if (cancelEditBtn && editPanel && !cancelEditBtn.dataset.bound) {
+                cancelEditBtn.dataset.bound = 'true';
+                cancelEditBtn.addEventListener('click', () => {
+                    editPanel.classList.add('hidden');
+                    applyProfile(loadUserProfile(firebaseUser.uid, firebaseUser), firebaseUser);
+                });
+            }
+
+            if (saveProfileBtn && !saveProfileBtn.dataset.bound) {
+                saveProfileBtn.dataset.bound = 'true';
+                saveProfileBtn.addEventListener('click', () => {
+                    const nextProfile = {
+                        ...currentProfile,
+                        ...readProfileFromForm(),
+                        shareHistory: currentProfile.shareHistory,
+                        requestHistory: currentProfile.requestHistory
+                    };
+                    saveUserProfile(firebaseUser.uid, nextProfile);
+                    localStorage.setItem('fs_currentUser', JSON.stringify({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email || '',
+                        displayName: nextProfile.displayName || firebaseUser.email?.split('@')[0] || ''
+                    }));
+                    applyProfile(nextProfile, firebaseUser);
+                    if (editPanel) editPanel.classList.add('hidden');
+                    alert('個人資料已更新');
+                });
+            }
+
+            window.addEventListener('storage', (event) => {
+                if (event.key !== getProfileKey(firebaseUser.uid)) return;
+                const nextProfile = loadUserProfile(firebaseUser.uid, firebaseUser);
+                applyProfile(nextProfile, firebaseUser);
+            });
+        });
+    </script>
 </body>
 </html>

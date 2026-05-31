@@ -18,6 +18,11 @@ app = FastAPI()
 def index():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
 
+
+@app.get("/index.html")
+def index_html():
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # 掛載靜態資料夾，確保前端能讀取圖片
