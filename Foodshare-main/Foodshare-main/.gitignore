@@ -1,0 +1,4 @@
+# Python 快取與編譯檔
+__pycache__/
+*.py[cod]
+*$py.class
