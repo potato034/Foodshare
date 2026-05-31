@@ -22,8 +22,97 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- ==================== <header> 導覽列 ==================== -->
-    <header class="bg-white shadow-sm sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
+    <!-- ==================== <div id="login-view"> 登入與註冊彈窗 ==================== -->
+    <div id="login-view" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 max-w-md w-full relative transition-all duration-300 transform scale-95">
+            <!-- Close Button -->
+            <button id="close-login-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none text-xl font-bold">
+                ✕
+            </button>
+            
+            <!-- Logo & Title -->
+            <div class="text-center mb-8">
+                <span class="text-5xl inline-block animate-bounce duration-1000 mb-3">🥦</span>
+                <h1 class="text-2xl font-extrabold text-gray-900 tracking-wide">興大食物共享平台</h1>
+                <p class="text-xs text-gray-500 mt-1">校園食物互助與覓食地圖</p>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex border-b border-gray-200 mb-6 text-sm">
+                <button id="tab-login" class="w-1/2 pb-3 font-semibold border-b-2 border-receiver text-receiver focus:outline-none transition">
+                    帳號登入
+                </button>
+                <button id="tab-register" class="w-1/2 pb-3 font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none transition">
+                    註冊帳號
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">校園電子信箱</label>
+                    <input type="email" id="login-email" placeholder="學號@smail.nchu.edu.tw 或 @nchu.edu.tw" 
+                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">密碼</label>
+                    <input type="password" id="login-password" placeholder="請輸入密碼 (至少 6 個字元)" 
+                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition">
+                </div>
+                <button id="email-login-btn" class="w-full py-2.5 bg-receiver hover:bg-teal-600 text-white font-semibold rounded-lg shadow-sm transition transform hover:-translate-y-0.5 text-sm">
+                    登入
+                </button>
+            </div>
+
+            <!-- Register Form (hidden by default) -->
+            <div id="form-register" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">校園電子信箱</label>
+                    <input type="email" id="reg-email" placeholder="學號@smail.nchu.edu.tw 或 @nchu.edu.tw" 
+                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-giver focus:border-transparent transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">密碼</label>
+                    <input type="password" id="reg-password" placeholder="設定密碼 (至少 6 個字元)" 
+                           class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-giver focus:border-transparent transition">
+                </div>
+                <button id="register-btn" class="w-full py-2.5 bg-giver hover:bg-orange-400 text-white font-semibold rounded-lg shadow-sm transition transform hover:-translate-y-0.5 text-sm">
+                    註冊帳號，並發送驗證信
+                </button>
+            </div>
+
+            <!-- Divider -->
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-gray-200"></span></div>
+                <div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-400">或使用以下方式</span></div>
+            </div>
+
+            <!-- Google Login Button -->
+            <button id="login-btn" class="w-full flex items-center justify-center space-x-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition transform hover:-translate-y-0.5 text-sm">
+                <!-- Google SVG Icon -->
+                <svg class="w-5 h-5" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                        <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.57h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.48C21.68,11.75 21.56,11.39 21.35,11.1z" fill="#4285F4" />
+                        <path d="M12,20.8c2.45,0 4.5,-0.8 6,-2.22l-3.3,-2.57c-0.92,0.61 -2.1,0.98 -3.7,0.98 -2.35,0 -4.35,-1.59 -5.06,-3.72H2.57v2.66C4.07,18.89 7.78,20.8 12,20.8z" fill="#34A853" />
+                        <path d="M6.94,13.27c-0.18,-0.54 -0.28,-1.12 -0.28,-1.72s0.1,-1.18 0.28,-1.72V7.17H2.57c-0.62,1.24 -0.97,2.64 -0.97,4.11s0.35,2.87 0.97,4.11L6.94,13.27z" fill="#FBBC05" />
+                        <path d="M12,6.72c1.33,0 2.53,0.46 3.47,1.36l2.6,-2.6C16.5,4.09 14.45,3.2 12,3.2c-4.22,0 -7.93,1.91 -9.43,5.03l4.37,3.38c0.71,-2.13 2.71,-3.72 5.06,-3.72z" fill="#EA4335" />
+                    </g>
+                </svg>
+                <span>使用 Google 校園信箱登入</span>
+            </button>
+
+            <!-- Back to Map / Info Link for visitors -->
+            <p class="text-center text-[10px] text-gray-400 mt-6">
+                中興大學校園食物共享與覓食地圖平台專題
+            </p>
+        </div>
+    </div>
+
+    <!-- ==================== <div id="main-view"> 主要網頁內容 ==================== -->
+    <div id="main-view" class="min-h-screen flex flex-col">
+
+        <!-- ==================== <header> 導覽列 ==================== -->
+        <header class="bg-white shadow-sm sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
         <!-- Logo -->
         <div class="flex items-center space-x-2">
             <span class="text-2xl font-bold text-receiver">🥦</span>
@@ -40,41 +129,55 @@
 
         <!-- 右側: 功能圖示與分享按鈕 -->
         <div class="flex items-center space-x-4">
-            <!-- 訊息 Icon -->
-            <a href="/static/message.html" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative inline-block" title="私訊">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </a>
+            <!-- 登入後顯示的控制項群組 -->
+            <div id="user-controls" class="flex items-center space-x-4 hidden">
+                <!-- 訊息 Icon -->
+                <a href="/static/message.html" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative inline-block" title="私訊">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </a>
 
-            <!-- 鈴鐺 Icon -->
-            <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative" title="系統通知">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-            </button>
-
-            <!-- 頭像 Icon -->
-            <div class="relative">
-                <button id="avatar-btn" class="w-9 h-9 bg-receiver text-white rounded-full flex items-center justify-center font-bold focus:outline-none overflow-hidden border-2 border-transparent hover:border-receiver">
-                    <span class="text-sm">9ana</span>
+                <!-- 鈴鐺 Icon -->
+                <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative" title="系統通知">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                 </button>
-                
-                <div id="avatar-menu" class="absolute right-0 pt-2 w-48 invisible opacity-0 transition-all duration-200 z-50">
-                    <div class="bg-white rounded-md shadow-lg py-1 border border-gray-100">
-                        <a href="/static/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👤個人檔案</a>
-                        <a href="/static/share.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-100">🎁分享清單</a>
-                        <a href="/static/food.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-teal-100">🍴覓食清單</a>
-                        <hr class="my-1">
-                        <a href="/static/setting.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">⚙️設定</a>
-                        <a href="/static/teach.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">📚使用教學</a>
-                        <a href="/static/aboutus.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">關於我們</a>
-                    </div>
+
+                <!-- 頭像 Icon -->
+                <div class="relative">
+                    <button id="avatar-btn" class="w-9 h-9 bg-receiver text-white rounded-full flex items-center justify-center font-bold focus:outline-none overflow-hidden border-2 border-transparent hover:border-receiver">
+                        <span class="text-sm">9ana</span>
+                    </button>
+                    
+                    <div id="avatar-menu" class="absolute right-0 pt-2 w-48 invisible opacity-0 transition-all duration-200 z-50">
+                        <div class="bg-white rounded-md shadow-lg py-1 border border-gray-100">
+                            <div id="user-name-display" class="px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-100 bg-gray-50">
+                                嗨，同學
+                            </div>
+                            <a href="/static/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👤個人檔案</a>
+                            <a href="/static/share.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-100">🎁分享清單</a>
+                            <a href="/static/food.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-teal-100">🍴覓食清單</a>
+                            <hr class="my-1">
+                            <a href="/static/setting.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">⚙️設定</a>
+                            <a href="/static/teach.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">📚使用教學</a>
+                            <a href="/static/aboutus.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">關於我們</a>
+                            <hr class="my-1">
+                            <button id="logout-btn" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none">
+                                🚪 登出
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <!-- 分享按鈕 (使用指定分享者色系 #FBB28B) -->
+                <a href="/static/upload.html" class="bg-giver hover:bg-orange-400 text-white font-medium px-4 py-2 rounded-full text-sm transition shadow-sm inline-block text-center shrink-0">
+                    ＋ 馬上分享
+                </a>
             </div>
 
-            <!-- 分享按鈕 (使用指定分享者色系 #FBB28B) -->
-            <a href="/static/upload.html" class="bg-giver hover:bg-orange-400 text-white font-medium px-4 py-2 rounded-full text-sm transition shadow-sm inline-block text-center">
-                ＋ 馬上分享
-            </a>
+            <!-- 未登入時顯示的登入/註冊按鈕 -->
+            <button id="header-login-btn" class="bg-[#A8CBCB] hover:bg-teal-600 text-white font-semibold px-5 py-2 rounded-full text-sm transition shadow-sm shrink-0">
+                登入 / 註冊
+            </button>
         </div>
     </header>
 
@@ -113,7 +216,7 @@
                         </div>
                     </div>
                      
-                    <button class="w-full py-2.5 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition">
+                    <button id="request-food-btn" class="w-full py-2.5 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition">
                         申請索取
                     </button>
                 </div>
@@ -163,6 +266,7 @@
         </div>
         <div>&copy; 2026 中興大學食物共享平台專題小組. All rights reserved.</div>
     </footer>
+    </div>
 
     <script>
         // 1. 頭像選單點擊切換邏輯 (保留你之前的改動)
@@ -277,80 +381,271 @@
             renderFoodCards(mockDatabaseData);
         });
     </script>
-    <div id="main-view" class="min-h-screen">
-        </div>
+    <!-- main-view wraps the page content above -->
     <script type="module">
         // 1. 引入 Firebase 核心與 Auth 模組 (CDN 方式)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signOut, 
+            onAuthStateChanged,
+            createUserWithEmailAndPassword,
+            sendEmailVerification,
+            signInWithEmailAndPassword
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         // 2. 貼上你的 Firebase Config
         const firebaseConfig = {
-        apiKey: "AIzaSyDYIH5q916EjCrvtaSMSFEDPTgRBFehJws",
-        authDomain: "nchu-foodshare.firebaseapp.com",
-        projectId: "nchu-foodshare",
-        storageBucket: "nchu-foodshare.firebasestorage.app",
-        messagingSenderId: "639230737508",
-        appId: "1:639230737508:web:545dd478442a74f07d3371",
-        measurementId: "G-20P8J9VGDZ"
+            apiKey: "AIzaSyDYIH5q916EjCrvtaSMSFEDPTgRBFehJws",
+            authDomain: "nchu-foodshare.firebaseapp.com",
+            projectId: "nchu-foodshare",
+            storageBucket: "nchu-foodshare.firebasestorage.app",
+            messagingSenderId: "639230737508",
+            appId: "1:639230737508:web:545dd478442a74f07d3371",
+            measurementId: "G-20P8J9VGDZ"
         };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // 3. 取得你在步驟二、三設定的 DOM 元素
+        // 3. 取得 DOM 元素
         const loginView = document.getElementById('login-view');
-        const mainView = document.getElementById('main-view');
-        const loginBtn = document.getElementById('login-btn');
+        const loginBtn = document.getElementById('login-btn'); // Google Login
         const logoutBtn = document.getElementById('logout-btn');
         const userNameDisplay = document.getElementById('user-name-display');
+
+        // 右上角狀態切換 DOM
+        const userControls = document.getElementById('user-controls');
+        const headerLoginBtn = document.getElementById('header-login-btn');
+        const closeLoginBtn = document.getElementById('close-login-btn');
+
+        // 預約索取按鈕
+        const requestFoodBtn = document.getElementById('request-food-btn');
+
+        // 信箱註冊 DOM
+        const regEmailInput = document.getElementById('reg-email');
+        const regPasswordInput = document.getElementById('reg-password');
+        const registerBtn = document.getElementById('register-btn');
+
+        // 信箱登入 DOM
+        const loginEmailInput = document.getElementById('login-email');
+        const loginPasswordInput = document.getElementById('login-password');
+        const emailLoginBtn = document.getElementById('email-login-btn');
+
+        // 頁籤切換 DOM
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const formLogin = document.getElementById('form-login');
+        const formRegister = document.getElementById('form-register');
+
+        // 頁籤切換邏輯
+        if (tabLogin && tabRegister && formLogin && formRegister) {
+            tabLogin.addEventListener('click', () => {
+                tabLogin.className = "w-1/2 pb-3 font-semibold border-b-2 border-receiver text-receiver focus:outline-none transition";
+                tabRegister.className = "w-1/2 pb-3 font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none transition";
+                formLogin.classList.remove('hidden');
+                formRegister.classList.add('hidden');
+            });
+
+            tabRegister.addEventListener('click', () => {
+                tabRegister.className = "w-1/2 pb-3 font-semibold border-b-2 border-giver text-giver focus:outline-none transition";
+                tabLogin.className = "w-1/2 pb-3 font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none transition";
+                formRegister.classList.remove('hidden');
+                formLogin.classList.add('hidden');
+            });
+        }
+
+        // 彈窗開啟關閉控制
+        if (headerLoginBtn && loginView) {
+            headerLoginBtn.addEventListener('click', () => {
+                loginView.classList.remove('hidden');
+            });
+        }
+        if (closeLoginBtn && loginView) {
+            closeLoginBtn.addEventListener('click', () => {
+                loginView.classList.add('hidden');
+            });
+        }
+        if (loginView) {
+            loginView.addEventListener('click', (e) => {
+                if (e.target === loginView) {
+                    loginView.classList.add('hidden');
+                }
+            });
+        }
+
+        // 4. 核心邏輯：監聽登入狀態 (決定顯示右上角選單)
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // 如果是信箱密碼登入，且信箱尚未驗證，強制登出並阻擋
+                if (!user.emailVerified) {
+                    await signOut(auth);
+                    alert("您的信箱尚未驗證！請先至信箱點開驗證連結。");
+                    return;
+                }
+
+                // 登入狀態：隱藏登入/註冊按鈕，顯示個人控制項
+                if (headerLoginBtn) headerLoginBtn.classList.add('hidden');
+                if (userControls) userControls.classList.remove('hidden');
+                if (loginView) loginView.classList.add('hidden'); // 登入成功後自動關閉彈窗
+                
+                if (userNameDisplay) {
+                    userNameDisplay.textContent = `嗨，${user.displayName || user.email.split('@')[0] || '同學'}`;
+                }
+            } else {
+                // 未登入狀態：顯示登入/註冊按鈕，隱藏個人控制項
+                if (headerLoginBtn) headerLoginBtn.classList.remove('hidden');
+                if (userControls) userControls.classList.add('hidden');
+            }
+        });
+
+        // 5. 核心邏輯：Google 登入與校園信箱驗證
+        if (loginBtn) {
+            loginBtn.addEventListener('click', async () => {
+                try {
+                    const result = await signInWithPopup(auth, provider);
+                    const email = result.user.email;
+                    if (!email.endsWith('@smail.nchu.edu.tw') && !email.endsWith('@nchu.edu.tw')) {
+                        await signOut(auth);
+                        alert("抱歉，僅限使用中興大學校園信箱登入！");
+                    }
+                } catch (error) {
+                    console.error("登入失敗", error);
+                }
+            });
+        }
+
+        // 6. 核心邏輯：信箱密碼註冊邏輯
+        if (registerBtn && regEmailInput && regPasswordInput) {
+            registerBtn.addEventListener('click', async () => {
+                const email = regEmailInput.value.trim();
+                const password = regPasswordInput.value;
+
+                if (!email || !password) {
+                    alert("請填寫完整的信箱與密碼！");
+                    return;
+                }
+
+                // 1. 第一道防線：前端檢查網域
+                if (!email.endsWith('@smail.nchu.edu.tw') && !email.endsWith('@nchu.edu.tw')) {
+                    alert("註冊失敗：僅限使用中興大學校園信箱。");
+                    return;
+                }
+
+                try {
+                    // 2. 向 Firebase 請求建立帳號
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // 3. 觸發系統發送驗證信給該信箱
+                    await sendEmailVerification(user);
+                    alert("註冊成功！系統已發送驗證信。請至信箱點擊連結開通帳號後，再重新登入。");
+
+                    // 4. 資安防護：註冊完會自動登入，但因尚未驗證，需強制將其登出
+                    await signOut(auth);
+                    
+                    // 清空輸入框並切回登入頁
+                    regEmailInput.value = "";
+                    regPasswordInput.value = "";
+                    if (tabLogin) tabLogin.click();
+
+                } catch (error) {
+                    console.error("註冊異常", error);
+                    if (error.code === 'auth/email-already-in-use') {
+                        alert("此信箱已被註冊過！");
+                    } else if (error.code === 'auth/weak-password') {
+                        alert("密碼安全性不足，至少需要 6 個字元。");
+                    } else if (error.code === 'auth/invalid-email') {
+                        alert("請輸入有效的電子信箱格式！");
+                    } else {
+                        alert(`發生錯誤 (${error.code})，請稍後再試。`);
+                    }
+                }
+            });
+        }
+
+        // 7. 核心邏輯：信箱密碼登入邏輯
+        if (emailLoginBtn && loginEmailInput && loginPasswordInput) {
+            emailLoginBtn.addEventListener('click', async () => {
+                const email = loginEmailInput.value.trim();
+                const password = loginPasswordInput.value;
+
+                if (!email || !password) {
+                    alert("請輸入信箱與密碼！");
+                    return;
+                }
+
+                // 前端網域檢查
+                if (!email.endsWith('@smail.nchu.edu.tw') && !email.endsWith('@nchu.edu.tw')) {
+                    alert("登入失敗：僅限使用中興大學校園信箱。");
+                    return;
+                }
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // 檢查信箱驗證狀態
+                    if (!user.emailVerified) {
+                        await signOut(auth);
+                        alert("您的信箱尚未驗證！請先至信箱點開驗證連結。");
+                    } else {
+                        // 清空輸入
+                        loginEmailInput.value = "";
+                        loginPasswordInput.value = "";
+                    }
+                } catch (error) {
+                    console.error("信箱登入異常", error);
+                    if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                        alert("信箱或密碼錯誤！");
+                    } else {
+                        alert(`登入發生錯誤 (${error.code})，請確認輸入是否有誤或稍後再試。`);
+                    }
+                }
+            });
+        }
+
+        // 8. 核心邏輯：登出
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await signOut(auth);
+            });
+        }
+
+        // 9. 預約索取操作攔截邏輯
+        if (requestFoodBtn) {
+            requestFoodBtn.addEventListener('click', () => {
+                const user = auth.currentUser;
+                if (!user) {
+                    alert("請先登入後再索取食物！");
+                    if (loginView) loginView.classList.remove('hidden');
+                } else {
+                    // 原本已登入的預約索取邏輯
+                    alert("預約索取申請成功！已通知分享者。");
+                }
+            });
+        }
+
+        // 10. 畫面邏輯：買賣家頁籤切換 (安全監聽)
         const tabBuyer = document.getElementById('tab-buyer');
         const tabSeller = document.getElementById('tab-seller');
         const buyerContent = document.getElementById('buyer-content');
         const sellerContent = document.getElementById('seller-content');
 
-        // 4. 核心邏輯：監聽登入狀態 (決定顯示登入頁還是主頁)
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loginView.classList.add('hidden');
-                mainView.classList.remove('hidden');
-                userNameDisplay.textContent = `嗨，${user.displayName || '同學'}`;
-            } else {
-                loginView.classList.remove('hidden');
-                mainView.classList.add('hidden');
-            }
-        });
+        if (tabBuyer && tabSeller && buyerContent && sellerContent) {
+            tabBuyer.addEventListener('click', () => {
+                buyerContent.classList.remove('hidden');
+                sellerContent.classList.add('hidden');
+            });
 
-        // 5. 核心邏輯：登入與校園信箱驗證
-        loginBtn.addEventListener('click', async () => {
-            try {
-                const result = await signInWithPopup(auth, provider);
-                const email = result.user.email;
-                if (!email.endsWith('@smail.nchu.edu.tw') && !email.endsWith('@nchu.edu.tw')) {
-                    await signOut(auth);
-                    alert("抱歉，僅限使用中興大學校園信箱登入！");
-                }
-            } catch (error) {
-                console.error("登入失敗", error);
-            }
-        });
-
-        // 6. 核心邏輯：登出
-        logoutBtn.addEventListener('click', async () => {
-            await signOut(auth);
-        });
-
-        // 7. 畫面邏輯：買賣家頁籤切換 (透過增減 hidden 類別)
-        tabBuyer.addEventListener('click', () => {
-            buyerContent.classList.remove('hidden');
-            sellerContent.classList.add('hidden');
-            // 這裡可以加上你需要的樣式切換，例如 border 顏色
-        });
-
-        tabSeller.addEventListener('click', () => {
-            sellerContent.classList.remove('hidden');
-            buyerContent.classList.add('hidden');
-        });
+            tabSeller.addEventListener('click', () => {
+                sellerContent.classList.remove('hidden');
+                buyerContent.classList.add('hidden');
+            });
+        }
     </script>
 </body>
 </html>
