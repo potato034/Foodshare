@@ -81,25 +81,6 @@
                 </button>
             </div>
 
-            <!-- Divider -->
-            <div class="relative my-6">
-                <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-gray-200"></span></div>
-                <div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-400">或使用以下方式</span></div>
-            </div>
-
-            <!-- Google Login Button -->
-            <button id="login-btn" class="w-full flex items-center justify-center space-x-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition transform hover:-translate-y-0.5 text-sm">
-                <!-- Google SVG Icon -->
-                <svg class="w-5 h-5" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-                    <g transform="matrix(1, 0, 0, 1, 0, 0)">
-                        <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.57h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.48C21.68,11.75 21.56,11.39 21.35,11.1z" fill="#4285F4" />
-                        <path d="M12,20.8c2.45,0 4.5,-0.8 6,-2.22l-3.3,-2.57c-0.92,0.61 -2.1,0.98 -3.7,0.98 -2.35,0 -4.35,-1.59 -5.06,-3.72H2.57v2.66C4.07,18.89 7.78,20.8 12,20.8z" fill="#34A853" />
-                        <path d="M6.94,13.27c-0.18,-0.54 -0.28,-1.12 -0.28,-1.72s0.1,-1.18 0.28,-1.72V7.17H2.57c-0.62,1.24 -0.97,2.64 -0.97,4.11s0.35,2.87 0.97,4.11L6.94,13.27z" fill="#FBBC05" />
-                        <path d="M12,6.72c1.33,0 2.53,0.46 3.47,1.36l2.6,-2.6C16.5,4.09 14.45,3.2 12,3.2c-4.22,0 -7.93,1.91 -9.43,5.03l4.37,3.38c0.71,-2.13 2.71,-3.72 5.06,-3.72z" fill="#EA4335" />
-                    </g>
-                </svg>
-                <span>使用 Google 校園信箱登入</span>
-            </button>
 
             <!-- Back to Map / Info Link for visitors -->
             <p class="text-center text-[10px] text-gray-400 mt-6">
@@ -387,8 +368,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { 
             getAuth, 
-            GoogleAuthProvider, 
-            signInWithPopup, 
             signOut, 
             onAuthStateChanged,
             createUserWithEmailAndPassword,
@@ -408,11 +387,9 @@
         };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
 
         // 3. 取得 DOM 元素
         const loginView = document.getElementById('login-view');
-        const loginBtn = document.getElementById('login-btn'); // Google Login
         const logoutBtn = document.getElementById('logout-btn');
         const userNameDisplay = document.getElementById('user-name-display');
 
@@ -501,21 +478,7 @@
             }
         });
 
-        // 5. 核心邏輯：Google 登入與校園信箱驗證
-        if (loginBtn) {
-            loginBtn.addEventListener('click', async () => {
-                try {
-                    const result = await signInWithPopup(auth, provider);
-                    const email = result.user.email;
-                    if (!email.endsWith('@smail.nchu.edu.tw') && !email.endsWith('@nchu.edu.tw')) {
-                        await signOut(auth);
-                        alert("抱歉，僅限使用中興大學校園信箱登入！");
-                    }
-                } catch (error) {
-                    console.error("登入失敗", error);
-                }
-            });
-        }
+        // 5. 核心邏輯：Google 登入已移除，目前僅支援信箱密碼登入
 
         // 6. 核心邏輯：信箱密碼註冊邏輯
         if (registerBtn && regEmailInput && regPasswordInput) {
