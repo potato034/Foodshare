@@ -18,19 +18,11 @@
         }
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
-    <header class="bg-white shadow-sm sticky top-0 z-50 px-6 py-3 flex items-center">
-        <a href="../index.html" class="text-gray-500 hover:text-giver transition mr-4 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            返回
-        </a>
-        <div>
-            <p class="text-xs text-gray-400">目前登入者</p>
-            <span id="page-title" class="text-xl font-bold text-giver">上傳食物</span>
-        </div>
-    </header>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen pt-24">
+    <script src="./header.js"></script>
 
     <main class="max-w-2xl mx-auto py-8 px-4">
+        <h1 id="page-title" class="text-2xl font-bold text-giver mb-4">上傳食物</h1>
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
             <div class="mb-6 rounded-xl border border-gray-100 bg-orange-50/50 p-4 text-sm text-gray-600">
                 送出後會直接加入目前使用者的分享清單，並同步到首頁與個人檔案。
