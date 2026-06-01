@@ -28,11 +28,15 @@
             box-shadow: 0 0 0 2px rgba(168, 203, 203, 0.65);
             transform: translateY(-2px);
         }
+        .brand-logo {
+            object-fit: contain;
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- ==================== <div id="login-view"> 登入與註冊彈窗 ==================== -->
+    <!-- ==================== 登入與註冊彈窗 ==================== -->
     <div id="login-view" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 max-w-md w-full relative transition-all duration-300 transform scale-95">
             <!-- Close Button -->
@@ -42,7 +46,9 @@
             
             <!-- Logo & Title -->
             <div class="text-center mb-8">
-                <span class="text-5xl inline-block animate-bounce duration-1000 mb-3">🥦</span>
+                <a href="./index.html" aria-label="回到首頁">
+                    <img src="./static/logo.png" alt="校園食物共享平台 Logo" class="brand-logo w-20 h-20 mx-auto animate-bounce duration-1000 mb-3">
+                </a>
                 <h1 class="text-2xl font-extrabold text-gray-900 tracking-wide">興大食物共享平台</h1>
                 <p class="text-xs text-gray-500 mt-1">校園食物互助與覓食地圖</p>
             </div>
@@ -102,10 +108,12 @@
     <div id="main-view" class="min-h-screen flex flex-col">
 
         <!-- ==================== <header> 導覽列 ==================== -->
-        <header class="bg-white shadow-sm sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
+        <header class="bg-white shadow-sm sticky top-0 z-[10000] px-6 py-3 flex items-center justify-between">
             <!-- Logo -->
             <div class="flex items-center space-x-2">
-                <span class="text-2xl font-bold text-receiver">🥦</span>
+                <a href="./index.html" aria-label="回到首頁">
+                    <img src="./static/logo.png" alt="校園食物共享平台 Logo" class="brand-logo w-12 h-12 shrink-0">
+                </a>
             </div>
 
             <!-- 搜尋引擎 -->
@@ -122,7 +130,7 @@
                 <!-- 登入後顯示的控制項群組 -->
                 <div id="user-controls" class="flex items-center space-x-4 hidden">
                     <!-- 訊息 Icon -->
-                    <a href="/static/message.html" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative inline-block" title="私訊">
+                    <a href="./static/message.html" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative inline-block" title="私訊">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                         <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                     </a>
@@ -133,23 +141,24 @@
                     </button>
 
                     <!-- 頭像 Icon -->
-                    <div class="relative">
+                    <div class="relative overflow-visible">
                         <button id="avatar-btn" class="w-9 h-9 bg-receiver text-white rounded-full flex items-center justify-center font-bold focus:outline-none overflow-hidden border-2 border-transparent hover:border-receiver">
-                            <span class="text-sm">9ana</span>
+                            <img id="avatar-btn-image" alt="使用者頭貼" class="hidden h-full w-full object-cover">
+                            <span id="avatar-btn-fallback" class="text-xs">9</span>
                         </button>
                         
-                        <div id="avatar-menu" class="absolute right-0 pt-2 w-48 invisible opacity-0 transition-all duration-200 z-50">
+                        <div id="avatar-menu" class="absolute right-0 top-full mt-2 w-48 invisible opacity-0 transition-all duration-200 z-[9999] max-h-[calc(100vh-5rem)] overflow-y-auto">
                             <div class="bg-white rounded-md shadow-lg py-1 border border-gray-100">
                                 <div id="user-name-display" class="px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-100 bg-gray-50">
                                     嗨，同學
                                 </div>
-                                <a href="/static/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👤個人檔案</a>
-                                <a href="/static/share.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-100">🎁分享清單</a>
-                                <a href="/static/food.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-teal-100">🍴覓食清單</a>
+                                <a id="avatar-profile-link" href="./static/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👤個人檔案</a>
+                                <a id="avatar-share-link" href="./static/share.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-100">🎁分享清單</a>
+                                <a id="avatar-food-link" href="./static/food.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-teal-100">🍴覓食清單</a>
                                 <hr class="my-1">
-                                <a href="/static/setting.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">⚙️設定</a>
-                                <a href="/static/teach.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">📚使用教學</a>
-                                <a href="/static/aboutus.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">關於我們</a>
+                                <a href="./static/setting.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">⚙️設定</a>
+                                <a href="./static/teach.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">📚使用教學</a>
+                                <a href="./static/aboutus.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">🙌關於我們</a>
                                 <hr class="my-1">
                                 <button id="logout-btn" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none">
                                     🚪 登出
@@ -159,7 +168,7 @@
                     </div>
 
                     <!-- 分享按鈕 (使用指定分享者色系 #FBB28B) -->
-                    <a href="/static/upload.html" class="bg-giver hover:bg-orange-400 text-white font-medium px-4 py-2 rounded-full text-sm transition shadow-sm inline-block text-center shrink-0">
+                    <a href="./static/upload.html" class="bg-giver hover:bg-orange-400 text-white font-medium px-4 py-2 rounded-full text-sm transition shadow-sm inline-block text-center shrink-0">
                         ＋ 馬上分享
                     </a>
                 </div>
@@ -235,7 +244,7 @@
 
         <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500 space-y-2">
             <div class="flex justify-center space-x-6">
-                <a href="/static/aboutus.html" class="hover:text-receiver transition">關於我們</a>
+                <a href="./static/aboutus.html" class="hover:text-receiver transition">關於我們</a>
             </div>
             <div>&copy; 2026 中興大學食物共享平台專題小組. All rights reserved.</div>
         </footer>
@@ -404,6 +413,16 @@
             renderFoodCards(mockDatabaseData);
             focusFood(mockDatabaseData[0]);
         });
+
+        window.addEventListener('storage', (event) => {
+            if (!event.key || !event.key.startsWith('fs_user_')) return;
+            const snapshot = getCurrentProfileSnapshot();
+            if (snapshot && auth.currentUser && snapshot.uid === auth.currentUser.uid) {
+                const profile = loadUserProfile(snapshot.uid, auth.currentUser);
+                renderAvatarButton(profile, auth.currentUser);
+                updateAvatarMenu(profile, auth.currentUser);
+            }
+        });
     </script>
 
     <!-- Firebase Auth & Controls -->
@@ -430,6 +449,126 @@
         };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+
+        const FALLBACK_PROFILE = {
+            displayName: '',
+            department: '',
+            avatarMode: 'email',
+            photoURL: '',
+            shareHistory: [],
+            requestHistory: []
+        };
+
+        function getProfileKey(uid) {
+            return `fs_user_${uid}`;
+        }
+
+        function getInitials(value) {
+            const text = (value || '').trim();
+            if (!text) return '9';
+            const parts = text.split(/\s+/).filter(Boolean);
+            if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function buildAvatarDataUrl(label) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 120;
+            canvas.height = 120;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 120, 120);
+            gradient.addColorStop(0, '#FBB28B');
+            gradient.addColorStop(1, '#A8CBCB');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 120, 120);
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            ctx.beginPath();
+            ctx.arc(60, 60, 52, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 42px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(getInitials(label), 60, 63);
+            return canvas.toDataURL('image/png');
+        }
+
+        function normalizeProfile(rawProfile, firebaseUser) {
+            const displayName = rawProfile?.displayName || firebaseUser?.displayName || (firebaseUser?.email ? firebaseUser.email.split('@')[0] : '');
+            const photoURL = rawProfile?.photoURL || firebaseUser?.photoURL || '';
+            return {
+                ...FALLBACK_PROFILE,
+                ...rawProfile,
+                displayName,
+                photoURL,
+                avatarMode: rawProfile?.avatarMode || (photoURL ? 'email' : 'generated'),
+                shareHistory: Array.isArray(rawProfile?.shareHistory) ? rawProfile.shareHistory : [],
+                requestHistory: Array.isArray(rawProfile?.requestHistory) ? rawProfile.requestHistory : []
+            };
+        }
+
+        function loadUserProfile(uid, firebaseUser) {
+            try {
+                const raw = localStorage.getItem(getProfileKey(uid));
+                if (!raw) {
+                    const profile = normalizeProfile({}, firebaseUser);
+                    localStorage.setItem(getProfileKey(uid), JSON.stringify(profile));
+                    return profile;
+                }
+                return normalizeProfile(JSON.parse(raw), firebaseUser);
+            } catch (error) {
+                return normalizeProfile({}, firebaseUser);
+            }
+        }
+
+        function getCurrentProfileSnapshot() {
+            try {
+                return JSON.parse(localStorage.getItem('fs_currentUser') || 'null');
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function renderAvatarButton(profile, firebaseUser) {
+            const imageEl = document.getElementById('avatar-btn-image');
+            const fallbackEl = document.getElementById('avatar-btn-fallback');
+            if (!imageEl || !fallbackEl) return;
+
+            let avatarSource = '';
+            if (profile.avatarMode === 'upload' && profile.photoURL) {
+                avatarSource = profile.photoURL;
+            } else if (profile.avatarMode === 'email' && firebaseUser?.photoURL) {
+                avatarSource = firebaseUser.photoURL;
+            } else {
+                avatarSource = buildAvatarDataUrl(profile.displayName || firebaseUser?.email || '9');
+            }
+
+            imageEl.src = avatarSource;
+            imageEl.classList.remove('hidden');
+            fallbackEl.classList.add('hidden');
+        }
+
+        function updateAvatarMenu(profile, firebaseUser) {
+            const profileLink = document.getElementById('avatar-profile-link');
+            const shareLink = document.getElementById('avatar-share-link');
+            const foodLink = document.getElementById('avatar-food-link');
+
+            if (profileLink) profileLink.textContent = `👤 ${profile.displayName || (firebaseUser?.email ? firebaseUser.email.split('@')[0] : '個人檔案')}`;
+            if (shareLink) shareLink.textContent = `🎁 分享清單 (${profile.shareHistory.length})`;
+            if (foodLink) foodLink.textContent = `🍴 覓食清單 (${profile.requestHistory.length})`;
+        }
+
+        function syncCurrentUserSnapshot(user) {
+            try {
+                localStorage.setItem('fs_currentUser', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName || user.email?.split('@')[0] || ''
+                }));
+            } catch (error) {
+                console.warn('localStorage set failed', error);
+            }
+        }
 
         // 取得 DOM 元素
         const loginView = document.getElementById('login-view');
@@ -510,14 +649,26 @@
                 if (headerLoginBtn) headerLoginBtn.classList.add('hidden');
                 if (userControls) userControls.classList.remove('hidden');
                 if (loginView) loginView.classList.add('hidden'); // 登入成功後自動關閉彈窗
+
+                const profile = loadUserProfile(user.uid, user);
+                syncCurrentUserSnapshot(user);
+                renderAvatarButton(profile, user);
+                updateAvatarMenu(profile, user);
                 
                 if (userNameDisplay) {
-                    userNameDisplay.textContent = `嗨，${user.displayName || user.email.split('@')[0] || '同學'}`;
+                    userNameDisplay.textContent = `嗨，${profile.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
                 }
             } else {
                 // 未登入狀態：顯示登入/註冊按鈕，隱藏個人控制項
                 if (headerLoginBtn) headerLoginBtn.classList.remove('hidden');
                 if (userControls) userControls.classList.add('hidden');
+                const fallbackEl = document.getElementById('avatar-btn-fallback');
+                const imageEl = document.getElementById('avatar-btn-image');
+                if (imageEl) imageEl.classList.add('hidden');
+                if (fallbackEl) {
+                    fallbackEl.classList.remove('hidden');
+                    fallbackEl.textContent = '9';
+                }
             }
         });
 
@@ -644,6 +795,26 @@
                 buyerContent.classList.add('hidden');
             });
         }
+    </script>
+
+    <script>
+        // 當登入彈窗開啟時，點擊logo 僅關閉彈窗，不導致整頁重新載入
+        (function() {
+            const brandLinks = document.querySelectorAll('a[aria-label="回到首頁"]');
+            const loginViewEl = document.getElementById('login-view');
+            if (!brandLinks || brandLinks.length === 0) return;
+
+            brandLinks.forEach(a => {
+                a.addEventListener('click', (e) => {
+                    const loginView = document.getElementById('login-view');
+                    if (loginView && !loginView.classList.contains('hidden')) {
+                        // 如果彈窗正在顯示，阻止預設導航並關閉彈窗
+                        e.preventDefault();
+                        loginView.classList.add('hidden');
+                    }
+                });
+            });
+        })();
     </script>
 </body>
 </html>
