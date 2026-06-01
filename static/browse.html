@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瀏覽所有食物 — FoodShare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { giver: '#FBB28B', receiver: '#A8CBCB' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen pt-24">
+    <script src="./header.js"></script>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- 頁面標題 + 搜尋 bar -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-extrabold text-gray-900 mb-4 flex items-center gap-2">
+                <span class="w-3 h-7 bg-receiver rounded-full inline-block"></span>
+                瀏覽所有食物
+            </h1>
+
+            <!-- 搜尋 bar（與 header 連動） -->
+            <div class="relative max-w-xl mb-4">
+                <input type="text" id="search-input" placeholder="搜尋食物名稱、地點…"
+                       class="w-full h-11 pl-11 pr-4 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent text-sm shadow-sm">
+                <div class="absolute left-3.5 top-3 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 篩選列 -->
+            <div class="flex flex-wrap gap-3 items-center">
+                <!-- 類別 pills -->
+                <div class="flex gap-2 flex-wrap" id="category-pills">
+                    <button data-cat="" class="cat-btn px-3 py-1.5 rounded-full bg-receiver text-white text-sm font-medium transition">全部</button>
+                    <button data-cat="便當" class="cat-btn px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">便當</button>
+                    <button data-cat="飲料" class="cat-btn px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">飲料</button>
+                    <button data-cat="餐盒" class="cat-btn px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">餐盒</button>
+                    <button data-cat="甜點" class="cat-btn px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">甜點</button>
+                    <button data-cat="麵包" class="cat-btn px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">麵包</button>
+                    <button data-cat="炸物" class="cat-btn px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">炸物</button>
+                    <button data-cat="其他" class="cat-btn px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">其他</button>
+                </div>
+
+                <!-- 地點下拉 -->
+                <select id="location-filter" class="px-3 py-1.5 rounded-full border border-gray-200 bg-white text-sm text-gray-600 focus:ring-2 focus:ring-receiver outline-none">
+                    <option value="">📍 所有地點</option>
+                </select>
+
+                <!-- 排序 -->
+                <select id="sort-filter" class="px-3 py-1.5 rounded-full border border-gray-200 bg-white text-sm text-gray-600 focus:ring-2 focus:ring-receiver outline-none">
+                    <option value="newest">最新發布</option>
+                    <option value="expiring">快過期優先</option>
+                    <option value="qty">份數多優先</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 結果統計 -->
+        <p id="result-count" class="text-sm text-gray-400 mb-4">載入中…</p>
+
+        <!-- 卡片格 -->
+        <div id="food-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"></div>
+    </main>
+
+    <script>
+        const params   = new URLSearchParams(window.location.search);
+        const initQ    = params.get('q') || '';
+        const initCat  = params.get('category') || '';
+        const initLoc  = params.get('location') || '';
+
+        const searchInput   = document.getElementById('search-input');
+        const locationSel   = document.getElementById('location-filter');
+        const sortSel       = document.getElementById('sort-filter');
+        const grid          = document.getElementById('food-grid');
+        const countEl       = document.getElementById('result-count');
+
+        searchInput.value = initQ;
+
+        let allFoods = [];
+        let activeCategory = initCat;
+
+        // 載入食物與地點
+        async function init() {
+            const [foodsRes, locsRes] = await Promise.all([
+                fetch('/api/foods'),
+                fetch('/api/locations'),
+            ]);
+            allFoods = await foodsRes.json();
+            const locs = await locsRes.json();
+
+            // 填入地點下拉
+            locs.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.name;
+                opt.textContent = l.name;
+                locationSel.appendChild(opt);
+            });
+            if (initLoc) locationSel.value = initLoc;
+
+            // 初始類別 pill
+            if (initCat) setCatPill(initCat);
+
+            applyFilters();
+        }
+
+        function setCatPill(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                const isActive = btn.dataset.cat === cat;
+                btn.className = isActive
+                    ? 'cat-btn px-3 py-1.5 rounded-full bg-receiver text-white text-sm font-medium transition'
+                    : 'cat-btn px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition';
+            });
+        }
+
+        function applyFilters() {
+            const q    = searchInput.value.trim().toLowerCase();
+            const cat  = activeCategory;
+            const loc  = locationSel.value;
+            const sort = sortSel.value;
+
+            let filtered = allFoods.filter(f => {
+                const matchQ   = !q   || f.title.toLowerCase().includes(q) || f.pickup_location.toLowerCase().includes(q) || f.description.toLowerCase().includes(q);
+                const matchCat = !cat || f.category === cat;
+                const matchLoc = !loc || f.main_location === loc;
+                return matchQ && matchCat && matchLoc;
+            });
+
+            // 排序
+            if (sort === 'expiring') {
+                filtered.sort((a, b) => new Date(a.expires_at_iso) - new Date(b.expires_at_iso));
+            } else if (sort === 'qty') {
+                filtered.sort((a, b) => (b.quantity_left ?? b.quantity ?? 0) - (a.quantity_left ?? a.quantity ?? 0));
+            }
+            // newest = API 預設順序（已按 created_at desc）
+
+            renderCards(filtered);
+
+            // 更新網址（不重新載入）
+            const url = new URL(window.location);
+            q   ? url.searchParams.set('q', q)        : url.searchParams.delete('q');
+            cat ? url.searchParams.set('category', cat) : url.searchParams.delete('category');
+            loc ? url.searchParams.set('location', loc) : url.searchParams.delete('location');
+            window.history.replaceState({}, '', url);
+        }
+
+        function renderCards(foods) {
+            countEl.textContent = `共 ${foods.length} 筆結果`;
+            if (foods.length === 0) {
+                grid.innerHTML = '<p class="text-center text-gray-400 col-span-full py-16">找不到符合條件的食物</p>';
+                return;
+            }
+
+            grid.innerHTML = foods.map(item => {
+                const heroHTML = item.image_path
+                    ? `<img src="${item.image_path}" class="w-full h-44 object-cover">`
+                    : `<div class="w-full h-44 ${item.bg_color} flex items-center justify-center text-5xl">${item.emoji}</div>`;
+
+                const left     = item.quantity_left ?? item.quantity;
+                const expiresAt = item.expires_at_iso;
+
+                return `
+                <a href="./detail.html?id=${item.id}"
+                   class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:border-receiver transition duration-200 flex flex-col">
+                    ${heroHTML}
+                    <div class="p-4 flex-grow">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-semibold ${item.text_color} ${item.badge_color} px-2 py-0.5 rounded">${item.category}</span>
+                            <span class="text-xs text-gray-400">${item.time_ago}</span>
+                        </div>
+                        <h3 class="font-bold text-gray-900 text-base mb-1 truncate">${item.title}</h3>
+                        <p class="text-xs text-gray-500 line-clamp-2 mb-2">${item.description}</p>
+                        <p class="text-xs text-gray-500 truncate">📍 ${item.pickup_location}</p>
+                        ${left != null ? `<p class="text-xs text-receiver font-semibold mt-1">📦 剩餘 ${left} 份</p>` : ''}
+                    </div>
+                    <div class="px-4 pb-3 text-xs font-medium text-orange-500 countdown-label" data-expires="${expiresAt}">⏳ 計算中…</div>
+                </a>`;
+            }).join('');
+
+            updateCountdowns();
+        }
+
+        function updateCountdowns() {
+            const now = Date.now();
+            document.querySelectorAll('.countdown-label').forEach(el => {
+                const expires = new Date(el.dataset.expires).getTime();
+                const diff = expires - now;
+                if (isNaN(diff) || diff <= 0) { el.textContent = '⛔ 已過期'; el.classList.replace('text-orange-500', 'text-gray-400'); return; }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                el.textContent = `⏳ 還剩 ${h > 0 ? h + ':' : ''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            });
+        }
+        setInterval(updateCountdowns, 1000);
+
+        // 事件綁定
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setCatPill(btn.dataset.cat);
+                applyFilters();
+            });
+        });
+        searchInput.addEventListener('input', applyFilters);
+        locationSel.addEventListener('change', applyFilters);
+        sortSel.addEventListener('change', applyFilters);
+
+        init();
+    </script>
+</body>
+</html>
