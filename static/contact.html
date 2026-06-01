@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>聯絡我們</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						giver: '#FBB28B',
+						receiver: '#A8CBCB'
+					}
+				}
+			}
+		}
+	</script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col pt-24">
+    <script src="./header.js"></script>
+
+	<main class="flex-grow max-w-4xl mx-auto w-full px-4 py-16">
+		<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+			<h1 class="text-3xl font-extrabold text-gray-900 mb-4 text-center">聯絡我們</h1>
+			<p class="text-center text-gray-500 mb-8">這一頁目前是空白頁，之後可以放聯絡方式、表單或社群資訊。</p>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div class="rounded-2xl border border-gray-100 bg-orange-50 p-5">
+					<p class="text-xs font-semibold text-gray-500 mb-1">Email</p>
+					<p class="font-bold text-gray-900">support@example.com</p>
+				</div>
+				<div class="rounded-2xl border border-gray-100 bg-teal-50 p-5">
+					<p class="text-xs font-semibold text-gray-500 mb-1">回饋表單</p>
+					<p class="font-bold text-gray-900">可再補上 Google 表單</p>
+				</div>
+				<div class="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+					<p class="text-xs font-semibold text-gray-500 mb-1">備註</p>
+					<p class="font-bold text-gray-900">目前先保留版面</p>
+				</div>
+			</div>
+		</div>
+	</main>
+</body>
+</html>

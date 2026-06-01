@@ -1,11 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>訊息</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        giver: '#FBB28B',
+                        receiver: '#A8CBCB'
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <h1>訊息</h1>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col pt-24">
+    <script src="./header.js"></script>
+
+    <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-16">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+            <h1 class="text-3xl font-extrabold text-gray-900 mb-3">訊息</h1>
+            <p class="text-gray-500">訊息頁面尚未完成。</p>
+        </div>
+    </main>
 </body>
 </html>
