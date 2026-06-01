@@ -9,22 +9,30 @@ from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
+# 獲取當前檔案所在的目錄路徑，確保後續路徑設定正確
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 app = FastAPI()
 
 @app.get("/")
 def index():
-    return FileResponse("index.html")
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/index.html")
+def index_html():
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # 掛載靜態資料夾，確保前端能讀取圖片
-app.mount("/images", StaticFiles(directory="uploaded_images"), name="images")
-UPLOAD_DIR = "uploaded_images"
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploaded_images")
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
+app.mount("/images", StaticFiles(directory=UPLOAD_DIR), name="images")
 
 # ==== 1. SQLite 資料庫設定 ====
-DATABASE_URL = "sqlite:///./food.db"
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'food.db')}"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
