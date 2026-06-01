@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>購物車 — FoodShare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { receiver: '#0d9488', giver: '#f97316' } } }
+        };
+    </script>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen pt-20">
+    <script src="./header.js"></script>
+
+    <main class="max-w-3xl mx-auto px-4 py-8">
+
+        <!-- 標題列 -->
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-extrabold text-gray-900">🛒 購物車</h1>
+            <button id="clear-all-btn" class="text-xs text-red-400 hover:text-red-600 transition hidden">清空購物車</button>
+        </div>
+
+        <!-- 狀態提示 -->
+        <div id="status-bar" class="hidden mb-4 px-4 py-2 rounded-xl text-sm font-medium"></div>
+
+        <!-- 空購物車 -->
+        <div id="empty-state" class="hidden text-center py-20">
+            <p class="text-5xl mb-4">🛒</p>
+            <p class="text-gray-500 text-lg font-semibold">購物車是空的</p>
+            <p class="text-gray-400 text-sm mt-1">去首頁找找有沒有想要的食物吧！</p>
+            <a href="../index.html" class="mt-6 inline-block px-6 py-2.5 bg-receiver hover:bg-teal-600 text-white font-bold rounded-full transition text-sm">瀏覽食物</a>
+        </div>
+
+        <!-- 購物車列表 -->
+        <div id="cart-list" class="space-y-4"></div>
+
+        <!-- 底部結帳列 -->
+        <div id="checkout-bar"
+             class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg px-6 py-4 flex items-center justify-between z-40">
+            <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700 font-medium">
+                    <input type="checkbox" id="select-all" class="w-4 h-4 accent-receiver rounded">
+                    全選
+                </label>
+                <span id="selected-count" class="text-sm text-gray-500">已選 0 件</span>
+            </div>
+            <button id="checkout-btn"
+                class="px-8 py-2.5 bg-receiver hover:bg-teal-600 text-white font-bold rounded-full transition text-sm shadow-sm disabled:opacity-40 disabled:pointer-events-none">
+                確認預約
+            </button>
+        </div>
+        <div class="h-20"></div><!-- 底部空間 -->
+    </main>
+
+    <script type="module">
+    import { getCurrentUserSnapshot, loadUserProfile } from './user-store.js';
+
+    const snapshot = getCurrentUserSnapshot();
+    const uid = snapshot?.uid ?? null;
+
+    let cart = [];
+    let selectedIds = new Set();
+
+    // ── 讀取購物車 ───────────────────────────────────────────
+    function loadCart() {
+        cart = JSON.parse(localStorage.getItem('fs_cart') || '[]');
+    }
+
+    function saveCart() {
+        localStorage.setItem('fs_cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('fs-cart-updated'));
+    }
+
+    // ── 渲染 ─────────────────────────────────────────────────
+    async function render() {
+        loadCart();
+        const list      = document.getElementById('cart-list');
+        const empty     = document.getElementById('empty-state');
+        const bar       = document.getElementById('checkout-bar');
+        const clearBtn  = document.getElementById('clear-all-btn');
+
+        if (cart.length === 0) {
+            list.innerHTML  = '';
+            empty.classList.remove('hidden');
+            bar.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+            return;
+        }
+
+        empty.classList.add('hidden');
+        bar.classList.remove('hidden');
+        clearBtn.classList.remove('hidden');
+
+        // 從 API 補充最新資料（確認食物還在、剩餘份數）
+        const freshMap = {};
+        await Promise.all(cart.map(async item => {
+            try {
+                const res  = await fetch(`/api/foods/${item.food_id}`);
+                if (res.ok) freshMap[item.food_id] = await res.json();
+            } catch {}
+        }));
+
+        // 依分享者分組（像蝦皮依店家分組）
+        const groups = {};
+        for (const item of cart) {
+            const fresh   = freshMap[item.food_id];
+            const sharerKey   = fresh?.sharer_uid  || 'unknown';
+            const sharerName  = fresh?.sharer_name || '未知分享者';
+            if (!groups[sharerKey]) groups[sharerKey] = { sharerName, sharerUid: sharerKey, items: [] };
+            groups[sharerKey].items.push({ ...item, fresh });
+        }
+
+        list.innerHTML = Object.values(groups).map(group => `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <!-- 分享者標頭 -->
+                <div class="flex items-center justify-between px-5 py-3 border-b border-gray-50 bg-gray-50">
+                    <div class="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                        <span class="w-6 h-6 rounded-full bg-giver text-white flex items-center justify-center text-xs">${(group.sharerName||'?').slice(0,1)}</span>
+                        ${group.sharerName}
+                    </div>
+                    <a href="./message.html?with=${group.sharerUid}" class="text-xs text-receiver hover:underline flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        私訊分享者
+                    </a>
+                </div>
+
+                <!-- 商品列 -->
+                ${group.items.map(item => renderItem(item)).join('')}
+            </div>
+        `).join('');
+
+        bindItemEvents();
+        updateSelectAll();
+        updateCheckoutBar();
+        startCountdowns();
+    }
+
+    function renderItem(item) {
+        const fresh    = item.fresh;
+        const expired  = fresh?.status !== 'available';
+        const maxQty   = fresh?.quantity_left ?? item.qty;
+        const heroHTML = fresh?.image_path
+            ? `<img src="${fresh.image_path}" class="w-20 h-20 object-cover rounded-xl shrink-0">`
+            : `<div class="w-20 h-20 rounded-xl bg-orange-50 flex items-center justify-center text-3xl shrink-0">${item.emoji || '🍴'}</div>`;
+
+        return `
+        <div class="cart-item px-5 py-4 ${expired ? 'opacity-50' : ''}" data-id="${item.food_id}">
+            <div class="flex items-start gap-4">
+                <!-- 勾選框 -->
+                <input type="checkbox" class="item-checkbox mt-1 w-4 h-4 accent-receiver rounded shrink-0"
+                       data-id="${item.food_id}" ${selectedIds.has(String(item.food_id)) ? 'checked' : ''}
+                       ${expired ? 'disabled' : ''}>
+
+                <!-- 圖片 -->
+                <a href="./detail.html?id=${item.food_id}">${heroHTML}</a>
+
+                <!-- 資訊 -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2">
+                        <a href="./detail.html?id=${item.food_id}" class="font-bold text-gray-900 text-sm hover:text-receiver transition truncate">${item.title}</a>
+                        <button class="del-btn shrink-0 text-gray-300 hover:text-red-400 transition text-lg leading-none" data-id="${item.food_id}" title="刪除">×</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-0.5">📍 ${item.location || '—'}</p>
+
+                    ${expired
+                        ? `<p class="text-xs text-red-400 font-semibold mt-1">⛔ 此食物已${fresh?.status === 'expired' ? '過期' : '被領完'}，無法預約</p>`
+                        : `<p class="countdown-tag text-xs text-orange-500 mt-0.5 font-medium" data-expires="${item.expires_at}">⏳ 計算中…</p>`
+                    }
+
+                    <!-- 可編輯欄位 -->
+                    ${expired ? '' : `
+                    <div class="mt-3 grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">姓名</label>
+                            <input class="field-name w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-receiver outline-none"
+                                   value="${item.name || ''}" data-id="${item.food_id}" placeholder="真實姓名">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">學號</label>
+                            <input class="field-sid w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-receiver outline-none"
+                                   value="${item.sid || ''}" data-id="${item.food_id}" placeholder="S113xxxxxx">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">預計領取時間</label>
+                            <input class="field-time w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-receiver outline-none"
+                                   value="${item.time || ''}" data-id="${item.food_id}" placeholder="例：今天 13:30 前">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">份數（最多 ${maxQty}）</label>
+                            <input type="number" class="field-qty w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-receiver outline-none text-center"
+                                   value="${item.qty || 1}" min="1" max="${maxQty}" data-id="${item.food_id}">
+                        </div>
+                    </div>`}
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function bindItemEvents() {
+        // 刪除
+        document.querySelectorAll('.del-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = String(btn.dataset.id);
+                cart = cart.filter(c => String(c.food_id) !== id);
+                selectedIds.delete(id);
+                saveCart();
+                render();
+            });
+        });
+
+        // 勾選
+        document.querySelectorAll('.item-checkbox').forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (cb.checked) selectedIds.add(String(cb.dataset.id));
+                else             selectedIds.delete(String(cb.dataset.id));
+                updateSelectAll();
+                updateCheckoutBar();
+            });
+        });
+
+        // 欄位編輯：即時同步到 cart
+        const syncField = (selector, key) => {
+            document.querySelectorAll(selector).forEach(el => {
+                el.addEventListener('input', () => {
+                    const id = String(el.dataset.id);
+                    const item = cart.find(c => String(c.food_id) === id);
+                    if (item) { item[key] = el.value; saveCart(); }
+                });
+            });
+        };
+        syncField('.field-name', 'name');
+        syncField('.field-sid',  'sid');
+        syncField('.field-time', 'time');
+        syncField('.field-qty',  'qty');
+    }
+
+    // ── 全選 ─────────────────────────────────────────────────
+    document.getElementById('select-all').addEventListener('change', function() {
+        const enabled = document.querySelectorAll('.item-checkbox:not(:disabled)');
+        enabled.forEach(cb => {
+            cb.checked = this.checked;
+            if (this.checked) selectedIds.add(String(cb.dataset.id));
+            else               selectedIds.delete(String(cb.dataset.id));
+        });
+        updateCheckoutBar();
+    });
+
+    function updateSelectAll() {
+        const all     = document.querySelectorAll('.item-checkbox:not(:disabled)');
+        const checked = document.querySelectorAll('.item-checkbox:not(:disabled):checked');
+        const sa = document.getElementById('select-all');
+        sa.checked       = all.length > 0 && checked.length === all.length;
+        sa.indeterminate = checked.length > 0 && checked.length < all.length;
+    }
+
+    function updateCheckoutBar() {
+        const n = selectedIds.size;
+        document.getElementById('selected-count').textContent = `已選 ${n} 件`;
+        document.getElementById('checkout-btn').disabled = n === 0;
+    }
+
+    // ── 確認預約 ────────────────────────────────────────────
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+        if (!uid) { alert('請先登入才能預約'); return; }
+
+        const toReserve = cart.filter(c => selectedIds.has(String(c.food_id)));
+        if (toReserve.length === 0) return;
+
+        // 驗證欄位
+        for (const item of toReserve) {
+            if (!item.name?.trim() || !item.sid?.trim() || !item.time?.trim()) {
+                alert(`「${item.title}」的姓名、學號、預計領取時間都必須填寫`);
+                return;
+            }
+        }
+
+        const btn = document.getElementById('checkout-btn');
+        btn.disabled   = true;
+        btn.textContent = '預約中…';
+
+        const results = await Promise.all(toReserve.map(async item => {
+            const fd = new FormData();
+            fd.append('requester_uid',         uid);
+            fd.append('quantity_reserved',     item.qty || 1);
+            fd.append('requester_name',        item.name);
+            fd.append('student_id',            item.sid);
+            fd.append('estimated_pickup_time', item.time);
+            try {
+                const res  = await fetch(`/api/foods/${item.food_id}/reserve`, { method: 'POST', body: fd });
+                const json = await res.json();
+                return { item, ok: res.ok, msg: json.detail || '' };
+            } catch {
+                return { item, ok: false, msg: '網路錯誤' };
+            }
+        }));
+
+        const success = results.filter(r => r.ok);
+        const failed  = results.filter(r => !r.ok);
+
+        // 成功的從購物車移除
+        const successIds = new Set(success.map(r => String(r.item.food_id)));
+        cart = cart.filter(c => !successIds.has(String(c.food_id)));
+        successIds.forEach(id => selectedIds.delete(id));
+        saveCart();
+
+        btn.disabled   = false;
+        btn.textContent = '確認預約';
+
+        if (failed.length === 0) {
+            showStatus(`🎉 ${success.length} 件食物預約成功！`, 'ok');
+        } else {
+            const failMsg = failed.map(r => `「${r.item.title}」：${r.msg}`).join('\n');
+            alert(`部分預約失敗：\n${failMsg}`);
+        }
+
+        render();
+    });
+
+    // ── 清空 ─────────────────────────────────────────────────
+    document.getElementById('clear-all-btn').addEventListener('click', () => {
+        if (!confirm('確定清空購物車嗎？')) return;
+        cart = [];
+        selectedIds.clear();
+        saveCart();
+        render();
+    });
+
+    // ── 倒數計時 ─────────────────────────────────────────────
+    function startCountdowns() {
+        function tick() {
+            document.querySelectorAll('.countdown-tag').forEach(el => {
+                const exp  = new Date(el.dataset.expires).getTime();
+                const diff = exp - Date.now();
+                if (diff <= 0) {
+                    el.textContent = '⛔ 已過期';
+                    el.classList.replace('text-orange-500', 'text-red-400');
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                const hStr = h > 0 ? `${h}:` : '';
+                el.textContent = `⏳ 還剩 ${hStr}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            });
+        }
+        tick();
+        clearInterval(window._cartCountdown);
+        window._cartCountdown = setInterval(tick, 1000);
+    }
+
+    // ── 狀態提示 ─────────────────────────────────────────────
+    function showStatus(msg, type = 'ok') {
+        const bar = document.getElementById('status-bar');
+        bar.className = 'mb-4 px-4 py-2 rounded-xl text-sm font-medium ' +
+            (type === 'ok' ? 'bg-teal-50 text-teal-700 border border-teal-100' : 'bg-red-50 text-red-600 border border-red-100');
+        bar.textContent = msg;
+        bar.classList.remove('hidden');
+        clearTimeout(bar._t);
+        bar._t = setTimeout(() => bar.classList.add('hidden'), 5000);
+    }
+
+    // ── 啟動 ─────────────────────────────────────────────────
+    if (!uid) {
+        document.getElementById('cart-list').innerHTML = '';
+        document.getElementById('empty-state').classList.remove('hidden');
+        document.getElementById('empty-state').querySelector('p.text-gray-500').textContent = '請先登入才能使用購物車';
+    } else {
+        // 同步使用者到 DB
+        const profile = loadUserProfile(uid, snapshot);
+        const fd = new FormData();
+        fd.append('firebase_uid', uid);
+        fd.append('email', snapshot.email || '');
+        fd.append('display_name', profile.displayName || '');
+        fetch('/api/users/sync', { method: 'POST', body: fd }).catch(() => {});
+
+        render();
+    }
+    </script>
+</body>
+</html>
