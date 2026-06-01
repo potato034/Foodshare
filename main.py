@@ -5,10 +5,10 @@ from fastapi.staticfiles import StaticFiles
 import os
 import uuid
 # 引入 SQLAlchemy 相關套件
-from sqlalchemy import create_engine, Column, Integer, String, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-
+from sqlalchemy.orm import Session
+from database import engine, get_db
+from models import FoodPost
+FoodPost.metadata.create_all(bind=engine)
 # 獲取當前檔案所在的目錄路徑，確保後續路徑設定正確
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -31,31 +31,6 @@ if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 app.mount("/images", StaticFiles(directory=UPLOAD_DIR), name="images")
 
-# ==== 1. SQLite 資料庫設定 ====
-DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'food.db')}"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-# ==== 2. 定義資料表模型 (Model) ====
-class FoodPost(Base):
-    __tablename__ = "food_posts"
-    
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    title = Column(String(100), nullable=False)
-    description = Column(Text, nullable=True)
-    image_path = Column(String(255), nullable=False) # 儲存圖片網址路徑
-
-# 啟動時自動建立資料庫檔案與資料表 (如果不存在的話)
-Base.metadata.create_all(bind=engine)
-
-# 取得資料庫連線的穩定會話 (Dependency)
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # ==== 3. 圖片上傳與資料寫入 API ====
 @app.post("/api/upload-food")
