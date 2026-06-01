@@ -1,4 +1,5 @@
 # Python 快取與編譯檔
 __pycache__/
+node_modules/
 *.py[cod]
 *$py.class
