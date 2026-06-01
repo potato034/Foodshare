@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的覓食清單</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        giver: '#FBB28B',
+                        receiver: '#A8CBCB'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+    <header class="bg-white shadow-sm sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center">
+            <a href="../index.html" class="text-gray-500 hover:text-receiver transition mr-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            </a>
+            <div>
+                <p class="text-xs text-gray-400">目前登入者</p>
+                <h1 id="page-title" class="text-xl font-bold text-receiver">我的覓食清單</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto w-full p-6 space-y-8 flex-grow">
+        <section class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                    <p class="text-sm text-gray-500">你的覓食資料會綁定目前登入帳號</p>
+                    <p id="profile-key" class="font-semibold text-gray-900">已同步到個人帳號</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="rounded-xl bg-teal-50 px-4 py-3 border border-teal-100">
+                        <p class="text-gray-500 text-xs">待處理</p>
+                        <p id="request-count" class="text-2xl font-extrabold text-receiver">0</p>
+                    </div>
+                    <div class="rounded-xl bg-gray-50 px-4 py-3 border border-gray-100">
+                        <p class="text-gray-500 text-xs">完成</p>
+                        <p id="request-finished-count" class="text-2xl font-extrabold text-gray-700">0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                    <span class="w-3 h-6 bg-receiver rounded-full mr-2 inline-block"></span>
+                    尚未領取
+                </h2>
+                <span id="empty-note" class="text-xs text-gray-400 hidden">目前沒有覓食紀錄</span>
+            </div>
+            <div id="request-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-gray-400 mb-4 flex items-center">
+                <span class="w-3 h-6 bg-gray-300 rounded-full mr-2 inline-block"></span>
+                歷史紀錄
+            </h2>
+            <div id="history-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-80"></div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { getCurrentUserSnapshot, loadUserProfile, getProfileKey } from './user-store.js';
+
+        const demoRequests = [
+            { id: 4, title: '多買的洪瑞珍三明治', emoji: '🥪', location: '綜合大樓一樓', timeLabel: '待前往領取', href: './detail.html?id=4', status: '待處理' }
+        ];
+
+        const demoHistory = [
+            { id: 1, title: '多出的黑糖珍珠鮮奶', emoji: '🧋', location: '男生宿舍大廳', timeLabel: '昨天', href: './detail.html?id=1', status: '已完成' },
+            { id: 3, title: '巧克力鮮 cream 蛋糕', emoji: '🍰', location: '女生宿舍交誼廳', timeLabel: '3/15', href: './detail.html?id=3', status: '已完成' }
+        ];
+
+        function renderList(listElement, items, mode) {
+            if (!listElement) return;
+            listElement.innerHTML = items.map((item) => `
+                <a href="${item.href || './detail.html'}" class="block bg-white rounded-xl shadow-sm border ${mode === 'request' ? 'border-receiver/30 hover:border-receiver' : 'border-gray-200 hover:border-gray-300'} hover:shadow-md transition duration-200 overflow-hidden">
+                    <div class="p-4 flex items-start space-x-4">
+                        <div class="w-20 h-20 ${mode === 'request' ? 'bg-teal-50' : 'bg-gray-100'} rounded-lg flex items-center justify-center text-3xl shrink-0 ${mode === 'history' ? 'grayscale' : ''}">${item.emoji || '🍴'}</div>
+                        <div class="flex-grow min-w-0">
+                            <div class="flex justify-between items-start mb-1 gap-2">
+                                <span class="${mode === 'request' ? 'bg-receiver text-white' : 'bg-gray-300 text-gray-700'} text-xs font-bold px-2 py-0.5 rounded shadow-sm">${item.status || (mode === 'request' ? '待領取' : '已完成')}</span>
+                                <span class="text-xs text-gray-400 whitespace-nowrap">${item.timeLabel || ''}</span>
+                            </div>
+                            <h3 class="font-bold ${mode === 'request' ? 'text-gray-900' : 'text-gray-600'} text-base mb-1 truncate">${item.title || '未命名項目'}</h3>
+                            <p class="text-sm ${mode === 'request' ? 'text-gray-500' : 'text-gray-400'} truncate">📍 ${item.location || '未填寫地點'}</p>
+                        </div>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        const snapshot = getCurrentUserSnapshot();
+        if (snapshot?.uid) {
+            const profile = loadUserProfile(snapshot.uid, snapshot);
+            const requestItems = profile.requestHistory.length ? profile.requestHistory : demoRequests;
+            const historyItems = profile.requestHistory.filter((item) => item.status === '已完成' || item.completed).concat(demoHistory);
+
+            document.getElementById('page-title').textContent = `${profile.displayName || snapshot.email?.split('@')[0] || '我的'} 的覓食清單`;
+            document.getElementById('profile-key').textContent = '已同步到個人帳號';
+            document.getElementById('request-count').textContent = String(profile.requestHistory.length);
+            document.getElementById('request-finished-count').textContent = String(profile.requestHistory.filter((item) => item.status === '已完成' || item.completed).length);
+            document.getElementById('empty-note').classList.toggle('hidden', profile.requestHistory.length !== 0);
+
+            renderList(document.getElementById('request-list'), requestItems, 'request');
+            renderList(document.getElementById('history-list'), historyItems, 'history');
+        } else {
+            document.getElementById('profile-key').textContent = '未登入時使用展示資料';
+            renderList(document.getElementById('request-list'), demoRequests, 'request');
+            renderList(document.getElementById('history-list'), demoHistory, 'history');
+        }
+
+        window.addEventListener('storage', (event) => {
+            if (!snapshot?.uid || event.key !== getProfileKey(snapshot.uid)) return;
+            const profile = loadUserProfile(snapshot.uid, snapshot);
+            renderList(document.getElementById('request-list'), profile.requestHistory.length ? profile.requestHistory : demoRequests, 'request');
+            renderList(document.getElementById('history-list'), profile.requestHistory.filter((item) => item.status === '已完成' || item.completed).concat(demoHistory), 'history');
+            document.getElementById('request-count').textContent = String(profile.requestHistory.length);
+            document.getElementById('request-finished-count').textContent = String(profile.requestHistory.filter((item) => item.status === '已完成' || item.completed).length);
+        });
+    </script>
+</body>
+</html>
