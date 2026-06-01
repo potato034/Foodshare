@@ -10,99 +10,60 @@
             theme: {
                 extend: {
                     colors: {
-                        giver: '#FBB28B',    // 分享者色系
-                        receiver: '#A8CBCB'  // 索取者色系
+                        giver: '#FBB28B',
+                        receiver: '#A8CBCB'
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
-
-    <header class="bg-white shadow-sm px-6 py-4 flex items-center">
-        <button onclick="history.back()" class="text-gray-500 hover:text-receiver transition flex items-center text-sm font-medium">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            返回首頁
-        </button>
-    </header>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col pt-24">
+    <script src="./header.js"></script>
 
     <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-12 flex flex-col items-center justify-center">
-        
         <div class="text-center mb-16">
-            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl tracking-tight">
-                網際網路專題可愛組員們 🌟
-            </h1>
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl tracking-tight">網際網路專題可愛組員們 🌟</h1>
             <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto text-sm">
                 我們是來自不同背景的三人小組，致力於透過 FastAPI 與智慧地圖串接，打造減少校園剩食、促進社區互助的溫暖共享平台。
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full px-4">
-            
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full bg-orange-100 border-4 border-giver/30 flex items-center justify-center text-3xl font-bold text-orange-600 mb-4 shadow-inner">
-                    👩‍💻
-                </div>
+                <div class="w-24 h-24 rounded-full bg-orange-100 border-4 border-giver/30 flex items-center justify-center text-3xl font-bold text-orange-600 mb-4 shadow-inner">👩‍💻</div>
                 <h3 class="text-xl font-bold text-gray-900 mb-1">胡僑耘</h3>
                 <p class="text-sm font-medium text-gray-400 mb-3">應經三</p>
-                
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-100 mb-6">
-                    前端視覺與使用者互動設計
-                </span>
-                
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-100 mb-6">前端視覺與使用者互動設計</span>
                 <div class="w-full pt-4 border-t border-gray-50 text-xs text-gray-500 space-y-2">
-                    <p class="flex items-center justify-center space-x-1">
-                        <span>📧</span>
-                        <a href="mailto:9ana@email.nchu.edu.tw" class="hover:text-giver transition underline">9ana@email.nchu.edu.tw</a>
-                    </p>
+                    <p class="flex items-center justify-center space-x-1"><span>📧</span><a href="mailto:9ana@email.nchu.edu.tw" class="hover:text-giver transition underline">9ana@email.nchu.edu.tw</a></p>
                 </div>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full bg-teal-50 border-4 border-receiver/30 flex items-center justify-center text-3xl font-bold text-teal-600 mb-4 shadow-inner">
-                    👨‍💻
-                </div>
+                <div class="w-24 h-24 rounded-full bg-teal-50 border-4 border-receiver/30 flex items-center justify-center text-3xl font-bold text-teal-600 mb-4 shadow-inner">👨‍💻</div>
                 <h3 class="text-xl font-bold text-gray-900 mb-1">鄭詠琳</h3>
                 <p class="text-sm font-medium text-gray-400 mb-3">資管二</p>
-                
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-teal-50 text-teal-600 border border-teal-100 mb-6">
-                    FastAPI 後端架構與 SQL 資料庫
-                </span>
-                
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-teal-50 text-teal-600 border border-teal-100 mb-6">FastAPI 後端架構與 SQL 資料庫</span>
                 <div class="w-full pt-4 border-t border-gray-50 text-xs text-gray-500 space-y-2">
-                    <p class="flex items-center justify-center space-x-1">
-                        <span>📧</span>
-                        <a href="mailto:backend@email.nchu.edu.tw" class="hover:text-receiver transition underline">backend@email.nchu.edu.tw</a>
-                    </p>
+                    <p class="flex items-center justify-center space-x-1"><span>📧</span><a href="mailto:backend@email.nchu.edu.tw" class="hover:text-receiver transition underline">backend@email.nchu.edu.tw</a></p>
                 </div>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-50 to-teal-50 border-4 border-dashed border-gray-300 flex items-center justify-center text-3xl font-bold mb-4 shadow-inner">
-                    🛠️
-                </div>
+                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-50 to-teal-50 border-4 border-dashed border-gray-300 flex items-center justify-center text-3xl font-bold mb-4 shadow-inner">🛠️</div>
                 <h3 class="text-xl font-bold text-gray-900 mb-1">鄭儀蓁</h3>
                 <p class="text-sm font-medium text-gray-400 mb-3">應經三</p>
-                
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-600 border border-purple-100 mb-6">
-                    前後端串接、細節打磨與 PM 專案控制
-                </span>
-                
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-600 border border-purple-100 mb-6">前後端串接、細節打磨與 PM 專案控制</span>
                 <div class="w-full pt-4 border-t border-gray-50 text-xs text-gray-500 space-y-2">
-                    <p class="flex items-center justify-center space-x-1">
-                        <span>📧</span>
-                        <a href="mailto:pm@email.nchu.edu.tw" class="hover:text-purple-500 transition underline">pm@email.nchu.edu.tw</a>
-                    </p>
+                    <p class="flex items-center justify-center space-x-1"><span>📧</span><a href="mailto:pm@email.nchu.edu.tw" class="hover:text-purple-500 transition underline">pm@email.nchu.edu.tw</a></p>
                 </div>
             </div>
-
         </div>
     </main>
 
     <footer class="bg-white border-t border-gray-100 py-4 text-center text-xs text-gray-400">
         &copy; 2026 中興大學食物共享平台專題小組.
     </footer>
-
 </body>
 </html>

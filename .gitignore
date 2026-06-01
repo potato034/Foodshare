@@ -2,3 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+# SQLite 本機資料庫
+*.db
+*.sqlite
+*.sqlite3
