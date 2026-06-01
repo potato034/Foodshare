@@ -53,8 +53,8 @@
                 <h1 id="profile-name-text" class="mb-1 text-2xl font-bold text-gray-900"></h1>
                 <p id="profile-dept-text" class="mb-4 text-sm text-gray-500"></p>
 
-                <div class="mb-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
-                    <button id="edit-profile-btn" class="rounded-xl bg-teal-50 px-3 py-2 text-sm font-medium text-teal-700 transition hover:bg-teal-100">編輯個人資料</button>
+                <div class="mb-4 flex justify-center w-full">
+                    <button id="edit-profile-btn" class="rounded-xl bg-teal-50 px-6 py-2 text-sm font-medium text-teal-700 transition hover:bg-teal-100">編輯個人資料</button>
                 </div>
 
                 <div id="edit-panel" class="hidden w-full rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left">
@@ -75,14 +75,10 @@
                 </div>
 
                 <div class="bg-gray-50 rounded-xl p-3 w-full border border-gray-100 mb-4">
-                    <p class="text-xs text-gray-500 mb-1">信用評價</p>
-                    <div class="flex justify-center items-center space-x-1 text-yellow-400">
-                        <span>★</span>
-                        <span>★</span>
-                        <span>★</span>
-                        <span>★</span>
-                        <span class="text-gray-300">★</span>
-                        <span class="text-gray-700 font-bold ml-1 text-sm">4.8</span>
+                    <p class="text-xs text-gray-500 mb-1">取貨率</p>
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="pickup-rate-text" class="text-2xl font-extrabold text-receiver">—</span>
+                        <span class="text-xs text-gray-400">（<span id="pickup-rate-detail">載入中</span>）</span>
                     </div>
                 </div>
             </div>
@@ -363,6 +359,10 @@
             const profile = loadUserProfile(firebaseUser.uid, firebaseUser);
             applyProfile(profile, firebaseUser);
 
+            // 從 API 載入真實的統計資料
+            const uid = firebaseUser.uid;
+            loadApiStats(uid);
+
             const avatarInput = document.getElementById('profile-avatar-input');
             const editProfileBtn = document.getElementById('edit-profile-btn');
             const cancelEditBtn = document.getElementById('cancel-edit-btn');
@@ -433,6 +433,83 @@
                 applyProfile(nextProfile, firebaseUser);
             });
         });
+
+        async function loadApiStats(uid) {
+            try {
+                // 取貨率
+                const rateRes  = await fetch(`/api/users/${uid}/pickup-rate`);
+                const rateData = await rateRes.json();
+                const rateEl   = document.getElementById('pickup-rate-text');
+                const detailEl = document.getElementById('pickup-rate-detail');
+                if (rateEl) rateEl.textContent = `${rateData.rate}%`;
+                if (detailEl) {
+                    detailEl.textContent = rateData.total === 0
+                        ? '尚無預約紀錄'
+                        : `預約 ${rateData.total} 次，未取 ${rateData.no_show} 次`;
+                }
+
+                // 未取食物（待領取的預約）
+                const reqRes   = await fetch(`/api/users/${uid}/requests`);
+                const requests = await reqRes.json();
+                const pending  = requests.filter(r => r.reservation_status === 'pending');
+                const reqBadge = document.getElementById('request-count-badge');
+                if (reqBadge) reqBadge.textContent = `${pending.length} 筆待辦`;
+
+                const reqList = document.getElementById('request-list');
+                if (reqList) {
+                    reqList.innerHTML = pending.length === 0
+                        ? '<p class="text-sm text-gray-400 text-center py-4">目前沒有待領取的食物</p>'
+                        : pending.map(r => `
+                            <div class="flex items-center justify-between p-3 bg-white border border-gray-100 hover:border-receiver/50 rounded-xl hover:shadow-sm transition">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center text-2xl shrink-0">${r.emoji}</div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-sm">${r.title}</h3>
+                                        <p class="text-xs text-gray-500">📍 ${r.location}　🕒 預計：${r.estimated_pickup_time || '未填寫'}　×${r.quantity_reserved} 份</p>
+                                    </div>
+                                </div>
+                                <a href="${r.href}" class="px-4 py-2 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-receiver hover:text-white rounded-lg transition">
+                                    查看詳情
+                                </a>
+                            </div>`).join('');
+                }
+
+                // 分享中的食物
+                const shareRes = await fetch(`/api/users/${uid}/shares`);
+                const shares   = await shareRes.json();
+                const active   = shares.filter(s => s.status !== '已完成' && s.status !== '已過期');
+                const shareBadge = document.getElementById('share-count-badge');
+                const shareCountEl = document.getElementById('share-count');
+                if (shareBadge)    shareBadge.textContent = `${active.length} 筆進行中`;
+                if (shareCountEl)  shareCountEl.innerHTML = `${shares.length} <span class="text-xs font-normal text-gray-400">次</span>`;
+
+                // 成功救援 = 已完成的預約數
+                const doneCount = requests.filter(r => r.reservation_status === 'completed').length;
+                const rescueEl = document.getElementById('rescue-count');
+                if (rescueEl) rescueEl.innerHTML = `${doneCount} <span class="text-xs font-normal text-gray-400">次</span>`;
+
+                const shareList = document.getElementById('share-list');
+                if (shareList) {
+                    shareList.innerHTML = active.length === 0
+                        ? '<p class="text-sm text-gray-400 text-center py-4">目前沒有進行中的分享</p>'
+                        : active.map(s => `
+                            <div class="flex items-center justify-between p-3 bg-white border border-gray-100 hover:border-giver/50 rounded-xl hover:shadow-sm transition">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center text-2xl shrink-0">${s.emoji}</div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-sm">${s.title}</h3>
+                                        <p class="text-xs text-gray-500">📍 ${s.location}　狀態：${s.status}</p>
+                                    </div>
+                                </div>
+                                <a href="${s.href}" class="px-4 py-2 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-giver hover:text-white rounded-lg transition">
+                                    管理狀態
+                                </a>
+                            </div>`).join('');
+                }
+            } catch (err) {
+                console.warn('API stats load failed', err);
+            }
+        }
     </script>
 </body>
 </html>

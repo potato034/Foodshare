@@ -63,64 +63,64 @@
     </main>
 
     <script type="module">
-        import { getCurrentUserSnapshot, loadUserProfile, getProfileKey } from './user-store.js';
+        import { getCurrentUserSnapshot, loadUserProfile } from './user-store.js';
 
-        const demoRequests = [
-            { id: 4, title: '多買的洪瑞珍三明治', emoji: '🥪', location: '綜合大樓一樓', timeLabel: '待前往領取', href: './detail.html?id=4', status: '待處理' }
-        ];
+        const snapshot = getCurrentUserSnapshot();
 
-        const demoHistory = [
-            { id: 1, title: '多出的黑糖珍珠鮮奶', emoji: '🧋', location: '男生宿舍大廳', timeLabel: '昨天', href: './detail.html?id=1', status: '已完成' },
-            { id: 3, title: '巧克力鮮 cream 蛋糕', emoji: '🍰', location: '女生宿舍交誼廳', timeLabel: '3/15', href: './detail.html?id=3', status: '已完成' }
-        ];
+        if (!snapshot?.uid) {
+            document.getElementById('page-title').textContent = '請先登入';
+            document.getElementById('profile-key').textContent = '登入後才能查看覓食清單';
+        } else {
+            const profile = loadUserProfile(snapshot.uid, snapshot);
+            const name = profile.displayName || snapshot.email?.split('@')[0] || '我的';
+            document.getElementById('page-title').textContent = `${name} 的覓食清單`;
+            loadRequests(snapshot.uid);
+        }
 
-        function renderList(listElement, items, mode) {
-            if (!listElement) return;
-            listElement.innerHTML = items.map((item) => `
-                <a href="${item.href || './detail.html'}" class="block bg-white rounded-xl shadow-sm border ${mode === 'request' ? 'border-receiver/30 hover:border-receiver' : 'border-gray-200 hover:border-gray-300'} hover:shadow-md transition duration-200 overflow-hidden">
+        async function loadRequests(uid) {
+            try {
+                const res   = await fetch(`/api/users/${uid}/requests`);
+                const items = await res.json();
+                renderAll(items);
+            } catch (err) {
+                document.getElementById('profile-key').textContent = '載入失敗，請確認伺服器是否啟動';
+            }
+        }
+
+        function renderAll(items) {
+            // 依預約狀態分成「尚未領取」和「歷史紀錄」
+            const pending = items.filter(i => i.status === '待領取');
+            const history = items.filter(i => i.status === '已完成' || i.status === '已取消');
+
+            document.getElementById('request-count').textContent         = String(pending.length);
+            document.getElementById('request-finished-count').textContent = String(history.filter(i => i.status === '已完成').length);
+            document.getElementById('empty-note').classList.toggle('hidden', pending.length !== 0);
+
+            renderList(document.getElementById('request-list'), pending, 'request');
+            renderList(document.getElementById('history-list'), history, 'history');
+        }
+
+        function renderList(listEl, items, mode) {
+            if (!listEl) return;
+            if (items.length === 0) { listEl.innerHTML = ''; return; }
+
+            // 卡片 HTML 結構與原本完全相同，資料來源改成 API
+            listEl.innerHTML = items.map(item => `
+                <a href="${item.href}" class="block bg-white rounded-xl shadow-sm border ${mode === 'request' ? 'border-receiver/30 hover:border-receiver' : 'border-gray-200 hover:border-gray-300'} hover:shadow-md transition duration-200 overflow-hidden">
                     <div class="p-4 flex items-start space-x-4">
                         <div class="w-20 h-20 ${mode === 'request' ? 'bg-teal-50' : 'bg-gray-100'} rounded-lg flex items-center justify-center text-3xl shrink-0 ${mode === 'history' ? 'grayscale' : ''}">${item.emoji || '🍴'}</div>
                         <div class="flex-grow min-w-0">
                             <div class="flex justify-between items-start mb-1 gap-2">
-                                <span class="${mode === 'request' ? 'bg-receiver text-white' : 'bg-gray-300 text-gray-700'} text-xs font-bold px-2 py-0.5 rounded shadow-sm">${item.status || (mode === 'request' ? '待領取' : '已完成')}</span>
-                                <span class="text-xs text-gray-400 whitespace-nowrap">${item.timeLabel || ''}</span>
+                                <span class="${mode === 'request' ? 'bg-receiver text-white' : 'bg-gray-300 text-gray-700'} text-xs font-bold px-2 py-0.5 rounded shadow-sm">${item.status}</span>
+                                <span class="text-xs text-gray-400 whitespace-nowrap">${item.timeLabel}</span>
                             </div>
-                            <h3 class="font-bold ${mode === 'request' ? 'text-gray-900' : 'text-gray-600'} text-base mb-1 truncate">${item.title || '未命名項目'}</h3>
-                            <p class="text-sm ${mode === 'request' ? 'text-gray-500' : 'text-gray-400'} truncate">📍 ${item.location || '未填寫地點'}</p>
+                            <h3 class="font-bold ${mode === 'request' ? 'text-gray-900' : 'text-gray-600'} text-base mb-1 truncate">${item.title}</h3>
+                            <p class="text-sm ${mode === 'request' ? 'text-gray-500' : 'text-gray-400'} truncate">📍 ${item.location}</p>
                         </div>
                     </div>
                 </a>
             `).join('');
         }
-
-        const snapshot = getCurrentUserSnapshot();
-        if (snapshot?.uid) {
-            const profile = loadUserProfile(snapshot.uid, snapshot);
-            const requestItems = profile.requestHistory.length ? profile.requestHistory : demoRequests;
-            const historyItems = profile.requestHistory.filter((item) => item.status === '已完成' || item.completed).concat(demoHistory);
-
-            document.getElementById('page-title').textContent = `${profile.displayName || snapshot.email?.split('@')[0] || '我的'} 的覓食清單`;
-            document.getElementById('profile-key').textContent = '已同步到個人帳號';
-            document.getElementById('request-count').textContent = String(profile.requestHistory.length);
-            document.getElementById('request-finished-count').textContent = String(profile.requestHistory.filter((item) => item.status === '已完成' || item.completed).length);
-            document.getElementById('empty-note').classList.toggle('hidden', profile.requestHistory.length !== 0);
-
-            renderList(document.getElementById('request-list'), requestItems, 'request');
-            renderList(document.getElementById('history-list'), historyItems, 'history');
-        } else {
-            document.getElementById('profile-key').textContent = '未登入時使用展示資料';
-            renderList(document.getElementById('request-list'), demoRequests, 'request');
-            renderList(document.getElementById('history-list'), demoHistory, 'history');
-        }
-
-        window.addEventListener('storage', (event) => {
-            if (!snapshot?.uid || event.key !== getProfileKey(snapshot.uid)) return;
-            const profile = loadUserProfile(snapshot.uid, snapshot);
-            renderList(document.getElementById('request-list'), profile.requestHistory.length ? profile.requestHistory : demoRequests, 'request');
-            renderList(document.getElementById('history-list'), profile.requestHistory.filter((item) => item.status === '已完成' || item.completed).concat(demoHistory), 'history');
-            document.getElementById('request-count').textContent = String(profile.requestHistory.length);
-            document.getElementById('request-finished-count').textContent = String(profile.requestHistory.filter((item) => item.status === '已完成' || item.completed).length);
-        });
     </script>
 </body>
 </html>

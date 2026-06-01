@@ -18,7 +18,7 @@
             <a href="${s}contact.html" class="hover:text-receiver transition">聯絡我們</a>
         </nav>
         <div class="ml-auto w-[360px] relative hidden xl:block">
-            <input type="text" placeholder="搜尋關鍵字或地點..."
+            <input type="text" id="header-search-input" placeholder="搜尋關鍵字或地點…"
                    class="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent text-sm">
             <div class="absolute left-3.5 top-3.5 text-gray-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -28,6 +28,10 @@
             <div id="user-controls" class="flex items-center gap-3 hidden">
                 <a href="${s}message.html" class="text-gray-600 hover:text-gray-900 transition" title="私訊">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                </a>
+                <a href="${s}cart.html" class="relative text-gray-600 hover:text-gray-900 transition" title="購物車">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span id="cart-badge" class="hidden absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-giver text-white text-[10px] font-bold flex items-center justify-center"></span>
                 </a>
                 <button class="text-gray-600 hover:text-gray-900 transition" title="系統通知">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -52,7 +56,7 @@
                     ＋ 馬上分享
                 </a>
             </div>
-            <button id="header-login-btn" class="bg-[#A8CBCB] hover:bg-teal-600 text-white font-semibold px-5 py-2 text-sm transition shadow-sm shrink-0">
+            <button id="header-login-btn" class="bg-[#A8CBCB] hover:bg-teal-600 text-white font-semibold px-5 py-2 text-sm transition shadow-sm shrink-0 rounded-full">
                 登入 / 註冊
             </button>
         </div>
@@ -168,4 +172,41 @@
             window.location.href = root + 'index.html?action=logout';
         });
     }
+
+    // 搜尋 bar：按 Enter 導向 browse.html
+    const searchInput = header.querySelector('#header-search-input');
+    if (searchInput) {
+        // 若已在 browse.html，同步搜尋框的值
+        const urlQ = new URLSearchParams(window.location.search).get('q');
+        if (urlQ && window.location.pathname.includes('browse.html')) {
+            searchInput.value = urlQ;
+        }
+
+        searchInput.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            const q = searchInput.value.trim();
+            if (!q) {
+                window.location.href = `${s}browse.html`;
+            } else {
+                window.location.href = `${s}browse.html?q=${encodeURIComponent(q)}`;
+            }
+        });
+    }
+
+    // 購物車 badge：讀 localStorage 顯示數量
+    function updateCartBadge() {
+        const badge = header.querySelector('#cart-badge');
+        if (!badge) return;
+        const cart = JSON.parse(localStorage.getItem('fs_cart') || '[]');
+        if (cart.length > 0) {
+            badge.textContent = cart.length > 9 ? '9+' : cart.length;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+    updateCartBadge();
+    window.addEventListener('storage', updateCartBadge);
+    // 同頁面內 cart 變動也能更新
+    window.addEventListener('fs-cart-updated', updateCartBadge);
 })();

@@ -55,65 +55,90 @@
     </main>
 
     <script type="module">
-        import { getCurrentUserSnapshot, loadUserProfile, getProfileKey } from './user-store.js';
+        import { getCurrentUserSnapshot, loadUserProfile } from './user-store.js';
 
-        const demoShares = [
-            { id: 1, title: '多出的黑糖珍珠鮮奶', emoji: '🧋', location: '男生宿舍大廳', timeLabel: '已發布 1 小時', href: './detail.html?id=1', status: '進行中' },
-            { id: 2, title: '會議多餘的排骨便當', emoji: '🍱', location: '社管大樓 4 樓', timeLabel: '已發布 3 小時', href: './detail.html?id=2', status: '進行中' }
-        ];
+        const snapshot = getCurrentUserSnapshot();
 
-        function renderShares(profile, user) {
-            const titleEl = document.getElementById('page-title');
-            const keyEl = document.getElementById('profile-key');
-            const countEl = document.getElementById('share-count');
-            const finishedEl = document.getElementById('share-finished-count');
-            const listEl = document.getElementById('share-list');
-            const emptyNote = document.getElementById('empty-note');
+        if (!snapshot?.uid) {
+            document.getElementById('page-title').textContent = '請先登入';
+            document.getElementById('profile-key').textContent = '登入後才能查看分享清單';
+        } else {
+            const profile = loadUserProfile(snapshot.uid, snapshot);
+            const name = profile.displayName || snapshot.email?.split('@')[0] || '我的';
+            document.getElementById('page-title').textContent = `${name} 的分享清單`;
+            loadShares(snapshot.uid);
+        }
 
-            const items = profile.shareHistory.length ? profile.shareHistory : demoShares;
-            const activeCount = profile.shareHistory.length;
-            const finishedCount = profile.shareHistory.filter((item) => item.status === '已完成' || item.completed).length;
+        // 刪除食物
+        window.deleteFood = async function(foodId) {
+            if (!confirm('確定要刪除這筆分享嗎？')) return;
+            const data = new FormData();
+            data.append('sharer_uid', snapshot.uid);
+            const res = await fetch(`/api/foods/${foodId}`, { method: 'DELETE', body: data });
+            if (res.ok) {
+                loadShares(snapshot.uid);
+            } else {
+                const json = await res.json();
+                alert(json.detail || '刪除失敗');
+            }
+        };
 
-            if (titleEl) titleEl.textContent = `${profile.displayName || user?.email?.split('@')[0] || '我的'} 的分享清單`;
-            if (keyEl) keyEl.textContent = user?.uid ? '已同步到個人帳號' : '未登入時使用展示資料';
-            if (countEl) countEl.textContent = String(activeCount);
-            if (finishedEl) finishedEl.textContent = String(finishedCount);
-
-            if (!listEl) return;
-            listEl.innerHTML = items.map((item) => `
-                <a href="${item.href || './detail.html'}" class="block bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-giver hover:shadow-md transition overflow-hidden group">
-                    <div class="p-4 flex items-start space-x-4">
-                        <div class="w-20 h-20 bg-orange-50 rounded-xl flex items-center justify-center text-3xl shrink-0">${item.emoji || '🎁'}</div>
-                        <div class="flex-grow min-w-0">
-                            <div class="flex justify-between items-start mb-1 gap-2">
-                                <span class="bg-giver text-white text-xs font-bold px-2 py-0.5 rounded shadow-sm">${item.status || '進行中'}</span>
-                                <span class="text-xs text-gray-400 whitespace-nowrap">${item.timeLabel || '剛剛發布'}</span>
-                            </div>
-                            <h3 class="font-bold text-gray-900 text-base mb-1 truncate group-hover:text-orange-600 transition">${item.title || '未命名分享項目'}</h3>
-                            <p class="text-sm text-gray-500 flex items-center truncate">📍 ${item.location || '未填寫地點'}</p>
-                        </div>
-                    </div>
-                </a>
-            `).join('');
-
-            if (emptyNote) {
-                emptyNote.classList.toggle('hidden', profile.shareHistory.length !== 0);
+        async function loadShares(uid) {
+            try {
+                const res   = await fetch(`/api/users/${uid}/shares`);
+                const items = await res.json();
+                renderShares(items);
+            } catch (err) {
+                document.getElementById('profile-key').textContent = '載入失敗，請確認伺服器是否啟動';
             }
         }
 
-        const snapshot = getCurrentUserSnapshot();
-        if (snapshot?.uid) {
-            const profile = loadUserProfile(snapshot.uid, snapshot);
-            renderShares(profile, snapshot);
-        } else {
-            renderShares({ shareHistory: [] }, null);
-        }
+        function renderShares(items) {
+            const activeCount   = items.filter(i => i.status !== '已完成').length;
+            const finishedCount = items.filter(i => i.status === '已完成').length;
 
-        window.addEventListener('storage', (event) => {
-            if (!snapshot?.uid || event.key !== getProfileKey(snapshot.uid)) return;
-            const nextProfile = loadUserProfile(snapshot.uid, snapshot);
-            renderShares(nextProfile, snapshot);
-        });
+            document.getElementById('share-count').textContent         = String(activeCount);
+            document.getElementById('share-finished-count').textContent = String(finishedCount);
+
+            const listEl    = document.getElementById('share-list');
+            const emptyNote = document.getElementById('empty-note');
+
+            if (items.length === 0) {
+                emptyNote?.classList.remove('hidden');
+                listEl.innerHTML = '';
+                return;
+            }
+            emptyNote?.classList.add('hidden');
+
+            listEl.innerHTML = items.map(item => `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-giver hover:shadow-md transition overflow-hidden group">
+                    <a href="${item.href}" class="block p-4 flex items-start space-x-4">
+                        ${item.image_path
+                            ? `<img src="${item.image_path}" class="w-20 h-20 rounded-xl object-cover shrink-0">`
+                            : `<div class="w-20 h-20 bg-orange-50 rounded-xl flex items-center justify-center text-3xl shrink-0">${item.emoji || '🎁'}</div>`
+                        }
+                        <div class="flex-grow min-w-0">
+                            <div class="flex justify-between items-start mb-1 gap-2">
+                                <span class="bg-giver text-white text-xs font-bold px-2 py-0.5 rounded shadow-sm">${item.status}</span>
+                                <span class="text-xs text-gray-400 whitespace-nowrap">${item.timeLabel}</span>
+                            </div>
+                            <h3 class="font-bold text-gray-900 text-base mb-1 truncate group-hover:text-orange-600 transition">${item.title}</h3>
+                            <p class="text-sm text-gray-500 flex items-center truncate">📍 ${item.location}</p>
+                        </div>
+                    </a>
+                    <div class="px-4 pb-3 pt-0 flex gap-2 border-t border-gray-50">
+                        <a href="./upload.html?edit=${item.id}"
+                           class="flex-1 text-center text-xs font-semibold py-1.5 rounded-lg border border-giver text-giver hover:bg-orange-50 transition">
+                            ✏️ 編輯
+                        </a>
+                        <button onclick="deleteFood(${item.id})"
+                                class="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition">
+                            🗑 刪除
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
     </script>
 </body>
 </html>
