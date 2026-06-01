@@ -23,75 +23,420 @@
     <script src="./header.js"></script>
 
     <main class="max-w-2xl mx-auto py-6 px-4">
-        
-        <div class="w-full h-64 bg-teal-50 rounded-2xl flex items-center justify-center text-7xl shadow-inner mb-6">
-            🍱
+
+        <!-- 食物圖示區 -->
+        <div id="food-hero" class="w-full h-64 bg-teal-50 rounded-2xl flex items-center justify-center text-7xl shadow-inner mb-6">
+            ⏳
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+
+            <!-- 狀態標籤 + 時間 -->
             <div class="flex justify-between items-center mb-3">
                 <div class="flex space-x-2">
-                    <span class="bg-receiver text-white text-xs font-bold px-3 py-1 rounded shadow-sm">待領取</span>
-                    <span class="bg-teal-50 text-teal-600 border border-teal-100 text-xs font-semibold px-2 py-1 rounded">便當</span>
+                    <span id="detail-status-badge" class="bg-receiver text-white text-xs font-bold px-3 py-1 rounded shadow-sm">載入中</span>
+                    <span id="detail-category-badge" class="bg-teal-50 text-teal-600 border border-teal-100 text-xs font-semibold px-2 py-1 rounded"></span>
                 </div>
-                <span class="text-sm text-gray-400">發布於 1 小時前</span>
+                <span id="detail-time-ago" class="text-sm text-gray-400"></span>
             </div>
 
-            <h1 class="text-2xl font-bold text-gray-900 mb-6">會議多餘的排骨便當</h1>
+            <!-- 標題 -->
+            <h1 id="detail-title" class="text-2xl font-bold text-gray-900 mb-6">載入中…</h1>
 
+            <!-- 分享者資訊 -->
             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-giver text-white rounded-full flex items-center justify-center font-bold">
-                        小明
-                    </div>
+                    <div id="detail-sharer-avatar" class="w-10 h-10 bg-giver text-white rounded-full flex items-center justify-center font-bold text-sm">?</div>
                     <div>
                         <p class="text-sm text-gray-500">分享者</p>
-                        <p class="font-bold text-gray-800">經濟系 小明</p>
+                        <p id="detail-sharer-name" class="font-bold text-gray-800">—</p>
                     </div>
                 </div>
-                <a href="./message.html" class="flex items-center space-x-1 text-sm bg-white border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition shadow-sm">
+                <a id="msg-link" href="./message.html" class="flex items-center space-x-1 text-sm bg-white border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     <span>發送私訊</span>
                 </a>
             </div>
 
+            <!-- 資訊格 -->
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <p class="text-xs text-gray-500 mb-1">📍 領取地點</p>
-                    <p class="font-semibold text-gray-800 text-sm">社管大樓 4 樓 (系辦外長桌)</p>
+                    <p id="detail-location" class="font-semibold text-gray-800 text-sm">—</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
-                    <p class="text-xs text-gray-500 mb-1">⏰ 領取時間</p>
-                    <p class="font-semibold text-gray-800 text-sm">今天 14:00 前</p>
+                    <p class="text-xs text-gray-500 mb-1">⏳ 剩餘時間</p>
+                    <p id="detail-countdown" class="font-semibold text-orange-500 text-sm">計算中…</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <p class="text-xs text-gray-500 mb-1">📦 數量/份量</p>
-                    <p class="font-semibold text-gray-800 text-sm">共 3 個 (可單獨領取)</p>
+                    <p id="detail-quantity" class="font-semibold text-gray-800 text-sm">—</p>
                 </div>
                 <div class="bg-gray-50 p-3 rounded-lg">
                     <p class="text-xs text-gray-500 mb-1">⏳ 狀態</p>
-                    <p class="font-semibold text-receiver text-sm">等待你來領取</p>
+                    <p id="detail-status-text" class="font-semibold text-receiver text-sm">—</p>
                 </div>
             </div>
 
+            <!-- 詳細說明 -->
             <div class="mb-8 border-t border-gray-100 pt-6">
                 <h3 class="text-sm font-bold text-gray-900 mb-2">詳細說明：</h3>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    系辦中午開會多出 3 個排骨便當，皆全新未動，有附筷子跟衛生紙，歡迎自取。請拿走的時候盡量保持桌面乾淨喔，謝謝！
-                </p>
+                <p id="detail-description" class="text-gray-600 text-sm leading-relaxed">—</p>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-3">
-                <button class="flex-1 bg-receiver hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition duration-200 transform hover:-translate-y-0.5 text-center">
-                    ✅ 我已成功領取
-                </button>
-                <button class="sm:w-1/3 bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-600 font-bold py-3 px-4 rounded-xl transition text-center">
-                    取消申請
-                </button>
-            </div>
-            <p class="text-center text-xs text-gray-400 mt-3">點擊「我已成功領取」後，系統會通知分享者並更改狀態</p>
+            <!-- 按鈕區（依身份動態顯示） -->
+            <div id="action-area"></div>
 
         </div>
     </main>
+
+    <script type="module">
+        import { getCurrentUserSnapshot, loadUserProfile } from './user-store.js';
+
+        const params  = new URLSearchParams(window.location.search);
+        const foodId  = params.get('id');
+        const snapshot = getCurrentUserSnapshot();
+        const uid     = snapshot?.uid || null;
+
+        if (!foodId) {
+            document.getElementById('detail-title').textContent = '找不到食物資料';
+            document.getElementById('action-area').innerHTML = '<p class="text-center text-gray-400">請從首頁選擇食物</p>';
+        } else {
+            loadDetail(foodId, uid);
+        }
+
+        async function loadDetail(id, uid) {
+            try {
+                const url = uid ? `/api/foods/${id}?uid=${uid}` : `/api/foods/${id}`;
+                const res  = await fetch(url);
+                if (!res.ok) throw new Error('找不到此食物');
+                const food = await res.json();
+                renderDetail(food);
+            } catch (err) {
+                document.getElementById('detail-title').textContent = err.message;
+            }
+        }
+
+        // 狀態對應顏色
+        const STATUS_COLOR = {
+            available: 'bg-receiver text-white',
+            reserved:  'bg-yellow-400 text-white',
+            completed: 'bg-gray-400 text-white',
+            expired:   'bg-gray-300 text-gray-600',
+        };
+
+        function renderDetail(food) {
+            // 食物圖示
+            const hero = document.getElementById('food-hero');
+            if (food.image_path) {
+                hero.innerHTML = `<img src="${food.image_path}" class="w-full h-full object-cover rounded-2xl">`;
+            } else {
+                hero.textContent = food.emoji;
+                hero.className = hero.className.replace('bg-teal-50', 'bg-orange-50');
+            }
+
+            // 標籤與時間
+            const statusBadge = document.getElementById('detail-status-badge');
+            statusBadge.textContent = food.status_label;
+            statusBadge.className = `text-xs font-bold px-3 py-1 rounded shadow-sm ${STATUS_COLOR[food.status] || 'bg-gray-300 text-white'}`;
+            document.getElementById('detail-category-badge').textContent = food.category;
+            document.getElementById('detail-time-ago').textContent = `發布於 ${food.time_ago}`;
+
+            // 標題
+            document.getElementById('detail-title').textContent = food.title;
+
+            // 分享者
+            const initials = (food.sharer_name || '?').slice(0, 2);
+            document.getElementById('detail-sharer-avatar').textContent = initials;
+            document.getElementById('detail-sharer-name').textContent = food.sharer_name || '—';
+
+            // 私訊連結：帶入分享者 uid 和 food id
+            const msgLink = document.getElementById('msg-link');
+            if (msgLink && food.sharer_uid && !food.is_my_post) {
+                msgLink.href = `./message.html?with=${food.sharer_uid}&post=${food.id}`;
+            } else if (msgLink && food.is_my_post) {
+                msgLink.classList.add('hidden'); // 自己的貼文不顯示私訊
+            }
+
+            // 資訊格
+            document.getElementById('detail-location').textContent = food.pickup_location;
+            const left = food.quantity_left ?? food.quantity;
+            const qtyText = food.quantity
+                ? `${left} / ${food.quantity} 份（剩餘 ${left} 份）`
+                : '未填寫';
+            document.getElementById('detail-quantity').textContent = qtyText;
+            document.getElementById('detail-status-text').textContent = food.status_label;
+
+            // 說明
+            document.getElementById('detail-description').textContent = food.description || '（無說明）';
+
+            // 倒數計時
+            const countdownEl = document.getElementById('detail-countdown');
+            if (food.expires_at_iso && countdownEl) {
+                const expiresAt = new Date(food.expires_at_iso).getTime();
+                function tick() {
+                    const diff = expiresAt - Date.now();
+                    if (diff <= 0) {
+                        countdownEl.textContent = '⛔ 已過期';
+                        countdownEl.classList.replace('text-orange-500', 'text-gray-400');
+                        return;
+                    }
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    const hStr = h > 0 ? `${h}:` : '';
+                    countdownEl.textContent = `⏳ 還剩 ${hStr}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    setTimeout(tick, 1000);
+                }
+                tick();
+            }
+
+            // 按鈕區
+            renderActions(food);
+        }
+
+        // 目前這筆食物資料（全域，供表單送出使用）
+        let currentFood = null;
+
+        function renderActions(food) {
+            currentFood = food;
+            const area = document.getElementById('action-area');
+
+            // 情況 1：這是自己發布的食物 → 顯示訂單管理
+            if (food.is_my_post) {
+                area.innerHTML = `
+                    <div class="py-4 bg-orange-50 rounded-xl border border-orange-100 px-4">
+                        <p class="text-sm font-semibold text-giver mb-2">🎁 這是你發布的食物（狀態：${food.status_label}）</p>
+                        <button id="btn-view-orders" class="text-xs px-3 py-1.5 rounded-lg border border-giver text-giver hover:bg-orange-50 transition">
+                            查看預約訂單
+                        </button>
+                    </div>
+                    <div id="orders-panel" class="mt-4 hidden"></div>`;
+                document.getElementById('btn-view-orders').addEventListener('click', () => loadOrders(food.id));
+                return;
+            }
+
+            // 情況 2：使用者已有待處理的預約
+            if (food.my_reservation_status === 'pending') {
+                const expiresAt = food.expires_at_iso ? new Date(food.expires_at_iso) : null;
+                const minsLeft  = expiresAt ? (expiresAt - Date.now()) / 60000 : 999;
+                const canCancel = minsLeft > 10;
+
+                area.innerHTML = `
+                    <div class="bg-teal-50 border border-teal-100 rounded-xl p-4 mb-3 text-sm text-teal-700">
+                        ✅ 你已預約此食物，請準時領取。
+                        ${!canCancel ? '<br><span class="text-red-500 text-xs">距過期不足 10 分鐘，無法取消</span>' : ''}
+                    </div>
+                    ${canCancel ? `
+                    <button id="btn-cancel" class="w-full bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-600 font-bold py-3 px-4 rounded-xl transition">
+                        取消預約
+                    </button>
+                    <p class="text-center text-xs text-gray-400 mt-2">距過期 10 分鐘內將無法取消</p>` : ''}`;
+
+                if (canCancel) {
+                    document.getElementById('btn-cancel').addEventListener('click', () => cancelReservation(food));
+                }
+                return;
+            }
+
+            // 情況 3：食物可領取，使用者還沒預約
+            if (food.status === 'available') {
+                if (!uid) {
+                    area.innerHTML = `
+                        <button onclick="window.location.href='../index.html'"
+                            class="w-full bg-receiver hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition">
+                            登入後才能預約
+                        </button>`;
+                    return;
+                }
+
+                const maxQty = food.quantity_left ?? food.quantity ?? 1;
+                area.innerHTML = `
+                    <div class="space-y-4 border border-gray-100 bg-gray-50 rounded-xl p-5">
+                        <h3 class="font-bold text-gray-800 text-sm">填寫預約資訊</h3>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">姓名 <span class="text-red-500">*</span></label>
+                                <input id="f-name" type="text" placeholder="真實姓名"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">學號 <span class="text-red-500">*</span></label>
+                                <input id="f-sid" type="text" placeholder="S113xxxxxx"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">預計領取時間 <span class="text-red-500">*</span></label>
+                                <input id="f-time" type="text" placeholder="例：今天 13:30 前"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">預約份數 <span class="text-red-500">*</span></label>
+                                <input id="f-qty" type="number" min="1" max="${maxQty}" value="1"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none text-center">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 pt-2">
+                            <button id="btn-reserve"
+                                class="flex-1 bg-receiver hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow-sm transition">
+                                🙋 直接預約
+                            </button>
+                            <button id="btn-cart"
+                                class="w-1/3 bg-white border-2 border-giver text-giver hover:bg-orange-50 font-bold py-3 rounded-xl transition text-sm">
+                                🛒 加入購物車
+                            </button>
+                        </div>
+                    </div>`;
+
+                document.getElementById('btn-reserve').addEventListener('click', () => submitReservation(food, false));
+                document.getElementById('btn-cart').addEventListener('click', () => addToCart(food));
+                return;
+            }
+
+            // 情況 4：已全部領完或過期
+            const msgMap = {
+                completed: '此食物已全部領完',
+                expired:   '此食物已過期下架',
+            };
+            area.innerHTML = `
+                <div class="text-center py-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <p class="text-sm text-gray-500">${msgMap[food.status] || '此食物目前不可領取'}</p>
+                </div>`;
+        }
+
+        // 驗證並取得表單值
+        function getFormValues() {
+            const name = document.getElementById('f-name')?.value.trim();
+            const sid  = document.getElementById('f-sid')?.value.trim();
+            const time = document.getElementById('f-time')?.value.trim();
+            const qty  = parseInt(document.getElementById('f-qty')?.value) || 1;
+            if (!name || !sid || !time) { alert('請填寫姓名、學號與預計領取時間'); return null; }
+            return { name, sid, time, qty };
+        }
+
+        // 直接預約
+        async function submitReservation(food, fromCart = false) {
+            const vals = getFormValues();
+            if (!vals) return;
+
+            const btn = document.getElementById('btn-reserve');
+            if (btn) { btn.disabled = true; btn.textContent = '預約中…'; }
+
+            const data = new FormData();
+            data.append('requester_uid',         uid);
+            data.append('quantity_reserved',     vals.qty);
+            data.append('requester_name',        vals.name);
+            data.append('student_id',            vals.sid);
+            data.append('estimated_pickup_time', vals.time);
+
+            try {
+                const res  = await fetch(`/api/foods/${food.id}/reserve`, { method: 'POST', body: data });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.detail || '預約失敗');
+                alert(`預約成功！剩餘 ${json.quantity_left} 份`);
+                window.location.reload();
+            } catch (err) {
+                alert(`預約失敗：${err.message}`);
+                if (btn) { btn.disabled = false; btn.textContent = '🙋 直接預約'; }
+            }
+        }
+
+        // 加入購物車（localStorage）
+        function addToCart(food) {
+            const vals = getFormValues();
+            if (!vals) return;
+
+            const cart = JSON.parse(localStorage.getItem('fs_cart') || '[]');
+            const exists = cart.find(c => c.food_id === food.id);
+            if (exists) { alert('此食物已在購物車中'); return; }
+
+            cart.push({
+                food_id:    food.id,
+                title:      food.title,
+                emoji:      food.emoji,
+                location:   food.pickup_location,
+                expires_at: food.expires_at_iso,
+                name: vals.name, sid: vals.sid, time: vals.time, qty: vals.qty,
+            });
+            localStorage.setItem('fs_cart', JSON.stringify(cart));
+            alert('已加入購物車 🛒');
+        }
+
+        // 取消預約
+        async function cancelReservation(food) {
+            if (!confirm('確定要取消預約嗎？')) return;
+            // 先撈 reservation_id
+            const res2   = await fetch(`/api/users/${uid}/requests`);
+            const items  = await res2.json();
+            const mine   = items.find(i => i.id == food.id || i.food_id == food.id);
+            const resId  = mine?.reservation_id;
+            if (!resId) { alert('找不到預約資料'); return; }
+
+            const data = new FormData();
+            data.append('requester_uid',  uid);
+            data.append('reservation_id', resId);
+
+            const res = await fetch(`/api/foods/${food.id}/cancel`, { method: 'POST', body: data });
+            const json = await res.json();
+            if (!res.ok) { alert(json.detail || '取消失敗'); return; }
+            alert('預約已取消');
+            window.location.reload();
+        }
+
+        // 分享者查看訂單
+        async function loadOrders(foodId) {
+            const panel = document.getElementById('orders-panel');
+            panel.classList.remove('hidden');
+            panel.innerHTML = '<p class="text-xs text-gray-400">載入中…</p>';
+            try {
+                const res   = await fetch(`/api/foods/${foodId}/reservations?sharer_uid=${uid}`);
+                const orders = await res.json();
+                if (orders.length === 0) { panel.innerHTML = '<p class="text-xs text-gray-400">目前無預約訂單</p>'; return; }
+                panel.innerHTML = orders.map(o => `
+                    <div class="border border-gray-100 rounded-xl p-4 mb-3 bg-white text-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-gray-800">${o.requester_name} <span class="text-xs text-gray-400">${o.student_id}</span></span>
+                            <span class="text-xs px-2 py-0.5 rounded-full ${o.status === 'completed' ? 'bg-teal-100 text-teal-600' : o.status === 'no_show' ? 'bg-red-100 text-red-500' : 'bg-orange-50 text-giver'}">${
+                                o.status === 'pending' ? '待領取' : o.status === 'completed' ? '已完成' : '未取'
+                            }</span>
+                        </div>
+                        <p class="text-gray-500 text-xs">份數：${o.quantity_reserved}　預計：${o.estimated_pickup_time}</p>
+                        ${o.status === 'pending' ? `
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="confirmComplete(${foodId}, ${o.reservation_id})" class="flex-1 text-xs py-1.5 rounded-lg bg-receiver text-white hover:bg-teal-600 transition">✅ 確認完成</button>
+                            <button onclick="confirmNoShow(${foodId}, ${o.reservation_id})" class="flex-1 text-xs py-1.5 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 transition">❌ 標記未取</button>
+                        </div>` : ''}
+                    </div>`).join('');
+            } catch { panel.innerHTML = '<p class="text-xs text-red-400">載入失敗</p>'; }
+        }
+
+        window.confirmComplete = async (foodId, resId) => {
+            const data = new FormData();
+            data.append('sharer_uid', uid);
+            data.append('reservation_id', resId);
+            const res = await fetch(`/api/foods/${foodId}/complete`, { method: 'POST', body: data });
+            const json = await res.json();
+            if (!res.ok) { alert(json.detail); return; }
+            alert('已確認完成！');
+            loadOrders(foodId);
+        };
+
+        window.confirmNoShow = async (foodId, resId) => {
+            if (!confirm('確定標記為「未取」？此操作會計入對方的取貨率')) return;
+            const data = new FormData();
+            data.append('sharer_uid', uid);
+            data.append('reservation_id', resId);
+            const res = await fetch(`/api/foods/${foodId}/no_show`, { method: 'POST', body: data });
+            const json = await res.json();
+            if (!res.ok) { alert(json.detail); return; }
+            alert('已標記未取');
+            loadOrders(foodId);
+        };
+    </script>
 </body>
 </html>

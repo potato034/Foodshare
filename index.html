@@ -126,8 +126,9 @@
 
             <!-- 搜尋引擎 -->
             <div class="ml-auto w-[360px] relative hidden xl:block">
-                <input type="text" placeholder="搜尋關鍵字或地點..." 
-                       class="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent text-sm">
+                <input type="text" id="index-search-input" placeholder="搜尋關鍵字或地點…"
+                       class="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent text-sm"
+                       onkeydown="if(event.key==='Enter'&&this.value.trim()){window.location.href='./static/browse.html?q='+encodeURIComponent(this.value.trim())}">
                 <div class="absolute left-3.5 top-3.5 text-gray-400">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
@@ -140,6 +141,12 @@
                     <!-- 訊息 Icon -->
                     <a href="./static/message.html" class="text-gray-600 hover:text-gray-900 transition" title="私訊">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    </a>
+
+                    <!-- 購物車 Icon -->
+                    <a href="./static/cart.html" class="relative text-gray-600 hover:text-gray-900 transition" title="購物車">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span id="cart-badge-index" class="hidden absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-orange-400 text-white text-[10px] font-bold flex items-center justify-center"></span>
                     </a>
 
                     <!-- 鈴鐺 Icon -->
@@ -178,7 +185,7 @@
                 </div>
 
                 <!-- 未登入時顯示的登入/註冊按鈕 -->
-                <button id="header-login-btn" class="bg-[#A8CBCB] hover:bg-teal-600 text-white font-semibold px-5 py-2 text-sm transition shadow-sm shrink-0">
+                <button id="header-login-btn" class="bg-[#A8CBCB] hover:bg-teal-600 text-white font-semibold px-5 py-2 text-sm transition shadow-sm shrink-0 rounded-full">
                     登入 / 註冊
                 </button>
             </div>
@@ -192,36 +199,40 @@
                 <!-- 類別篩選器 -->
                 <div class="flex items-center space-x-3 mb-4 overflow-x-auto pb-2">
                     <span class="text-sm font-semibold text-gray-500 shrink-0">食物類別：</span>
-                    <button class="px-4 py-1.5 rounded-full bg-receiver text-white text-sm font-medium">全部</button>
-                    <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">便當</button>
-                    <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">飲料</button>
-                    <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">餐盒</button>
-                    <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">甜點</button>
-                    <button class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">其他</button>
+                    <button data-filter-btn="全部" class="px-4 py-1.5 rounded-full bg-receiver text-white text-sm font-medium transition">全部</button>
+                    <button data-filter-btn="便當" class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">便當</button>
+                    <button data-filter-btn="飲料" class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">飲料</button>
+                    <button data-filter-btn="餐盒" class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">餐盒</button>
+                    <button data-filter-btn="甜點" class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">甜點</button>
+                    <button data-filter-btn="其他" class="px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition">其他</button>
                 </div>
 
                 <!-- 地圖主體與左側 1/3 詳細資訊區塊 -->
                 <div class="relative w-full h-[450px] bg-slate-100 rounded-xl overflow-hidden border border-gray-200 shadow-inner flex flex-col lg:flex-row">
                     
                     <!-- 地圖左側 1/3 食物細項顯示區 -->
-                    <div id="detail-panel" class="w-full lg:w-1/3 h-60 lg:h-full bg-white border-r-0 lg:border-r border-b lg:border-b-0 border-gray-200 p-5 flex flex-col justify-between z-10 shadow-md">
-                        <div>
-                            <div class="flex justify-between items-start mb-3">
-                                <span id="detail-category" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-orange-100 text-orange-600">飲料</span>
-                                <span id="detail-time" class="text-xs text-gray-400">剛剛發布</span>
+                    <div id="detail-panel" class="w-full lg:w-1/3 h-auto lg:h-full bg-white border-r-0 lg:border-r border-b lg:border-b-0 border-gray-200 flex flex-col z-10 shadow-md overflow-hidden">
+                        <!-- 圖片/Emoji 區 -->
+                        <div id="detail-hero" class="w-full h-32 bg-orange-50 flex items-center justify-center text-5xl shrink-0"></div>
+                        <!-- 文字區 -->
+                        <div class="p-4 flex flex-col justify-between flex-1">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <span id="detail-category" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-orange-100 text-orange-600">飲料</span>
+                                    <span id="detail-time" class="text-xs text-gray-400">剛剛發布</span>
+                                </div>
+                                <h3 id="detail-title" class="text-base font-bold text-gray-900 mb-1">—</h3>
+                                <p id="detail-description" class="text-xs text-gray-500 mb-3 line-clamp-2">—</p>
+                                <div class="space-y-1 text-xs text-gray-500">
+                                    <div><span id="detail-countdown" class="text-orange-500 font-medium">⏳ —</span></div>
+                                    <div class="flex items-center gap-1">📍 <span id="detail-location">—</span></div>
+                                </div>
                             </div>
-                            <h3 id="detail-title" class="text-lg font-bold text-gray-900 mb-2">多出的黑糖珍珠鮮奶</h3>
-                            <p id="detail-description" class="text-sm text-gray-600 mb-4">微糖微冰、全新未拆封。買一送一多一杯喝不完，送給有緣人！</p>
-                            
-                            <div class="space-y-2 text-xs text-gray-500">
-                                <div class="flex items-center"><span class="font-bold w-12 text-gray-700">時間：</span> <span id="detail-time-window">12:00 - 14:00 之間</span></div>
-                                <div class="flex items-center"><span class="font-bold w-12 text-gray-700">地點：</span> <span id="detail-location">中興大學男生宿舍大廳</span></div>
-                            </div>
+                            <a id="request-food-btn" href="#"
+                               class="mt-3 w-full py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition text-center block">
+                                申請索取 →
+                            </a>
                         </div>
-                         
-                        <button id="request-food-btn" class="w-full py-2.5 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition">
-                            申請索取
-                        </button>
                     </div>
 
                     <!-- 真實地圖 -->
@@ -236,13 +247,19 @@
 
             <!-- 【區塊二：食物卡片列表區域】 -->
             <section class="p-6 max-w-7xl mx-auto w-full">
-                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                    <span class="w-3 h-6 bg-giver rounded-full mr-2 inline-block"></span>
-                    最新免費食物
-                </h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                        <span class="w-3 h-6 bg-giver rounded-full mr-2 inline-block"></span>
+                        最新免費食物
+                    </h2>
+                    <a href="./static/browse.html" class="text-sm font-semibold text-receiver hover:underline">查看全部 →</a>
+                </div>
 
-                <div id="food-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    </div>
+                <!-- Swiper 輪播容器 -->
+                <div class="swiper food-swiper" style="overflow:hidden">
+                    <div id="food-grid" class="swiper-wrapper"></div>
+                </div>
+                <p id="food-empty" class="hidden text-center text-gray-400 py-8">此類別目前沒有可領取的食物</p>
             </section>
         </main>
 
@@ -277,67 +294,9 @@
         }
 
         // ================================================================
-        // 2. 模擬從資料庫（FastAPI）撈出來的食物資料清單
+        // 2. 從 FastAPI 撈食物資料（取代原本的靜態陣列）
         // ================================================================
-        const mockDatabaseData = [
-            {
-                id: 1,
-                title: "多出的黑糖珍珠鮮奶",
-                category: "飲料",
-                description: "全新未拆封，微糖微冰。買一送一多一杯喝不完...",
-                pickup_location: "女宿誠軒",
-                time_window: "12:00 - 14:00",
-                time_ago: "5 分鐘前",
-                coords: [24.1209, 120.6762],
-                emoji: "🧋",
-                bg_color: "bg-orange-100",
-                text_color: "text-orange-600",
-                badge_color: "bg-orange-50",
-            },
-            {
-                id: 2,
-                title: "會議多餘的排骨便當",
-                category: "便當",
-                description: "系辦中午開會多出 3 個排骨便當，皆全新未動，歡迎自取。",
-                pickup_location: "社管大樓 4 樓",
-                time_window: "12:30 - 14:00",
-                time_ago: "20 分鐘前",
-                coords: [24.1239, 120.6777],
-                emoji: "🍱",
-                bg_color: "bg-teal-50",
-                text_color: "text-teal-600",
-                badge_color: "bg-teal-50",
-            },
-            {
-                id: 3,
-                title: "巧克力鮮 cream 蛋糕",
-                category: "甜點",
-                description: "慶生切剩下的半個蛋糕，一直冰在冰箱，保存良好。",
-                pickup_location: "女生宿舍交誼廳",
-                time_window: "13:00 - 18:00",
-                time_ago: "1 小時前",
-                coords: [24.1218, 120.6769],
-                emoji: "🍰",
-                bg_color: "bg-yellow-50",
-                text_color: "text-yellow-600",
-                badge_color: "bg-yellow-50",
-            },
-            {
-                id: 4,
-                title: "多買的洪瑞珍三明治",
-                category: "其他",
-                description: "早上不小心重複多買了，期限到今天晚上，希望有人能帶走它。",
-                pickup_location: "綜合大樓一樓",
-                time_window: "11:00 - 21:00",
-                time_ago: "2 小時前",
-                coords: [24.1237, 120.6798],
-                emoji: "🥪",
-                bg_color: "bg-purple-50",
-                text_color: "text-purple-600",
-                badge_color: "bg-purple-50",
-            }
-        ];
-        window.mockDatabaseData = mockDatabaseData;
+        window.foodData = [];
 
         // 初始化地圖 (置中在中興大學)
         const campusMap = L.map('campus-map', { scrollWheelZoom: false }).setView([24.1232, 120.6776], 16);
@@ -354,15 +313,53 @@
             document.getElementById('detail-category').textContent = item.category;
             document.getElementById('detail-category').className = `px-2.5 py-1 text-xs font-semibold rounded-md ${item.badge_color.replace('bg-', 'bg-').replace('50', '100')} ${item.text_color}`;
             document.getElementById('detail-time').textContent = item.time_ago;
+            // 圖片或 emoji
+            const hero = document.getElementById('detail-hero');
+            if (item.image_path) {
+                hero.innerHTML = `<img src="${item.image_path}" class="w-full h-full object-cover">`;
+            } else {
+                hero.innerHTML = '';
+                hero.textContent = item.emoji || '🍴';
+            }
+
             document.getElementById('detail-title').textContent = item.title;
             document.getElementById('detail-description').textContent = item.description;
-            document.getElementById('detail-time-window').textContent = item.time_window;
-            document.getElementById('detail-location').textContent = item.pickup_location;
+
+            // 地點
+            const locText = item.detail_location
+                ? `${item.main_location} - ${item.detail_location}`
+                : item.main_location || item.pickup_location;
+            document.getElementById('detail-location').textContent = locText;
+
+            // 倒數計時（每秒更新）
+            const countdownEl = document.getElementById('detail-countdown');
+            clearInterval(window._panelCountdown);
+            function tickPanel() {
+                if (!item.expires_at_iso) { countdownEl.textContent = '⏳ —'; return; }
+                const diff = new Date(item.expires_at_iso).getTime() - Date.now();
+                if (diff <= 0) {
+                    countdownEl.textContent = '⛔ 已過期';
+                    countdownEl.classList.replace('text-orange-500', 'text-gray-400');
+                    clearInterval(window._panelCountdown);
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                const hStr = h > 0 ? `${h}:` : '';
+                countdownEl.textContent = `⏳ 還剩 ${hStr}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            }
+            tickPanel();
+            window._panelCountdown = setInterval(tickPanel, 1000);
         }
 
         function focusFood(item) {
             activeFoodId = item.id;
             updateDetailPanel(item);
+
+            // 申請索取按鈕導向 detail.html
+            const reqBtn = document.getElementById('request-food-btn');
+            if (reqBtn) reqBtn.href = `./static/detail.html?id=${item.id}`;
 
             const card = document.querySelector(`[data-food-card="${item.id}"]`);
             document.querySelectorAll('[data-food-card]').forEach((el) => el.classList.remove('food-card-active'));
@@ -377,16 +374,38 @@
             }
         }
 
-        // 把資料庫陣列渲染到網頁畫面上
+        // 把資料陣列渲染成卡片並更新地圖（Fix 2+3+6）
+        let foodSwiper = null;
+
         function renderFoodCards(dataArray) {
-            const foodGrid = document.getElementById('food-grid');
-            foodGrid.innerHTML = ""; // 先清空容器
+            const foodGrid   = document.getElementById('food-grid');
+            const emptyMsg   = document.getElementById('food-empty');
+            foodGrid.innerHTML = '';
+
+            // 清除舊 markers
+            mapMarkers.forEach(m => campusMap.removeLayer(m));
+            mapMarkers.clear();
+
+            // 銷毀舊 Swiper
+            if (foodSwiper) { foodSwiper.destroy(true, true); foodSwiper = null; }
+
+            if (dataArray.length === 0) {
+                emptyMsg.classList.remove('hidden');
+                return;
+            }
+            emptyMsg.classList.add('hidden');
 
             dataArray.forEach(item => {
-                const cardHTML = `
-                    <div data-food-card="${item.id}" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-200 flex flex-col justify-between cursor-pointer" onclick="focusFood(window.mockDatabaseData.find(food => food.id === ${item.id}))">
+                const heroHTML = item.image_path
+                    ? `<img src="${item.image_path}" class="w-full h-40 object-cover">`
+                    : `<div class="w-full h-40 ${item.bg_color} flex items-center justify-center text-5xl">${item.emoji}</div>`;
+
+                // 每張卡片用 swiper-slide 包裝
+                foodGrid.innerHTML += `
+                    <div class="swiper-slide" style="height:auto">
+                      <div data-food-card="${item.id}" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-200 flex flex-col justify-between cursor-pointer h-full" onclick="focusFood(window.foodData.find(f => f.id === ${item.id}))">
                         <div>
-                            <div class="w-full h-40 ${item.bg_color} flex items-center justify-center text-4xl">${item.emoji}</div>
+                            ${heroHTML}
                             <div class="p-4">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-xs font-semibold ${item.text_color} ${item.badge_color} px-2 py-0.5 rounded">${item.category}</span>
@@ -396,29 +415,130 @@
                                 <p class="text-xs text-gray-500 line-clamp-2">${item.description}</p>
                             </div>
                         </div>
-                        <div class="px-4 pb-4 pt-2 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500">
-                            <span>📍 ${item.pickup_location}</span>
-                            <span class="text-giver font-semibold cursor-pointer">看詳細</span>
+                        <div class="px-4 pt-2 pb-1 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500">
+                            <span>📍 ${item.detail_location ? `${item.main_location}-${item.detail_location}` : item.main_location || item.pickup_location}</span>
+                            <a href="./static/detail.html?id=${item.id}" class="text-giver font-semibold hover:underline" onclick="event.stopPropagation()">看詳細 →</a>
                         </div>
-                    </div>
-                `;
-                
-                foodGrid.innerHTML += cardHTML;
+                        <div class="px-4 pb-3 text-xs font-medium text-orange-500 countdown-label" data-expires="${item.expires_at_iso}">⏳ 計算中…</div>
+                      </div>
+                    </div>`;
 
-                const marker = L.marker(item.coords).addTo(campusMap);
-                marker.bindPopup(`<b>${item.title}</b><br>${item.pickup_location}`);
+                // Fix 6：emoji marker 加白色圓圈背景
+                const emojiIcon = L.divIcon({
+                    className: '',
+                    html: `<div style="width:40px;height:40px;background:rgba(255,255,255,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,0.22);cursor:pointer">${item.emoji}</div>`,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20],
+                    popupAnchor: [0, -22],
+                });
+                const marker = L.marker(item.coords, { icon: emojiIcon }).addTo(campusMap);
+                const popupLoc = item.detail_location
+                    ? `${item.main_location} - ${item.detail_location}`
+                    : item.main_location || item.pickup_location;
+                marker.bindPopup(`<b>${item.title}</b><br>📍 ${popupLoc}`);
                 marker.on('click', () => focusFood(item));
                 mapMarkers.set(item.id, marker);
             });
+
+            // 初始化 Swiper（卡片數 < 4 就不 loop、不自動播放）
+            const enough = dataArray.length > 4;
+            foodSwiper = new Swiper('.food-swiper', {
+                slidesPerView: 1.2,
+                spaceBetween: 16,
+                loop: enough,
+                autoplay: enough ? { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true } : false,
+                speed: 600,
+                breakpoints: {
+                    640:  { slidesPerView: 2, spaceBetween: 16 },
+                    1024: { slidesPerView: 4, spaceBetween: 20 },
+                },
+            });
         }
 
-        // 網頁載入完成後，立刻執行渲染與地圖中心定位
-        window.addEventListener('DOMContentLoaded', () => {
-            renderFoodCards(mockDatabaseData);
-            focusFood(mockDatabaseData[0]);
+        // Fix 4：類別篩選邏輯
+        let activeCategory = '全部';
+        function applyFilter(category) {
+            activeCategory = category;
+            const filtered = category === '全部'
+                ? window.foodData
+                : window.foodData.filter(f => f.category === category);
+            renderFoodCards(filtered);
+            if (filtered.length > 0) focusFood(filtered[0]);
+
+            // 更新按鈕樣式
+            document.querySelectorAll('[data-filter-btn]').forEach(btn => {
+                const isActive = btn.dataset.filterBtn === category;
+                btn.className = isActive
+                    ? 'px-4 py-1.5 rounded-full bg-receiver text-white text-sm font-medium transition'
+                    : 'px-4 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition';
+            });
+        }
+
+        // 網頁載入完成後，從 API 撈資料再渲染
+        window.addEventListener('DOMContentLoaded', async () => {
+            const foodGrid = document.getElementById('food-grid');
+
+            // 綁定篩選按鈕（在 HTML 上加 data-filter-btn 屬性）
+            document.querySelectorAll('[data-filter-btn]').forEach(btn => {
+                btn.addEventListener('click', () => applyFilter(btn.dataset.filterBtn));
+            });
+
+            try {
+                const res  = await fetch('/api/foods');
+                const data = await res.json();
+                window.foodData = data;
+
+                if (data.length === 0) {
+                    if (foodGrid) foodGrid.innerHTML = '<p class="text-center text-gray-400 col-span-full py-8">目前沒有可領取的食物</p>';
+                    return;
+                }
+                renderFoodCards(data);
+                focusFood(data[0]);
+            } catch (err) {
+                console.error('載入食物資料失敗', err);
+                if (foodGrid) foodGrid.innerHTML = '<p class="text-center text-red-400 col-span-full py-8">載入失敗，請確認伺服器是否啟動</p>';
+            }
         });
 
+        // 倒數計時：每秒更新所有卡片的剩餘時間
+        function updateCountdowns() {
+            const now = Date.now();
+            document.querySelectorAll('.countdown-label').forEach(el => {
+                const expires = new Date(el.dataset.expires).getTime();
+                const diff = expires - now;
+                if (diff <= 0) {
+                    el.textContent = '⛔ 已過期';
+                    el.classList.replace('text-orange-500', 'text-gray-400');
+                    const card = el.closest('[data-food-card]');
+                    if (card) card.style.opacity = '0.45';
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                const hStr = h > 0 ? `${h}:` : '';
+                el.textContent = `⏳ 還剩 ${hStr}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            });
+        }
+        setInterval(updateCountdowns, 1000);
+
+        // 購物車 badge
+        function updateIndexCartBadge() {
+            const badge = document.getElementById('cart-badge-index');
+            if (!badge) return;
+            const cart = JSON.parse(localStorage.getItem('fs_cart') || '[]');
+            if (cart.length > 0) {
+                badge.textContent = cart.length > 9 ? '9+' : cart.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+        updateIndexCartBadge();
+        window.addEventListener('fs-cart-updated', updateIndexCartBadge);
+
         window.addEventListener('storage', (event) => {
+            if (event.key === 'fs_cart') { updateIndexCartBadge(); return; }
             if (!event.key || !event.key.startsWith('fs_user_')) return;
             const snapshot = getCurrentProfileSnapshot();
             if (snapshot && auth.currentUser && snapshot.uid === auth.currentUser.uid) {
@@ -827,5 +947,9 @@
             });
         })();
     </script>
+
+    <!-- Swiper -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 </body>
 </html>

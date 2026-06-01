@@ -58,50 +58,80 @@
                         <label for="category" class="block text-sm font-medium text-gray-700 mb-1">類別 <span class="text-red-500">*</span></label>
                         <select id="category" name="category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none bg-white transition">
                             <option value="" disabled selected>請選擇類別</option>
-                            <option value="便當">🍱 便當</option>
-                            <option value="飲料">🧋 飲料</option>
-                            <option value="餐盒">🥡 餐盒</option>
-                            <option value="甜點">🍰 甜點</option>
-                            <option value="其他">🥪 其他</option>
+                            <option value="便當">便當</option>
+                            <option value="飲料">飲料</option>
+                            <option value="餐盒">餐盒</option>
+                            <option value="甜點">甜點</option>
+                            <option value="麵包">麵包</option>
+                            <option value="披薩">披薩</option>
+                            <option value="炸物">炸物</option>
+                            <option value="其他">其他</option>
+
                         </select>
+                    </div>
+                </div>
+
+                <!-- Emoji 選擇器：選完類別後自動帶入預設，點欄位用系統 emoji 鍵盤自由換 -->
+                <div class="flex items-start gap-4 p-4 bg-orange-50 rounded-xl border border-orange-100">
+                    <div class="shrink-0">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">地圖顯示 Emoji</label>
+                        <input type="text" id="emoji-input" name="emoji_choice"
+                               placeholder="🍱"
+                               class="w-16 h-12 text-center text-3xl border border-gray-300 rounded-xl focus:ring-2 focus:ring-giver outline-none bg-white cursor-pointer"
+                               maxlength="8" readonly
+                               onclick="this.removeAttribute('readonly'); this.focus()">
+                    </div>
+                    <div class="pt-1">
+                        <p class="text-sm font-medium text-gray-700 mb-1">怎麼選 emoji？</p>
+                        <p class="text-xs text-gray-500">① 先選左側的「類別」，欄位會自動帶入預設 emoji</p>
+                        <p class="text-xs text-gray-500">② 想換其他 emoji：點擊左邊的方框，再按
+                            <kbd class="bg-white border border-gray-300 rounded px-1 text-xs">Windows + .</kbd>或是 <kbd class="bg-white border border-gray-300 rounded px-1 text-xs">Control + Command + 空白鍵</kbd>
+                            開啟 emoji 鍵盤
+                        </p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">供應數量/份量 <span class="text-red-500">*</span></label>
-                        <input type="text" id="quantity" name="quantity" required placeholder="例如：3個、大約半鍋" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition">
+                        <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">供應份數 <span class="text-red-500">*</span></label>
+                        <input type="number" id="quantity" name="quantity" required min="1" max="999" placeholder="請輸入整數，例如 3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition">
                     </div>
                     <div>
-                        <label for="time-limit" class="block text-sm font-medium text-gray-700 mb-1">限時領取 <span class="text-red-500">*</span></label>
-                        <select id="time-limit" name="time_limit" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none bg-white transition">
-                            <option value="1">1 小時內</option>
-                            <option value="2">2 小時內</option>
-                            <option value="3">3 小時內</option>
-                            <option value="6">6 小時內</option>
-                            <option value="12">12 小時內</option>
-                            <option value="24">24 小時內 (今天內)</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">限時領取 <span class="text-red-500">*</span></label>
+                        <div class="flex gap-2">
+                            <input type="number" id="time-limit-value" min="1" max="999" value="1"
+                                   class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition text-center">
+                            <select id="time-limit-unit" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none bg-white transition">
+                                <option value="min">分鐘</option>
+                                <option value="hour" selected>小時</option>
+                            </select>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">逾時後食物將自動下架</p>
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">領取地點 <span class="text-red-500">*</span></label>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <select name="main_location" required class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none bg-white transition">
-                            <option value="" disabled selected>選擇校園地標</option>
-                            <option value="圓廳">圓廳</option>
-                            <option value="圖書館">圖書館</option>
-                            <option value="綜合大樓">綜合大樓</option>
-                            <option value="校門口">校門口</option>
-                            <option value="社館大樓">社館大樓</option>
-                            <option value="應經一館">應經一館</option>
-                            <option value="國農大樓">國農大樓</option>
-                            <option value="體育館">體育館</option>
-                            <option value="理學院">理學院</option>
-                            <option value="小禮堂">小禮堂</option>
-                            <option value="雲平樓">雲平樓</option>
-                        </select>
+                        <!-- 自訂可搜尋下拉選單 -->
+                        <div class="relative w-full sm:w-1/2" id="loc-wrapper">
+                            <input type="text" id="main-location-input"
+                                   placeholder="搜尋或選擇地標…" autocomplete="off" readonly
+                                   class="w-full px-4 py-2 pr-9 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition cursor-pointer bg-white">
+                            <!-- 下拉箭頭 -->
+                            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">▾</span>
+                            <!-- 隱藏欄位 -->
+                            <input type="hidden" name="main_location" id="main-location-hidden">
+                            <!-- 下拉選單 -->
+                            <div id="loc-dropdown"
+                                 class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                                <div class="p-2 border-b border-gray-100">
+                                    <input type="text" id="loc-search" placeholder="輸入關鍵字篩選…" autocomplete="off"
+                                           class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-giver outline-none">
+                                </div>
+                                <ul id="loc-list" class="max-h-48 overflow-y-auto py-1 text-sm"></ul>
+                            </div>
+                        </div>
                         <input type="text" name="detail_location" placeholder="詳細位置 (例：4樓系辦外桌上)" class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition">
                     </div>
                     <p class="text-xs text-gray-500 mt-1">選擇鄰近的地標能幫助索取者在地圖上更快找到喔！</p>
@@ -110,6 +140,15 @@
                 <div>
                     <label for="description" class="block text-sm font-medium text-gray-700 mb-1">詳細內容 (選填)</label>
                     <textarea id="description" name="description" rows="4" placeholder="補充說明食物的狀態，例如：全新未拆封、微糖微冰、請自備環保容器..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition resize-none"></textarea>
+                </div>
+
+                <!-- 編輯模式才顯示：領取狀態 -->
+                <div id="status-field" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">領取狀態</label>
+                    <select id="status-select" name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none bg-white transition">
+                        <option value="available">🟢 可領取（重新開放）</option>
+                        <option value="completed">⚫ 已完成（手動關閉）</option>
+                    </select>
                 </div>
 
                 <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
@@ -121,6 +160,24 @@
     </main>
 
     <script>
+        // 類別 → 預設 emoji 對應表
+        const CATEGORY_EMOJI = {
+            '便當': '🍱', '飲料': '🧋', '餐盒': '🥡', '甜點': '🍰', '麵包': '🍞', '披薩': '🍕','炸物': '🍟', '其他': '🥪'
+        };
+
+        // 選類別時自動帶入預設 emoji（使用者還沒有自己選過的話）
+        document.getElementById('category').addEventListener('change', function () {
+            const emojiInput = document.getElementById('emoji-input');
+            if (!emojiInput.dataset.userPicked) {
+                emojiInput.value = CATEGORY_EMOJI[this.value] || '';
+            }
+        });
+
+        // 使用者自己改了 emoji → 標記為「已自選」，類別切換不再覆蓋
+        document.getElementById('emoji-input').addEventListener('input', function () {
+            if (this.value.trim()) this.dataset.userPicked = 'true';
+        });
+
         function previewImage(event) {
             const file = event.target.files[0];
             if (file) {
@@ -138,68 +195,182 @@
     </script>
 
     <script type="module">
-        import { getCurrentUserSnapshot, loadUserProfile, addShareItem, saveUserProfile, getProfileKey } from './user-store.js';
+        import { getCurrentUserSnapshot, loadUserProfile } from './user-store.js';
 
         const titleEl = document.getElementById('page-title');
-        const form = document.getElementById('upload-form');
+        const form    = document.getElementById('upload-form');
+        const submitBtn = form?.querySelector('[type="submit"]');
 
-        function refreshPageState() {
-            const snapshot = getCurrentUserSnapshot();
-            if (snapshot?.uid) {
-                const profile = loadUserProfile(snapshot.uid, snapshot);
-                if (titleEl) titleEl.textContent = `${profile.displayName || snapshot.email?.split('@')[0] || '我的'} 的上傳頁`;
-                return snapshot;
-            }
-            if (titleEl) titleEl.textContent = '請先登入後再上傳';
-            return null;
-        }
+        // ── 自訂可搜尋地點下拉 ──────────────────────────────────
+        let allLocations = [];
+        const locInput    = document.getElementById('main-location-input');
+        const locHidden   = document.getElementById('main-location-hidden');
+        const locDropdown = document.getElementById('loc-dropdown');
+        const locSearch   = document.getElementById('loc-search');
+        const locList     = document.getElementById('loc-list');
 
-        refreshPageState();
-
-        if (form) {
-            form.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const snapshot = getCurrentUserSnapshot();
-                if (!snapshot?.uid) {
-                    alert('請先登入，才能把資料加入你的個人清單。');
-                    return;
-                }
-
-                const title = document.getElementById('food-name').value.trim();
-                const category = document.getElementById('category').value;
-                const quantity = document.getElementById('quantity').value.trim();
-                const timeLimit = document.getElementById('time-limit').value;
-                const mainLocation = form.elements['main_location'].value;
-                const detailLocation = form.elements['detail_location'].value.trim();
-                const description = document.getElementById('description').value.trim();
-                const preview = document.getElementById('image-preview');
-
-                if (!title || !category || !quantity || !timeLimit || !mainLocation) {
-                    alert('請先填完必填欄位');
-                    return;
-                }
-
-                const nextProfile = addShareItem(snapshot.uid, {
-                    title,
-                    emoji: category === '便當' ? '🍱' : category === '飲料' ? '🧋' : category === '甜點' ? '🍰' : category === '餐盒' ? '🥡' : '🥪',
-                    location: detailLocation ? `${mainLocation}｜${detailLocation}` : mainLocation,
-                    timeLabel: `限時 ${timeLimit} 小時`,
-                    status: '進行中',
-                    quantity,
-                    category,
-                    description,
-                    image: preview && preview.src ? preview.src : '',
-                    href: './share.html'
-                }, snapshot);
-
-                saveUserProfile(snapshot.uid, nextProfile);
-                localStorage.setItem('fs_currentUser', JSON.stringify(snapshot));
-                alert('已加入你的分享清單');
-                window.location.href = './share.html';
+        function renderLocList(keyword = '') {
+            const kw = keyword.toLowerCase();
+            const filtered = kw
+                ? allLocations.filter(n => n.toLowerCase().includes(kw))
+                : allLocations;
+            locList.innerHTML = filtered.length === 0
+                ? '<li class="px-4 py-2 text-gray-400">無符合的地點</li>'
+                : filtered.map(name => `
+                    <li class="loc-option px-4 py-2 hover:bg-orange-50 hover:text-giver cursor-pointer transition rounded-lg mx-1
+                               ${locInput.value === name ? 'bg-orange-50 text-giver font-semibold' : 'text-gray-700'}"
+                        data-name="${name}">${name}</li>`
+                ).join('');
+            locList.querySelectorAll('.loc-option').forEach(li => {
+                li.addEventListener('mousedown', e => {
+                    e.preventDefault(); // 避免 blur 先觸發
+                    selectLocation(li.dataset.name);
+                });
             });
         }
 
-        window.addEventListener('focus', refreshPageState);
+        function selectLocation(name) {
+            locInput.value  = name;
+            locHidden.value = name;
+            closeDropdown();
+        }
+
+        function openDropdown() {
+            locDropdown.classList.remove('hidden');
+            renderLocList(locSearch.value);
+            locSearch.value = '';
+            locSearch.focus();
+        }
+
+        function closeDropdown() {
+            locDropdown.classList.add('hidden');
+            locSearch.value = '';
+        }
+
+        locInput.addEventListener('click', openDropdown);
+        locSearch.addEventListener('input', () => renderLocList(locSearch.value));
+        locSearch.addEventListener('keydown', e => { if (e.key === 'Escape') closeDropdown(); });
+
+        // 點外面關閉
+        document.addEventListener('click', e => {
+            if (!document.getElementById('loc-wrapper').contains(e.target)) closeDropdown();
+        });
+
+        // 從 API 載入地點
+        fetch('/api/locations').then(r => r.json()).then(locs => {
+            allLocations = locs.map(l => l.name);
+        }).catch(() => {});
+
+        // 頁面標題顯示登入者名字
+        const snapshot  = getCurrentUserSnapshot();
+        const editId    = new URLSearchParams(window.location.search).get('edit'); // 編輯模式
+        if (snapshot?.uid) {
+            const profile = loadUserProfile(snapshot.uid, snapshot);
+            if (titleEl) titleEl.textContent = `${profile.displayName || snapshot.email?.split('@')[0] || '我的'} 的上傳頁`;
+
+            // 如果是編輯模式，顯示狀態欄並預填表單資料
+            if (editId) {
+                document.getElementById('page-title').textContent = '編輯分享';
+                document.querySelector('[type="submit"]').textContent = '儲存變更';
+                document.getElementById('status-field').classList.remove('hidden');
+                fetch(`/api/foods/${editId}`).then(r => r.json()).then(food => {
+                    document.getElementById('food-name').value   = food.title || '';
+                    document.getElementById('category').value    = food.category || '';
+                    document.getElementById('emoji-input').value = food.emoji || '';
+                    document.getElementById('quantity').value    = food.quantity || '';
+                    document.getElementById('time-limit').value  = food.time_limit || 2;
+                    document.getElementById('description').value = food.description || '';
+                    // main_location / detail_location 現在 API 直接回傳
+                    if (food.main_location) selectLocation(food.main_location);
+                    form.elements['detail_location'].value = food.detail_location || '';
+                    document.getElementById('emoji-input').dataset.userPicked = 'true';
+                    document.getElementById('status-select').value = food.status || 'available';
+                    // 有舊圖片就在預覽區顯示
+                    if (food.image_path) {
+                        const preview = document.getElementById('image-preview');
+                        const icon    = document.getElementById('upload-icon');
+                        preview.src = food.image_path;
+                        preview.classList.remove('hidden');
+                        icon.classList.add('hidden');
+                    }
+                }).catch(() => {});
+            }
+
+            // 登入後把用戶資訊同步到 SQLite（讓 FoodPost 的 FK 能正確指向 users 表）
+            const syncData = new FormData();
+            syncData.append('firebase_uid', snapshot.uid);
+            syncData.append('email', snapshot.email || '');
+            syncData.append('display_name', profile.displayName || '');
+            fetch('/api/users/sync', { method: 'POST', body: syncData }).catch(() => {});
+        } else {
+            if (titleEl) titleEl.textContent = '請先登入後再上傳';
+        }
+
+        if (form) {
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const snapshot = getCurrentUserSnapshot();
+                if (!snapshot?.uid) {
+                    alert('請先登入，才能發布分享。');
+                    return;
+                }
+
+                // 基本驗證
+                const title       = document.getElementById('food-name').value.trim();
+                const category    = document.getElementById('category').value;
+                const quantity    = document.getElementById('quantity').value.trim();
+                const timeLimitVal  = parseInt(document.getElementById('time-limit-value').value) || 1;
+                const timeLimitUnit = document.getElementById('time-limit-unit').value;
+                const timeLimit     = timeLimitUnit === 'hour' ? timeLimitVal * 60 : timeLimitVal; // 統一轉分鐘
+                const mainLoc     = document.getElementById('main-location-hidden').value
+                                   || document.getElementById('main-location-input').value;
+                const detailLoc   = form.elements['detail_location'].value.trim();
+                const description = document.getElementById('description').value.trim();
+                const fileInput   = document.getElementById('file-upload');
+
+                if (!title || !category || !quantity || !timeLimit || !mainLoc) {
+                    alert('請先填完所有必填欄位（＊）');
+                    return;
+                }
+
+                // 組成 FormData 送到 API
+                const emojiChoice = document.getElementById('emoji-input').value.trim();
+                const data = new FormData();
+                data.append('sharer_uid',      snapshot.uid);
+                data.append('title',           title);
+                data.append('emoji_choice',    emojiChoice);
+                data.append('category',        category);
+                data.append('quantity',        quantity);
+                data.append('time_limit',      timeLimit);
+                data.append('main_location',   mainLoc);
+                data.append('detail_location', detailLoc);
+                data.append('description',     description);
+                if (fileInput.files[0]) {
+                    data.append('file', fileInput.files[0]);
+                }
+
+                // 送出，鎖住按鈕避免重複點
+                const isEdit = !!editId;
+                if (isEdit) {
+                    const statusVal = document.getElementById('status-select')?.value;
+                    if (statusVal) data.append('status', statusVal);
+                }
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = isEdit ? '儲存中…' : '發布中…'; }
+                try {
+                    const url    = isEdit ? `/api/foods/${editId}` : '/api/foods';
+                    const method = isEdit ? 'PUT' : 'POST';
+                    const res    = await fetch(url, { method, body: data });
+                    const json   = await res.json();
+                    if (!res.ok) throw new Error(json.detail || (isEdit ? '儲存失敗' : '發布失敗'));
+                    alert(isEdit ? '已儲存變更 ✅' : '發布成功！已加入分享清單 🎉');
+                    window.location.href = './share.html';
+                } catch (err) {
+                    alert(`操作失敗：${err.message}`);
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = isEdit ? '儲存變更' : '確認發布分享'; }
+                }
+            });
+        }
     </script>
 </body>
 </html>
