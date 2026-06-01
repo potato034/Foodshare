@@ -110,10 +110,26 @@ def seed():
                 created_at=now - timedelta(hours=2),
                 expires_at=now + timedelta(minutes=720),
             ),
+            FoodPost(
+                sharer_uid="demo_user_001",
+                title="阿蓁的高纖豆漿",
+                category="飲料",
+                emoji="🥤",
+                description="在全家剛買的高纖豆漿，還沒喝完，想說放在冰箱裡明天再喝，結果忘了它的存在，現在想說乾脆分享給需要的人好了。",
+                quantity=1, quantity_left=1,
+                main_location="應經一館",
+                detail_location="系學會辦公室",
+                lat=24.1237, lng=120.6798,
+                time_limit=720,   # 720 分鐘 = 12 小時
+                status="available",
+                image_path="/images/soymilk.jpg",
+                created_at=now - timedelta(hours=24),
+                expires_at=now + timedelta(minutes=720),
+            ),
         ]
         db.add_all(sample_posts)
         db.commit()
-        print("測試資料建立完成！共 4 筆食物。")
+        print("測試資料建立完成！共 5 筆食物。")
 
     finally:
         db.close()
