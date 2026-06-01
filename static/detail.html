@@ -198,6 +198,38 @@
         // 目前這筆食物資料（全域，供表單送出使用）
         let currentFood = null;
 
+        function formatPickupOption(date) {
+            const now = new Date();
+            const hh = String(date.getHours()).padStart(2, '0');
+            const mm = String(date.getMinutes()).padStart(2, '0');
+            const dayLabel = date.toDateString() === now.toDateString()
+                ? '今天'
+                : `${date.getMonth() + 1}/${date.getDate()}`;
+            return `${dayLabel} ${hh}:${mm} 前`;
+        }
+
+        function buildPickupTimeOptions(food) {
+            const quarterMs = 15 * 60 * 1000;
+            const now = new Date();
+            const expiresAt = food.expires_at_iso ? new Date(food.expires_at_iso) : null;
+            if (!expiresAt || Number.isNaN(expiresAt.getTime())) {
+                return '<option value="" disabled>目前沒有可預約的領取時間</option>';
+            }
+
+            const firstSlot = new Date(Math.ceil(now.getTime() / quarterMs) * quarterMs);
+            const lastSlot = new Date(Math.floor(expiresAt.getTime() / quarterMs) * quarterMs);
+            const options = [];
+
+            for (let slot = firstSlot; slot <= lastSlot; slot = new Date(slot.getTime() + quarterMs)) {
+                const label = formatPickupOption(slot);
+                options.push(`<option value="${label}">${label}</option>`);
+            }
+
+            return options.length > 0
+                ? options.join('')
+                : '<option value="" disabled>目前沒有可預約的領取時間</option>';
+        }
+
         function renderActions(food) {
             currentFood = food;
             const area = document.getElementById('action-area');
@@ -251,6 +283,7 @@
                 }
 
                 const maxQty = food.quantity_left ?? food.quantity ?? 1;
+                const pickupTimeOptions = buildPickupTimeOptions(food);
                 area.innerHTML = `
                     <div class="space-y-4 border border-gray-100 bg-gray-50 rounded-xl p-5">
                         <h3 class="font-bold text-gray-800 text-sm">填寫預約資訊</h3>
@@ -263,7 +296,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">學號 <span class="text-red-500">*</span></label>
-                                <input id="f-sid" type="text" placeholder="S113xxxxxx"
+                                <input id="f-sid" type="text" placeholder=" "
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
                             </div>
                         </div>
@@ -271,8 +304,11 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">預計領取時間 <span class="text-red-500">*</span></label>
-                                <input id="f-time" type="text" placeholder="例：今天 13:30 前"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
+                                <select id="f-time"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
+                                    <option value="">請選擇領取時間</option>
+                                    ${pickupTimeOptions}
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">預約份數 <span class="text-red-500">*</span></label>
