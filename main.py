@@ -97,6 +97,7 @@ def food_to_card(post: FoodPost, db: Session = None) -> dict:
         "quantity":        post.quantity if post.quantity is not None else "",
         "quantity_left":   post.quantity_left if post.quantity_left is not None else post.quantity,
         "sharer_name":     sharer_name,
+        "sharer_uid":      post.sharer_uid,
         "image_path":      post.image_path or "",
         "expires_at_iso":  (post.expires_at.isoformat() + "Z") if post.expires_at else None,
     }
