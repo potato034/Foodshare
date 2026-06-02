@@ -685,6 +685,14 @@
 
                 const profile = loadUserProfile(user.uid, user);
                 syncCurrentUserSnapshot(user);
+                
+                // 同步使用者到後端資料庫
+                const syncData = new FormData();
+                syncData.append('firebase_uid', user.uid);
+                syncData.append('email', user.email || '');
+                syncData.append('display_name', profile.displayName || '');
+                fetch('/api/users/sync', { method: 'POST', body: syncData }).catch(() => {});
+
                 renderAvatarButton(profile, user);
                 updateAvatarMenu(profile, user);
                 

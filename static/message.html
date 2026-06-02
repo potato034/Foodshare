@@ -151,7 +151,14 @@
 
         // 若 URL 帶了 ?with=xxx，直接開啟對話
         if (initWith) {
-            openChat(initWith, initPostId ? parseInt(initPostId) : null);
+            let parsedPost = null;
+            if (initPostId && initPostId !== 'null' && initPostId !== 'undefined') {
+                const parsed = parseInt(initPostId);
+                if (!isNaN(parsed)) {
+                    parsedPost = parsed;
+                }
+            }
+            openChat(initWith, parsedPost);
         }
     }
 
@@ -219,7 +226,7 @@
     // ── 開啟指定對話 ────────────────────────────────────────
     async function openChat(otherUid, postId = null) {
         currentOther  = otherUid;
-        currentPostId = postId;
+        currentPostId = (postId && !isNaN(postId)) ? postId : null;
         isThreadFirstLoad = true;
 
         chatEmpty.classList.add('hidden');
