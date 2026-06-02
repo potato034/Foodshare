@@ -108,7 +108,7 @@
     <div id="main-view" class="min-h-screen flex flex-col">
 
         <!-- ==================== <header> 導覽列 ==================== -->
-        <script src="./static/header.js"></script>
+        <script src="./static/header.js?v999"></script>
 
         <!-- ==================== <main> 主要內容 ==================== -->
         <main class="flex-grow flex flex-col">
@@ -805,9 +805,7 @@
                 if (!user) {
                     alert("請先登入後再索取食物！");
                     if (loginView) loginView.classList.remove('hidden');
-                } else {
-                    alert("預約索取申請成功！已通知分享者。");
-                }
+                } 
             });
         }
 
