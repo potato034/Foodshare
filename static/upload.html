@@ -93,7 +93,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">供應份數 <span class="text-red-500">*</span></label>
                         <input type="number" id="quantity" name="quantity" required min="1" max="999" placeholder="請輸入整數，例如 3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition">
@@ -109,6 +109,13 @@
                             </select>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">逾時後食物將自動下架</p>
+                    </div>
+                    <div>
+                        <label for="waitlist-time-limit" class="block text-sm font-medium text-gray-700 mb-1">遞補後領取時限 <span class="text-red-500">*</span></label>
+                        <select id="waitlist-time-limit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none bg-white transition">
+                            <!-- options will be populated dynamically -->
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">遞補成功後的專屬領取時限</p>
                     </div>
                 </div>
 
@@ -181,6 +188,79 @@
         document.getElementById('emoji-input').addEventListener('input', function () {
             if (this.value.trim()) this.dataset.userPicked = 'true';
         });
+
+        function updateWaitlistOptions(savedValue) {
+            const val = parseInt(document.getElementById('time-limit-value').value) || 1;
+            const unit = document.getElementById('time-limit-unit').value;
+            const maxMins = unit === 'hour' ? val * 60 : val;
+            
+            const select = document.getElementById('waitlist-time-limit');
+            const previousValue = savedValue || parseInt(select.value) || 30;
+            select.innerHTML = '';
+            
+            let optionsAdded = 0;
+            for (let m = 15; m <= maxMins; m += 15) {
+                const opt = document.createElement('option');
+                opt.value = m;
+                if (m >= 60 && m % 60 === 0) {
+                    opt.textContent = `${m / 60} 小時`;
+                } else {
+                    opt.textContent = `${m} 分鐘`;
+                }
+                select.appendChild(opt);
+                optionsAdded++;
+            }
+            
+            if (maxMins > 0 && maxMins % 15 !== 0) {
+                const opt = document.createElement('option');
+                opt.value = maxMins;
+                if (maxMins >= 60 && maxMins % 60 === 0) {
+                    opt.textContent = `${maxMins / 60} 小時`;
+                } else {
+                    opt.textContent = `${maxMins} 分鐘`;
+                }
+                select.appendChild(opt);
+                optionsAdded++;
+            }
+
+            if (optionsAdded === 0) {
+                const opt = document.createElement('option');
+                opt.value = Math.max(1, maxMins);
+                if (maxMins >= 60 && maxMins % 60 === 0) {
+                    opt.textContent = `${maxMins / 60} 小時`;
+                } else {
+                    opt.textContent = `${maxMins} 分鐘`;
+                }
+                select.appendChild(opt);
+            }
+            
+            let hasSelected = false;
+            for (let i = 0; i < select.options.length; i++) {
+                if (parseInt(select.options[i].value) === previousValue) {
+                    select.selectedIndex = i;
+                    hasSelected = true;
+                    break;
+                }
+            }
+            if (!hasSelected) {
+                let defaultIdx = -1;
+                for (let i = 0; i < select.options.length; i++) {
+                    if (parseInt(select.options[i].value) === 30) {
+                        defaultIdx = i;
+                        break;
+                    }
+                }
+                if (defaultIdx !== -1) {
+                    select.selectedIndex = defaultIdx;
+                } else {
+                    select.selectedIndex = 0;
+                }
+            }
+        }
+
+        document.getElementById('time-limit-value').addEventListener('input', () => updateWaitlistOptions());
+        document.getElementById('time-limit-unit').addEventListener('change', () => updateWaitlistOptions());
+        updateWaitlistOptions();
 
         function previewImage(event) {
             const file = event.target.files[0];
@@ -366,6 +446,7 @@
                         document.getElementById('time-limit-value').value = mins;
                         document.getElementById('time-limit-unit').value = 'min';
                     }
+                    updateWaitlistOptions(food.waitlist_time_limit || 30);
                     document.getElementById('description').value = food.description || '';
                     // main_location / detail_location 現在 API 直接回傳
                     if (food.main_location) selectLocation(food.main_location);
@@ -410,6 +491,7 @@
                 const timeLimitVal  = parseInt(document.getElementById('time-limit-value').value) || 1;
                 const timeLimitUnit = document.getElementById('time-limit-unit').value;
                 const timeLimit     = timeLimitUnit === 'hour' ? timeLimitVal * 60 : timeLimitVal; // 統一轉分鐘
+                const waitlistLimit = parseInt(document.getElementById('waitlist-time-limit').value) || 30;
                 const mainLoc     = document.getElementById('main-location-hidden').value
                                    || document.getElementById('main-location-input').value;
                 const detailLoc   = form.elements['detail_location'].value.trim();
@@ -430,6 +512,7 @@
                 data.append('category',        category);
                 data.append('quantity',        quantity);
                 data.append('time_limit',      timeLimit);
+                data.append('waitlist_time_limit', waitlistLimit);
                 data.append('main_location',   mainLoc);
                 data.append('detail_location', detailLoc);
                 data.append('description',     description);

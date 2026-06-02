@@ -104,6 +104,17 @@
             if (!listEl) return;
             if (items.length === 0) { listEl.innerHTML = ''; return; }
 
+            const formatDeadline = (isoString) => {
+                if (!isoString) return '';
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return '';
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                const hh = String(date.getHours()).padStart(2, '0');
+                const min = String(date.getMinutes()).padStart(2, '0');
+                return `🔴 領取期限：${mm}/${dd} ${hh}:${min} 前`;
+            };
+
             // 卡片 HTML 結構與原本完全相同，資料來源改成 API
             listEl.innerHTML = items.map(item => `
                 <a href="${item.href}" class="block bg-white rounded-xl shadow-sm border ${mode === 'request' ? 'border-receiver/30 hover:border-receiver' : 'border-gray-200 hover:border-gray-300'} hover:shadow-md transition duration-200 overflow-hidden">
@@ -116,6 +127,7 @@
                             </div>
                             <h3 class="font-bold ${mode === 'request' ? 'text-gray-900' : 'text-gray-600'} text-base mb-1 truncate">${item.title}</h3>
                             <p class="text-sm ${mode === 'request' ? 'text-gray-500' : 'text-gray-400'} truncate">📍 ${item.location}</p>
+                            ${item.pickup_deadline ? `<p class="text-xs font-semibold text-red-500 mt-1.5">${formatDeadline(item.pickup_deadline)}</p>` : ''}
                         </div>
                     </div>
                 </a>
