@@ -117,12 +117,12 @@
             }
         }
 
-        // 狀態對應顏色
         const STATUS_COLOR = {
             available: 'bg-receiver text-white',
             reserved:  'bg-yellow-400 text-white',
             completed: 'bg-gray-400 text-white',
             expired:   'bg-gray-300 text-gray-600',
+            waiting:   'bg-orange-400 text-white',
         };
 
         function renderDetail(food) {
@@ -257,22 +257,25 @@
                 return;
             }
 
-            // 情況 2：使用者已有待處理的預約
-            if (food.my_reservation_status === 'pending') {
+            // 情況 2：使用者已有待處理的預約或候補
+            if (food.my_reservation_status === 'pending' || food.my_reservation_status === 'waiting') {
+                const isWaiting = food.my_reservation_status === 'waiting';
                 const expiresAt = food.expires_at_iso ? new Date(food.expires_at_iso) : null;
                 const minsLeft  = expiresAt ? (expiresAt - Date.now()) / 60000 : 999;
-                const canCancel = minsLeft > 10;
+                const canCancel = isWaiting || minsLeft > 10;
 
                 area.innerHTML = `
-                    <div class="bg-teal-50 border border-teal-100 rounded-xl p-4 mb-3 text-sm text-teal-700">
-                        ✅ 你已預約此食物，請準時領取。
-                        ${!canCancel ? '<br><span class="text-red-500 text-xs">距過期不足 10 分鐘，無法取消</span>' : ''}
+                    <div class="${isWaiting ? 'bg-orange-50 border-orange-100 text-orange-700' : 'bg-teal-50 border-teal-100 text-teal-700'} border rounded-xl p-4 mb-3 text-sm">
+                        ${isWaiting 
+                            ? `⏳ 你已在候補名單中（目前候補順位：<b>${food.waiting_position || 1}</b>）。` 
+                            : '✅ 你已預約此食物，請準時領取。'}
+                        ${(!canCancel && !isWaiting) ? '<br><span class="text-red-500 text-xs">距過期不足 10 分鐘，無法取消</span>' : ''}
                     </div>
                     ${canCancel ? `
                     <button id="btn-cancel" class="w-full bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-600 font-bold py-3 px-4 rounded-xl transition">
-                        取消預約
+                        ${isWaiting ? '取消候補' : '取消預約'}
                     </button>
-                    <p class="text-center text-xs text-gray-400 mt-2">距過期 10 分鐘內將無法取消</p>` : ''}`;
+                    ${!isWaiting ? '<p class="text-center text-xs text-gray-400 mt-2">距過期 10 分鐘內將無法取消</p>' : ''}` : ''}`;
 
                 if (canCancel) {
                     document.getElementById('btn-cancel').addEventListener('click', () => cancelReservation(food));
@@ -280,13 +283,14 @@
                 return;
             }
 
-            // 情況 3：食物可領取，使用者還沒預約
-            if (food.status === 'available') {
+            // 情況 3：食物可領取或可候補，使用者還沒預約
+            if (food.status === 'available' || food.status === 'reserved') {
+                const isReserved = food.status === 'reserved';
                 if (!uid) {
                     area.innerHTML = `
                         <button onclick="window.location.href='../index.html'"
                             class="w-full bg-receiver hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition">
-                            登入後才能預約
+                            登入後才能${isReserved ? '候補' : '預約'}
                         </button>`;
                     return;
                 }
@@ -295,7 +299,7 @@
                 const pickupTimeOptions = buildPickupTimeOptions(food);
                 area.innerHTML = `
                     <div class="space-y-4 border border-gray-100 bg-gray-50 rounded-xl p-5">
-                        <h3 class="font-bold text-gray-800 text-sm">填寫預約資訊</h3>
+                        <h3 class="font-bold text-gray-800 text-sm">${isReserved ? '填寫候補資訊' : '填寫預約資訊'}</h3>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -321,15 +325,15 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">預約份數 <span class="text-red-500">*</span></label>
-                                <input id="f-qty" type="number" min="1" max="${maxQty}" value="1"
+                                <input id="f-qty" type="number" min="1" max="${isReserved ? (food.quantity || 1) : maxQty}" value="1"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none text-center">
                             </div>
                         </div>
 
                         <div class="flex gap-3 pt-2">
                             <button id="btn-reserve"
-                                class="flex-1 bg-receiver hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow-sm transition">
-                                🙋 直接預約
+                                class="flex-1 ${isReserved ? 'bg-orange-400 hover:bg-orange-500' : 'bg-receiver hover:bg-teal-600'} text-white font-bold py-3 rounded-xl shadow-sm transition">
+                                ${isReserved ? '⏳ 排隊候補' : '🙋 直接預約'}
                             </button>
                             <button id="btn-cart"
                                 class="w-1/3 bg-white border-2 border-giver text-giver hover:bg-orange-50 font-bold py-3 rounded-xl transition text-sm">
@@ -383,11 +387,15 @@
                 const res  = await fetch(`/api/foods/${food.id}/reserve`, { method: 'POST', body: data });
                 const json = await res.json();
                 if (!res.ok) throw new Error(json.detail || '預約失敗');
-                alert(`預約成功！剩餘 ${json.quantity_left} 份`);
+                if (json.waiting) {
+                    alert('已排入候補名單！如果有預約者取消，系統將自動依序為您遞補。');
+                } else {
+                    alert(`預約成功！剩餘 ${json.quantity_left} 份`);
+                }
                 window.location.reload();
             } catch (err) {
                 alert(`預約失敗：${err.message}`);
-                if (btn) { btn.disabled = false; btn.textContent = '🙋 直接預約'; }
+                if (btn) { btn.disabled = false; btn.textContent = food.status === 'reserved' ? '⏳ 排隊候補' : '🙋 直接預約'; }
             }
         }
 
@@ -446,8 +454,16 @@
                     <div class="border border-gray-100 rounded-xl p-4 mb-3 bg-white text-sm">
                         <div class="flex justify-between items-start mb-2">
                             <span class="font-bold text-gray-800">${o.requester_name} <span class="text-xs text-gray-400">${o.student_id}</span></span>
-                            <span class="text-xs px-2 py-0.5 rounded-full ${o.status === 'completed' ? 'bg-teal-100 text-teal-600' : o.status === 'no_show' ? 'bg-red-100 text-red-500' : 'bg-orange-50 text-giver'}">${
-                                o.status === 'pending' ? '待領取' : o.status === 'completed' ? '已完成' : '未取'
+                            <span class="text-xs px-2 py-0.5 rounded-full ${
+                                o.status === 'completed' ? 'bg-teal-100 text-teal-600' : 
+                                o.status === 'no_show' ? 'bg-red-100 text-red-500' : 
+                                o.status === 'waiting' ? 'bg-orange-100 text-orange-600' :
+                                'bg-orange-50 text-giver'
+                            }">${
+                                o.status === 'pending' ? '待領取' : 
+                                o.status === 'completed' ? '已完成' : 
+                                o.status === 'no_show' ? '未取' : 
+                                o.status === 'waiting' ? '候補中' : '未知'
                             }</span>
                         </div>
                         <p class="text-gray-500 text-xs">份數：${o.quantity_reserved}　預計：${o.estimated_pickup_time}</p>

@@ -233,9 +233,9 @@ def get_foods(db: Session = Depends(get_db)):
     順便把到期的食物自動標記為 expired。
     """
     now = datetime.utcnow()
-    # 自動將過期食物標記為 expired
+    # 自動將過期食物標記為 expired (包含 available 和 reserved)
     expired_posts = db.query(FoodPost).filter(
-        FoodPost.status == "available",
+        FoodPost.status.in_(["available", "reserved"]),
         FoodPost.expires_at < now
     ).all()
     for p in expired_posts:
@@ -244,7 +244,7 @@ def get_foods(db: Session = Depends(get_db)):
         db.commit()
 
     posts = db.query(FoodPost).filter(
-        FoodPost.status == "available",
+        FoodPost.status.in_(["available", "reserved"]),
         FoodPost.expires_at > now
     ).all()
     return [food_to_card(p, db) for p in posts]
@@ -252,7 +252,7 @@ def get_foods(db: Session = Depends(get_db)):
 @app.get("/api/foods/{food_id}")
 def get_food(food_id: int, uid: str = None, db: Session = Depends(get_db)):
     """詳細頁用：取得單一食物完整資訊。
-    可選傳入 uid 查詢參數，回傳該使用者對這筆食物的預約狀態。
+    可選傳入 uid 查詢參數，回傳該使用者對這筆食物的預約狀態與候補順位。
     """
     post = db.query(FoodPost).filter(FoodPost.id == food_id).first()
     if not post:
@@ -270,6 +270,20 @@ def get_food(food_id: int, uid: str = None, db: Session = Depends(get_db)):
             .first()
         )
     data["my_reservation_status"] = my_reservation.status if my_reservation else None
+    
+    if my_reservation and my_reservation.status == "waiting":
+        waiting_list = db.query(Reservation).filter(
+            Reservation.food_post_id == food_id,
+            Reservation.status == "waiting"
+        ).order_by(Reservation.created_at.asc()).all()
+        try:
+            pos = [w.id for w in waiting_list].index(my_reservation.id) + 1
+            data["waiting_position"] = pos
+        except ValueError:
+            data["waiting_position"] = 1
+    else:
+        data["waiting_position"] = None
+        
     return data
 
 @app.post("/api/foods")
@@ -400,6 +414,37 @@ def delete_food(
     db.commit()
     return {"ok": True}
 
+def trigger_waiting_queue(post: FoodPost, released_qty: int, db: Session):
+    """當有預約被取消或標記未取釋放份數時，自動由候補隊列中依序遞補。"""
+    db.flush()
+    waiting_list = db.query(Reservation).filter(
+        Reservation.food_post_id == post.id,
+        Reservation.status == "waiting"
+    ).order_by(Reservation.created_at.asc()).all()
+
+    for w in waiting_list:
+        if released_qty >= w.quantity_reserved:
+            w.status = "pending"
+            released_qty -= w.quantity_reserved
+            requester = db.query(User).filter(User.firebase_uid == w.requester_uid).first()
+            if requester:
+                requester.total_reservations += 1
+            if released_qty == 0:
+                break
+
+    post.quantity_left = (post.quantity_left or 0) + released_qty
+    if post.quantity_left > 0:
+        post.status = "available"
+    else:
+        pending_count = db.query(Reservation).filter(
+            Reservation.food_post_id == post.id,
+            Reservation.status == "pending"
+        ).count()
+        if pending_count == 0:
+            post.status = "completed"
+        else:
+            post.status = "reserved"
+
 @app.post("/api/foods/{food_id}/reserve")
 def reserve_food(
     food_id:               int,
@@ -410,23 +455,29 @@ def reserve_food(
     estimated_pickup_time: str     = Form(None),
     db:                    Session = Depends(get_db),
 ):
-    """detail.html 預約食物。"""
+    """detail.html 預約食物（支援排隊候補）。"""
     post = db.query(FoodPost).filter(FoodPost.id == food_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="找不到此食物貼文")
-    if post.status not in ("available",):
+    if post.status not in ("available", "reserved"):
         raise HTTPException(status_code=400, detail="此食物目前不可預約")
     if post.sharer_uid == requester_uid:
         raise HTTPException(status_code=400, detail="不能預約自己發布的食物")
 
     left = post.quantity_left if post.quantity_left is not None else post.quantity
-    if left is None or quantity_reserved > left:
-        raise HTTPException(status_code=400, detail=f"剩餘份數不足（剩 {left} 份）")
+    is_waiting = False
+    if left is None or left <= 0 or quantity_reserved > left:
+        is_waiting = True
 
-    # 扣除份數
-    post.quantity_left = left - quantity_reserved
-    if post.quantity_left <= 0:
-        post.status = "completed"   # 全部被預約完 → 下架
+    if not is_waiting:
+        # 扣除份數，建立正式預約
+        post.quantity_left = left - quantity_reserved
+        if post.quantity_left <= 0:
+            post.status = "reserved"  # 設為已預約，但首頁仍可顯示，供他人候補
+        res_status = "pending"
+    else:
+        # 庫存不足，建立候補預約
+        res_status = "waiting"
 
     reservation = Reservation(
         food_post_id=food_id,
@@ -435,16 +486,18 @@ def reserve_food(
         requester_name=requester_name,
         student_id=student_id,
         estimated_pickup_time=estimated_pickup_time,
+        status=res_status,
     )
     db.add(reservation)
 
-    # 更新預約者的累積預約次數
-    requester = db.query(User).filter(User.firebase_uid == requester_uid).first()
-    if requester:
-        requester.total_reservations += 1
+    if not is_waiting:
+        # 只有正式預約才累加預約次數
+        requester = db.query(User).filter(User.firebase_uid == requester_uid).first()
+        if requester:
+            requester.total_reservations += 1
 
     db.commit()
-    return {"ok": True, "quantity_left": post.quantity_left}
+    return {"ok": True, "quantity_left": post.quantity_left, "waiting": is_waiting}
 
 @app.post("/api/foods/{food_id}/complete")
 def complete_food(
@@ -465,6 +518,7 @@ def complete_food(
         raise HTTPException(status_code=403, detail="只有分享者可以確認完成")
 
     r.status = "completed"
+    db.flush()
     # 如果所有 pending 預約都完成，食物標記為 completed
     pending_count = db.query(Reservation).filter(
         Reservation.food_post_id == food_id,
@@ -494,10 +548,8 @@ def mark_no_show(
         raise HTTPException(status_code=403, detail="只有分享者可以標記未取")
 
     r.status = "no_show"
-    # 退還份數
-    r.food_post.quantity_left = (r.food_post.quantity_left or 0) + r.quantity_reserved
-    if r.food_post.status == "completed":
-        r.food_post.status = "available"
+    # 自動依序遞補候補隊列或退還庫存
+    trigger_waiting_queue(r.food_post, r.quantity_reserved, db)
 
     # 計入未取次數
     requester = db.query(User).filter(User.firebase_uid == r.requester_uid).first()
@@ -514,27 +566,28 @@ def cancel_food(
     reservation_id: int     = Form(...),
     db:             Session = Depends(get_db),
 ):
-    """預約者取消預約（距過期 > 10 分鐘才可取消）。"""
+    """預約者取消預約（或候補）。"""
     r = db.query(Reservation).filter(
         Reservation.id == reservation_id,
         Reservation.food_post_id == food_id,
         Reservation.requester_uid == requester_uid,
-        Reservation.status == "pending"
+        Reservation.status.in_(["pending", "waiting"])
     ).first()
     if not r:
         raise HTTPException(status_code=404, detail="找不到對應的預約")
 
-    # 距過期不足 10 分鐘則不能取消
-    if r.food_post.expires_at:
+    # 若是正式預約，且距過期不足 10 分鐘則不能取消 (候補則無此限制)
+    if r.status == "pending" and r.food_post.expires_at:
         mins_left = (r.food_post.expires_at - datetime.utcnow()).total_seconds() / 60
         if mins_left < 10:
             raise HTTPException(status_code=400, detail="距過期不足 10 分鐘，無法取消")
 
+    is_pending = (r.status == "pending")
     r.status = "cancelled"
-    # 退還份數
-    r.food_post.quantity_left = (r.food_post.quantity_left or 0) + r.quantity_reserved
-    if r.food_post.status == "completed":
-        r.food_post.status = "available"
+
+    if is_pending:
+        # 自動依序遞補候補隊列或退還庫存
+        trigger_waiting_queue(r.food_post, r.quantity_reserved, db)
 
     db.commit()
     return {"ok": True}
@@ -693,6 +746,17 @@ def get_user_requests(uid: str, db: Session = Depends(get_db)):
             item["status"] = "已取消"
         elif r.status == "no_show":
             item["status"] = "未取"
+        elif r.status == "waiting":
+            # 計算該候補預約在貼文候補名單中的位置
+            waiting_list = db.query(Reservation).filter(
+                Reservation.food_post_id == r.food_post_id,
+                Reservation.status == "waiting"
+            ).order_by(Reservation.created_at.asc()).all()
+            try:
+                pos = [w.id for w in waiting_list].index(r.id) + 1
+                item["status"] = f"候位中 (順位 {pos})"
+            except ValueError:
+                item["status"] = "候位中"
         result.append(item)
     return result
 
