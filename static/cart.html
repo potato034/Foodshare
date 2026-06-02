@@ -139,11 +139,19 @@
 
     function renderItem(item) {
         const fresh    = item.fresh;
-        const expired  = fresh?.status !== 'available';
-        const maxQty   = fresh?.quantity_left ?? item.qty;
+        const expired  = fresh?.status !== 'available' && fresh?.status !== 'reserved';
+        const isReserved = fresh?.status === 'reserved';
+        const maxQty   = isReserved ? (fresh?.quantity ?? 1) : (fresh?.quantity_left ?? item.qty);
         const heroHTML = fresh?.image_path
             ? `<img src="${fresh.image_path}" class="w-20 h-20 object-cover rounded-xl shrink-0">`
             : `<div class="w-20 h-20 rounded-xl bg-orange-50 flex items-center justify-center text-3xl shrink-0">${item.emoji || '🍴'}</div>`;
+
+        // 如果是候補商品，強制作領取時間為候補
+        if (isReserved && item.time !== '系統自動候補') {
+            item.time = '系統自動候補';
+            // 同步回 localStorage
+            setTimeout(() => saveCart(), 0);
+        }
 
         return `
         <div class="cart-item px-5 py-4 ${expired ? 'opacity-50' : ''}" data-id="${item.food_id}">
@@ -166,7 +174,9 @@
 
                     ${expired
                         ? `<p class="text-xs text-red-400 font-semibold mt-1">⛔ 此食物已${fresh?.status === 'expired' ? '過期' : '被領完'}，無法預約</p>`
-                        : `<p class="countdown-tag text-xs text-orange-500 mt-0.5 font-medium" data-expires="${item.expires_at}">⏳ 計算中…</p>`
+                        : (isReserved 
+                            ? `<p class="text-xs text-orange-500 font-semibold mt-1">⏳ 此食物已被預約完，確認後將排入候補名單</p>`
+                            : `<p class="countdown-tag text-xs text-orange-500 mt-0.5 font-medium" data-expires="${item.expires_at}">⏳ 計算中…</p>`)
                     }
 
                     <!-- 可編輯欄位 -->
@@ -184,8 +194,8 @@
                         </div>
                         <div>
                             <label class="text-xs text-gray-400 block mb-0.5">預計領取時間</label>
-                            <input class="field-time w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-receiver outline-none"
-                                   value="${item.time || ''}" data-id="${item.food_id}" placeholder="例：今天 13:30 前">
+                            <input class="field-time w-full px-2 py-1.5 text-xs border border-gray-200 bg-gray-50 rounded-lg outline-none text-gray-400 cursor-not-allowed"
+                                   value="${item.time || ''}" data-id="${item.food_id}" readonly disabled placeholder="例：今天 13:30 前">
                         </div>
                         <div>
                             <label class="text-xs text-gray-400 block mb-0.5">份數（最多 ${maxQty}）</label>
