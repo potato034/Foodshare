@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Form, File, UploadFile, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Form, File, UploadFile, Depends, HTTPException, Request
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -34,6 +34,20 @@ def index():
 @app.get("/index.html")
 def index_html():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+@app.get("/{page_name}.html")
+def redirect_html_pages(page_name: str, request: Request):
+    known_pages = {
+        "message", "detail", "share", "food", "browse",
+        "cart", "profile", "upload", "teach", "aboutus", "setting"
+    }
+    if page_name in known_pages:
+        query_params = request.url.query
+        url = f"/static/{page_name}.html"
+        if query_params:
+            url += f"?{query_params}"
+        return RedirectResponse(url=url)
+    raise HTTPException(status_code=404, detail="Not Found")
 
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 app.mount("/images", StaticFiles(directory=UPLOAD_DIR), name="images")
