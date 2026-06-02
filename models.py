@@ -109,3 +109,11 @@ class Feedback(Base):
     email      = Column(String(255), nullable=True)
     content    = Column(Text,        nullable=False)
     created_at = Column(DateTime,    nullable=False, default=datetime.utcnow)
+
+
+class UserMap(Base):
+    """Firebase UID 與本地有秩序 user_id 的對照表。"""
+    __tablename__ = "user_maps"
+
+    firebase_uid = Column(String(128), primary_key=True)
+    ordered_id   = Column(String(50),  nullable=False, unique=True)

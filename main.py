@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import os, uuid
 
 from database import engine, get_db
-from models import Base, User, FoodPost, Reservation, Location, Message, Feedback
+from models import Base, User, FoodPost, Reservation, Location, Message, Feedback, UserMap
 
 # 啟動時自動建立所有資料表
 Base.metadata.create_all(bind=engine)
@@ -194,17 +194,34 @@ def sync_user(
     display_name: str = Form(None),
     db: Session = Depends(get_db),
 ):
-    """Firebase 登入後，把使用者資料同步到 SQLite。"""
-    user = db.query(User).filter(User.firebase_uid == firebase_uid).first()
+    """Firebase 登入後，把使用者資料同步到 SQLite。支援秩序化 user_id 去亂碼。"""
+    # 1. 處理有秩序的 ID 對照
+    # 如果原本就是 ordered_id (例如 demo_user_001 或 user_001)，就直接使用
+    if firebase_uid.startswith("user_") or firebase_uid.startswith("demo_"):
+        ordered_id = firebase_uid
+    else:
+        mapping = db.query(UserMap).filter(UserMap.firebase_uid == firebase_uid).first()
+        if not mapping:
+            count = db.query(UserMap).count()
+            # 依序產生 user_001, user_002 ...
+            ordered_id = f"user_{count + 1:03d}"
+            mapping = UserMap(firebase_uid=firebase_uid, ordered_id=ordered_id)
+            db.add(mapping)
+            db.commit()
+        else:
+            ordered_id = mapping.ordered_id
+
+    # 2. 在 users 資料表中使用有秩序的 ordered_id 儲存
+    user = db.query(User).filter(User.firebase_uid == ordered_id).first()
     if user:
         user.email = email
         if display_name:
             user.display_name = display_name
     else:
-        user = User(firebase_uid=firebase_uid, email=email, display_name=display_name)
+        user = User(firebase_uid=ordered_id, email=email, display_name=display_name)
         db.add(user)
     db.commit()
-    return {"ok": True}
+    return {"ok": True, "ordered_id": ordered_id}
 
 # ══════════════════════════════════════════════════════════════
 # API：食物貼文

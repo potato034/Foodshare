@@ -346,22 +346,45 @@
             };
         }
 
-        onAuthStateChanged(auth, (user) => {
-            const snapshot = getCurrentUserSnapshot();
-            const activeUser = user || snapshot;
+        onAuthStateChanged(auth, async (user) => {
+            let activeUser = user || getCurrentUserSnapshot();
 
             if (!activeUser?.uid) {
                 applyProfile(normalizeProfile({}, null), null);
                 return;
             }
 
-            const firebaseUser = user || snapshot;
-            const profile = loadUserProfile(firebaseUser.uid, firebaseUser);
-            applyProfile(profile, firebaseUser);
+            let finalUid = activeUser.uid;
+            // 如果此時拿到的是原始 Firebase UID，且本地尚未有映射對照，我們需要進行同步
+            if (user && !user.uid.startsWith('user_') && !user.uid.startsWith('demo_')) {
+                const mapped = localStorage.getItem(`fs_mapped_uid_${user.uid}`);
+                if (mapped) {
+                    finalUid = mapped;
+                } else {
+                    // 本地尚無對照，主動呼叫 sync API 取得
+                    try {
+                        const syncData = new FormData();
+                        syncData.append('firebase_uid', user.uid);
+                        syncData.append('email', user.email || '');
+                        const res = await fetch('/api/users/sync', { method: 'POST', body: syncData });
+                        const resData = await res.json();
+                        if (res.ok && resData.ordered_id) {
+                            finalUid = resData.ordered_id;
+                            localStorage.setItem(`fs_mapped_uid_${user.uid}`, finalUid);
+                        }
+                    } catch (err) {
+                        console.error('Profile sync mapping error:', err);
+                    }
+                }
+            }
+
+            // 使用得到的 finalUid
+            const finalUser = user ? { ...user, uid: finalUid } : { ...activeUser, uid: finalUid };
+            const profile = loadUserProfile(finalUid, finalUser);
+            applyProfile(profile, finalUser);
 
             // 從 API 載入真實的統計資料
-            const uid = firebaseUser.uid;
-            loadApiStats(uid);
+            loadApiStats(finalUid);
 
             const avatarInput = document.getElementById('profile-avatar-input');
             const editProfileBtn = document.getElementById('edit-profile-btn');
