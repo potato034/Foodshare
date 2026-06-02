@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import os, uuid
 
 from database import engine, get_db
-from models import Base, User, FoodPost, Reservation, Location, Message
+from models import Base, User, FoodPost, Reservation, Location, Message, Feedback, UserMap
 
 # 啟動時自動建立所有資料表
 Base.metadata.create_all(bind=engine)
@@ -194,17 +194,34 @@ def sync_user(
     display_name: str = Form(None),
     db: Session = Depends(get_db),
 ):
-    """Firebase 登入後，把使用者資料同步到 SQLite。"""
-    user = db.query(User).filter(User.firebase_uid == firebase_uid).first()
+    """Firebase 登入後，把使用者資料同步到 SQLite。支援秩序化 user_id 去亂碼。"""
+    # 1. 處理有秩序的 ID 對照
+    # 如果原本就是 ordered_id (例如 demo_user_001 或 user_001)，就直接使用
+    if firebase_uid.startswith("user_") or firebase_uid.startswith("demo_"):
+        ordered_id = firebase_uid
+    else:
+        mapping = db.query(UserMap).filter(UserMap.firebase_uid == firebase_uid).first()
+        if not mapping:
+            count = db.query(UserMap).count()
+            # 依序產生 user_001, user_002 ...
+            ordered_id = f"user_{count + 1:03d}"
+            mapping = UserMap(firebase_uid=firebase_uid, ordered_id=ordered_id)
+            db.add(mapping)
+            db.commit()
+        else:
+            ordered_id = mapping.ordered_id
+
+    # 2. 在 users 資料表中使用有秩序的 ordered_id 儲存
+    user = db.query(User).filter(User.firebase_uid == ordered_id).first()
     if user:
         user.email = email
         if display_name:
             user.display_name = display_name
     else:
-        user = User(firebase_uid=firebase_uid, email=email, display_name=display_name)
+        user = User(firebase_uid=ordered_id, email=email, display_name=display_name)
         db.add(user)
     db.commit()
-    return {"ok": True}
+    return {"ok": True, "ordered_id": ordered_id}
 
 # ══════════════════════════════════════════════════════════════
 # API：食物貼文
@@ -340,7 +357,7 @@ async def update_food(
 
     meta  = CATEGORY_META.get(category, CATEGORY_META["其他"])
     emoji = emoji_choice.strip() if emoji_choice and emoji_choice.strip() else meta["emoji"]
-    coords = LOCATION_COORDS.get(main_location, [post.lat or 24.1232, post.lng or 120.6776])
+    coords = get_location_coords(main_location, db)
 
     if file and file.filename:
         ext      = os.path.splitext(file.filename)[1]
@@ -829,3 +846,33 @@ def get_unread_count(uid: str, db: Session = Depends(get_db)):
         Message.is_read      == False,
     ).count()
     return {"unread": count}
+
+
+@app.post("/api/feedback")
+def create_feedback(
+    name: str = Form(None),
+    email: str = Form(None),
+    content: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    if not content or not content.strip():
+        raise HTTPException(status_code=400, detail="回饋內容不能為空")
+    fb = Feedback(name=name, email=email, content=content)
+    db.add(fb)
+    db.commit()
+    return {"ok": True}
+
+
+@app.get("/api/admin/feedbacks")
+def get_feedbacks(db: Session = Depends(get_db)):
+    """管理員後台 API：取得所有回饋。"""
+    fbs = db.query(Feedback).order_by(Feedback.created_at.desc()).all()
+    return [
+        {
+            "id": f.id,
+            "name": f.name,
+            "email": f.email,
+            "content": f.content,
+            "created_at": f.created_at.isoformat()
+        } for f in fbs
+    ]

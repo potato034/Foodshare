@@ -53,8 +53,15 @@ export function saveUserProfile(uid, profile) {
 
 export function syncCurrentUserSnapshot(user) {
     try {
+        let finalUid = user.uid;
+        if (finalUid && !finalUid.startsWith('user_') && !finalUid.startsWith('demo_')) {
+            const mapped = localStorage.getItem(`fs_mapped_uid_${finalUid}`);
+            if (mapped) {
+                finalUid = mapped;
+            }
+        }
         localStorage.setItem('fs_currentUser', JSON.stringify({
-            uid: user.uid,
+            uid: finalUid,
             email: user.email || '',
             displayName: user.displayName || user.email?.split('@')[0] || ''
         }));

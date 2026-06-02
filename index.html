@@ -683,22 +683,42 @@
                 if (userControls) userControls.classList.remove('hidden');
                 if (loginView) loginView.classList.add('hidden'); // 登入成功後自動關閉彈窗
 
-                const profile = loadUserProfile(user.uid, user);
-                syncCurrentUserSnapshot(user);
-                
                 // 同步使用者到後端資料庫
+                const profileBefore = loadUserProfile(user.uid, user);
                 const syncData = new FormData();
                 syncData.append('firebase_uid', user.uid);
                 syncData.append('email', user.email || '');
-                syncData.append('display_name', profile.displayName || '');
-                fetch('/api/users/sync', { method: 'POST', body: syncData }).catch(() => {});
+                syncData.append('display_name', profileBefore.displayName || '');
 
-                renderAvatarButton(profile, user);
-                updateAvatarMenu(profile, user);
-                
-                if (userNameDisplay) {
-                    userNameDisplay.textContent = `嗨，${profile.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
-                }
+                fetch('/api/users/sync', { method: 'POST', body: syncData })
+                    .then(res => res.json())
+                    .then(resData => {
+                        const finalUid = (resData && resData.ordered_id) ? resData.ordered_id : user.uid;
+                        if (resData && resData.ordered_id) {
+                            localStorage.setItem(`fs_mapped_uid_${user.uid}`, resData.ordered_id);
+                        }
+                        // 使用 finalUid 重新同步快照與載入 profile
+                        syncCurrentUserSnapshot({ ...user, uid: finalUid });
+                        const profile = loadUserProfile(finalUid, user);
+
+                        renderAvatarButton(profile, { ...user, uid: finalUid });
+                        updateAvatarMenu(profile, { ...user, uid: finalUid });
+                        
+                        if (userNameDisplay) {
+                            userNameDisplay.textContent = `嗨，${profile.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Sync user error:", err);
+                        // 降級處理
+                        syncCurrentUserSnapshot(user);
+                        const profile = loadUserProfile(user.uid, user);
+                        renderAvatarButton(profile, user);
+                        updateAvatarMenu(profile, user);
+                        if (userNameDisplay) {
+                            userNameDisplay.textContent = `嗨，${profile.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
+                        }
+                    });
             } else {
                 // 未登入狀態：顯示登入/註冊按鈕，隱藏個人控制項
                 if (headerLoginBtn) headerLoginBtn.classList.remove('hidden');

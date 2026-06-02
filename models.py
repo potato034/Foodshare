@@ -98,3 +98,22 @@ class Message(Base):
     sender    = relationship("User",     foreign_keys=[sender_uid])
     receiver  = relationship("User",     foreign_keys=[receiver_uid])
     food_post = relationship("FoodPost", foreign_keys=[food_post_id])
+
+
+class Feedback(Base):
+    """使用者提交的意見回饋。"""
+    __tablename__ = "feedbacks"
+
+    id         = Column(Integer,     primary_key=True, autoincrement=True)
+    name       = Column(String(100), nullable=True)
+    email      = Column(String(255), nullable=True)
+    content    = Column(Text,        nullable=False)
+    created_at = Column(DateTime,    nullable=False, default=datetime.utcnow)
+
+
+class UserMap(Base):
+    """Firebase UID 與本地有秩序 user_id 的對照表。"""
+    __tablename__ = "user_maps"
+
+    firebase_uid = Column(String(128), primary_key=True)
+    ordered_id   = Column(String(50),  nullable=False, unique=True)
