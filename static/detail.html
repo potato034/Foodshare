@@ -152,10 +152,19 @@
 
             // 私訊連結：帶入分享者 uid 和 food id
             const msgLink = document.getElementById('msg-link');
-            if (msgLink && food.sharer_uid && !food.is_my_post) {
-                msgLink.href = `./message.html?with=${food.sharer_uid}&post=${food.id}`;
-            } else if (msgLink && food.is_my_post) {
-                msgLink.classList.add('hidden'); // 自己的貼文不顯示私訊
+            if (msgLink) {
+                if (food.is_my_post) {
+                    msgLink.classList.add('hidden'); // 自己的貼文不顯示私訊
+                } else {
+                    msgLink.href = `./message.html?with=${food.sharer_uid}&post=${food.id}`;
+                    msgLink.addEventListener('click', (e) => {
+                        if (!uid) {
+                            e.preventDefault();
+                            alert("請先登入才能使用私訊功能！");
+                            window.location.href = '../index.html';
+                        }
+                    });
+                }
             }
 
             // 資訊格

@@ -120,6 +120,8 @@
     let currentOther   = null;
     let currentPostId  = null;
     let pollTimer      = null;
+    let currentOtherName = '';
+    let currentFoodTitle = '';
 
     if (!uid) {
         convList.innerHTML = '<p class="text-center text-gray-400 text-sm py-10">請先登入才能使用私訊</p>';
@@ -152,6 +154,23 @@
     }
 
     function renderConvList(convs) {
+        // 檢查當前的對話是否已經在 list 中
+        if (currentOther) {
+            const hasConv = convs.some(c => c.other_uid === currentOther && (c.food_post_id ?? null) === (currentPostId ?? null));
+            if (!hasConv) {
+                // 如果不在 list 中，手動將其新增到最上方作為臨時項目
+                convs.unshift({
+                    other_uid: currentOther,
+                    other_name: currentOtherName || '對話對象',
+                    food_post_id: currentPostId,
+                    food_title: currentFoodTitle ? currentFoodTitle.replace(/^[^\s]+\s/, '') : '', // 移除 emoji 標頭
+                    last_message: '（尚未發送訊息）',
+                    last_time: null,
+                    unread: 0
+                });
+            }
+        }
+
         if (convs.length === 0 && !initWith) {
             convList.innerHTML = '<p class="text-center text-gray-400 text-sm py-10">目前沒有對話</p>';
             return;
@@ -218,8 +237,11 @@
 
     function renderThread(data) {
         // 頂部資訊
-        chatAvatar.textContent = (data.other_name || '?').slice(0, 2);
-        chatName.textContent   = data.other_name;
+        currentOtherName = data.other_name || '對話對象';
+        currentFoodTitle = data.order_info ? data.order_info.title : '';
+
+        chatAvatar.textContent = currentOtherName.slice(0, 2);
+        chatName.textContent   = currentOtherName;
 
         // 訂單資訊卡
         if (data.order_info) {
