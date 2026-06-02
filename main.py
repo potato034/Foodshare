@@ -396,6 +396,7 @@ async def update_food(
     waitlist_time_limit: int        = Form(15),
     description:         str        = Form(None),
     status:              str        = Form(None),   # 分享者可手動改狀態
+    delete_image:        bool       = Form(False),  # 是否刪除原圖
     file:                UploadFile = File(None),
     db:                  Session    = Depends(get_db),
 ):
@@ -410,7 +411,9 @@ async def update_food(
     emoji = emoji_choice.strip() if emoji_choice and emoji_choice.strip() else meta["emoji"]
     coords = get_location_coords(main_location, db)
 
-    if file and file.filename:
+    if delete_image:
+        post.image_path = ""
+    elif file and file.filename:
         ext      = os.path.splitext(file.filename)[1]
         filename = f"{uuid.uuid4()}{ext}"
         contents = await file.read()
