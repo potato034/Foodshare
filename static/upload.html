@@ -36,7 +36,12 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">上傳食物相片</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-giver hover:bg-orange-50 transition cursor-pointer" onclick="document.getElementById('file-upload').click()">
                         <div class="space-y-1 text-center">
-                            <img id="image-preview" class="mx-auto h-32 object-cover hidden rounded-lg mb-4" />
+                            <div class="relative inline-block mx-auto mb-4">
+                                <img id="image-preview" class="h-32 object-cover hidden rounded-lg" />
+                                <button type="button" id="delete-image-btn" 
+                                        class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold hidden shadow-md focus:outline-none transition duration-150 transform hover:scale-110"
+                                        title="刪除圖片">×</button>
+                            </div>
                             <svg id="upload-icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
@@ -93,7 +98,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">供應份數 <span class="text-red-500">*</span></label>
                         <input type="number" id="quantity" name="quantity" required min="1" max="999" placeholder="請輸入整數，例如 3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition">
@@ -109,6 +114,13 @@
                             </select>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">逾時後食物將自動下架</p>
+                    </div>
+                    <div>
+                        <label for="waitlist-time-limit" class="block text-sm font-medium text-gray-700 mb-1">遞補後領取時限 <span class="text-red-500">*</span></label>
+                        <select id="waitlist-time-limit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none bg-white transition">
+                            <!-- options will be populated dynamically -->
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">遞補成功後的專屬領取時限</p>
                     </div>
                 </div>
 
@@ -182,19 +194,112 @@
             if (this.value.trim()) this.dataset.userPicked = 'true';
         });
 
+        function updateWaitlistOptions(savedValue) {
+            const val = parseInt(document.getElementById('time-limit-value').value) || 1;
+            const unit = document.getElementById('time-limit-unit').value;
+            const maxMins = unit === 'hour' ? val * 60 : val;
+            
+            const select = document.getElementById('waitlist-time-limit');
+            const previousValue = savedValue || parseInt(select.value) || 30;
+            select.innerHTML = '';
+            
+            let optionsAdded = 0;
+            for (let m = 15; m <= maxMins; m += 15) {
+                const opt = document.createElement('option');
+                opt.value = m;
+                if (m >= 60 && m % 60 === 0) {
+                    opt.textContent = `${m / 60} 小時`;
+                } else {
+                    opt.textContent = `${m} 分鐘`;
+                }
+                select.appendChild(opt);
+                optionsAdded++;
+            }
+            
+            if (maxMins > 0 && maxMins % 15 !== 0) {
+                const opt = document.createElement('option');
+                opt.value = maxMins;
+                if (maxMins >= 60 && maxMins % 60 === 0) {
+                    opt.textContent = `${maxMins / 60} 小時`;
+                } else {
+                    opt.textContent = `${maxMins} 分鐘`;
+                }
+                select.appendChild(opt);
+                optionsAdded++;
+            }
+
+            if (optionsAdded === 0) {
+                const opt = document.createElement('option');
+                opt.value = Math.max(1, maxMins);
+                if (maxMins >= 60 && maxMins % 60 === 0) {
+                    opt.textContent = `${maxMins / 60} 小時`;
+                } else {
+                    opt.textContent = `${maxMins} 分鐘`;
+                }
+                select.appendChild(opt);
+            }
+            
+            let hasSelected = false;
+            for (let i = 0; i < select.options.length; i++) {
+                if (parseInt(select.options[i].value) === previousValue) {
+                    select.selectedIndex = i;
+                    hasSelected = true;
+                    break;
+                }
+            }
+            if (!hasSelected) {
+                let defaultIdx = -1;
+                for (let i = 0; i < select.options.length; i++) {
+                    if (parseInt(select.options[i].value) === 30) {
+                        defaultIdx = i;
+                        break;
+                    }
+                }
+                if (defaultIdx !== -1) {
+                    select.selectedIndex = defaultIdx;
+                } else {
+                    select.selectedIndex = 0;
+                }
+            }
+        }
+
+        document.getElementById('time-limit-value').addEventListener('input', () => updateWaitlistOptions());
+        document.getElementById('time-limit-unit').addEventListener('change', () => updateWaitlistOptions());
+        updateWaitlistOptions();
+
         function previewImage(event) {
             const file = event.target.files[0];
             if (file) {
+                document.getElementById('file-upload').dataset.deleted = 'false';
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const preview = document.getElementById('image-preview');
                     const icon = document.getElementById('upload-icon');
+                    const deleteBtn = document.getElementById('delete-image-btn');
                     preview.src = e.target.result;
                     preview.classList.remove('hidden');
+                    if (deleteBtn) deleteBtn.classList.remove('hidden');
                     icon.classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
             }
+        }
+
+        const deleteImageBtn = document.getElementById('delete-image-btn');
+        if (deleteImageBtn) {
+            deleteImageBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fileInput = document.getElementById('file-upload');
+                fileInput.value = '';
+                fileInput.dataset.deleted = 'true';
+                
+                const preview = document.getElementById('image-preview');
+                const icon = document.getElementById('upload-icon');
+                preview.src = '';
+                preview.classList.add('hidden');
+                deleteImageBtn.classList.add('hidden');
+                icon.classList.remove('hidden');
+            });
         }
     </script>
 
@@ -366,6 +471,7 @@
                         document.getElementById('time-limit-value').value = mins;
                         document.getElementById('time-limit-unit').value = 'min';
                     }
+                    updateWaitlistOptions(food.waitlist_time_limit || 30);
                     document.getElementById('description').value = food.description || '';
                     // main_location / detail_location 現在 API 直接回傳
                     if (food.main_location) selectLocation(food.main_location);
@@ -376,8 +482,10 @@
                     if (food.image_path) {
                         const preview = document.getElementById('image-preview');
                         const icon    = document.getElementById('upload-icon');
+                        const deleteBtn = document.getElementById('delete-image-btn');
                         preview.src = food.image_path;
                         preview.classList.remove('hidden');
+                        if (deleteBtn) deleteBtn.classList.remove('hidden');
                         icon.classList.add('hidden');
                     }
                 }).catch(() => {});
@@ -410,6 +518,7 @@
                 const timeLimitVal  = parseInt(document.getElementById('time-limit-value').value) || 1;
                 const timeLimitUnit = document.getElementById('time-limit-unit').value;
                 const timeLimit     = timeLimitUnit === 'hour' ? timeLimitVal * 60 : timeLimitVal; // 統一轉分鐘
+                const waitlistLimit = parseInt(document.getElementById('waitlist-time-limit').value) || 30;
                 const mainLoc     = document.getElementById('main-location-hidden').value
                                    || document.getElementById('main-location-input').value;
                 const detailLoc   = form.elements['detail_location'].value.trim();
@@ -430,9 +539,12 @@
                 data.append('category',        category);
                 data.append('quantity',        quantity);
                 data.append('time_limit',      timeLimit);
+                data.append('waitlist_time_limit', waitlistLimit);
                 data.append('main_location',   mainLoc);
                 data.append('detail_location', detailLoc);
                 data.append('description',     description);
+                const isImageDeleted = fileInput.dataset.deleted === 'true';
+                data.append('delete_image', isImageDeleted);
                 if (fileInput.files[0]) {
                     data.append('file', fileInput.files[0]);
                 }

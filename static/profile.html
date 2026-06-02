@@ -347,12 +347,14 @@
         }
 
         onAuthStateChanged(auth, async (user) => {
-            let activeUser = user || getCurrentUserSnapshot();
-
-            if (!activeUser?.uid) {
+            if (!user) {
+                try {
+                    localStorage.removeItem('fs_currentUser');
+                } catch (error) {}
                 applyProfile(normalizeProfile({}, null), null);
                 return;
             }
+            let activeUser = user;
 
             let finalUid = activeUser.uid;
             // 如果此時拿到的是原始 Firebase UID，且本地尚未有映射對照，我們需要進行同步

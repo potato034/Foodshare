@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-import os, uuid
+import os, uuid, re
 
 from database import engine, get_db
 from models import Base, User, FoodPost, Reservation, Location, Message, Feedback, UserMap
@@ -131,6 +131,39 @@ def food_to_list_item(post: FoodPost) -> dict:
         "href":       f"./detail.html?id={post.id}",
         "status":     STATUS_LABEL.get(post.status, post.status),
     }
+
+def parse_estimated_pickup_time(time_str: str, post_expires_at: datetime) -> datetime:
+    """解析預估領取時間（今天 HH:MM 前 或 MM/DD HH:MM 前）為 Naive UTC 時間。"""
+    if not time_str:
+        return post_expires_at
+    time_str = time_str.strip()
+    now_utc = datetime.utcnow()
+    now_tw = now_utc + timedelta(hours=8)
+    try:
+        # 今天 HH:MM 前
+        m1 = re.search(r'今天\s*(\d{1,2}):(\d{2})', time_str)
+        if m1:
+            hour = int(m1.group(1))
+            minute = int(m1.group(2))
+            dt_tw = now_tw.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            dt_utc = dt_tw - timedelta(hours=8)
+            return dt_utc
+            
+        # MM/DD HH:MM 前
+        m2 = re.search(r'(\d{1,2})[/\-](\d{1,2})\s*(\d{1,2}):(\d{2})', time_str)
+        if m2:
+            month = int(m2.group(1))
+            day = int(m2.group(2))
+            hour = int(m2.group(3))
+            minute = int(m2.group(4))
+            year = now_tw.year
+            dt_tw = datetime(year=year, month=month, day=day, hour=hour, minute=minute, second=0)
+            dt_utc = dt_tw - timedelta(hours=8)
+            return dt_utc
+    except Exception as e:
+        print(f"Error parsing pickup time '{time_str}': {e}")
+    return post_expires_at
+
 
 # ══════════════════════════════════════════════════════════════
 # API：地點管理
@@ -363,6 +396,7 @@ async def update_food(
     waitlist_time_limit: int        = Form(15),
     description:         str        = Form(None),
     status:              str        = Form(None),   # 分享者可手動改狀態
+    delete_image:        bool       = Form(False),  # 是否刪除原圖
     file:                UploadFile = File(None),
     db:                  Session    = Depends(get_db),
 ):
@@ -377,7 +411,9 @@ async def update_food(
     emoji = emoji_choice.strip() if emoji_choice and emoji_choice.strip() else meta["emoji"]
     coords = get_location_coords(main_location, db)
 
-    if file and file.filename:
+    if delete_image:
+        post.image_path = ""
+    elif file and file.filename:
         ext      = os.path.splitext(file.filename)[1]
         filename = f"{uuid.uuid4()}{ext}"
         contents = await file.read()
@@ -485,7 +521,8 @@ def reserve_food(
         if post.quantity_left <= 0:
             post.status = "reserved"  # 設為已預約，但首頁仍可顯示，供他人候補
         res_status = "pending"
-        pickup_deadline = post.expires_at
+        parsed_deadline = parse_estimated_pickup_time(estimated_pickup_time, post.expires_at)
+        pickup_deadline = min(parsed_deadline, post.expires_at)
     else:
         # 庫存不足，建立候補預約
         res_status = "waiting"
@@ -751,7 +788,7 @@ def get_user_requests(uid: str, db: Session = Depends(get_db)):
         item["student_id"]            = r.student_id or ""
         item["estimated_pickup_time"] = r.estimated_pickup_time or ""
         item["reservation_status"]    = r.status
-        item["pickup_deadline"]       = r.pickup_deadline.isoformat() if r.pickup_deadline else None
+        item["pickup_deadline"]       = (r.pickup_deadline.isoformat() + "Z") if r.pickup_deadline else None
         if r.status == "pending":
             item["status"] = "待領取"
         elif r.status == "completed":

@@ -729,6 +729,11 @@
                         }
                     });
             } else {
+                // 清除本地登入快照
+                try {
+                    localStorage.removeItem('fs_currentUser');
+                } catch (error) {}
+
                 // 未登入狀態：顯示登入/註冊按鈕，隱藏個人控制項
                 if (headerLoginBtn) headerLoginBtn.classList.remove('hidden');
                 if (userControls) userControls.classList.add('hidden');
