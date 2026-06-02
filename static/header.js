@@ -23,7 +23,7 @@
             <a href="${s}share.html" class="text-giver hover:opacity-80 transition font-bold">分享清單</a>
             <a href="${s}food.html" class="text-receiver hover:opacity-80 transition font-bold">預約清單</a>
         </nav>
-        <div class="ml-auto w-[360px] relative hidden xl:block">
+        <div class="ml-auto w-40 sm:w-48 md:w-64 lg:w-80 xl:w-[360px] relative hidden sm:block">
             <input type="text" id="header-search-input" placeholder="搜尋關鍵字或地點…"
                    class="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent text-sm">
             <div class="absolute left-3.5 top-3.5 text-gray-400">
