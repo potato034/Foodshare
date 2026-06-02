@@ -3,67 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>關於我們</title>
+    <title>關於我們 | 興大食物共享平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        giver: '#FBB28B',
-                        receiver: '#A8CBCB'
+                        giver: '#FBB28B',    // 暖杏橘
+                        receiver: '#A8CBCB'  // 鼠尾草綠
                     }
                 }
             }
         }
     </script>
+    <style>
+        /* 輕微的文青風手感淡入動畫 */
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col pt-24">
-    <script src="./header.js"></script>
+<body class="bg-stone-50 text-gray-700 font-sans min-h-screen flex flex-col pt-24">
+    <script src="./header.js?v=999"></script>
 
-    <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-12 flex flex-col items-center justify-center">
-        <div class="text-center mb-16">
-            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl tracking-tight">網際網路專題可愛組員們 🌟</h1>
-            <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto text-sm">
-                我們是來自不同背景的三人小組，致力於透過 FastAPI 與智慧地圖串接，打造減少校園剩食、促進社區互助的溫暖共享平台。
-            </p>
+    <main class="flex-grow max-w-5xl mx-auto w-full px-6 py-12 flex flex-col items-center">
+        
+        <div class="flex p-1.5 bg-gray-200/60 backdrop-blur-sm rounded-2xl w-full max-w-md justify-between mb-12 shadow-sm border border-gray-100">
+            <button id="tab-mission" class="w-1/3 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 bg-white text-gray-800 shadow-sm focus:outline-none">
+                平台初衷
+            </button>
+            <button id="tab-feedback" class="w-1/3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 text-gray-500 hover:text-gray-800 focus:outline-none">
+                回饋表單
+            </button>
+            <button id="tab-contact" class="w-1/3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 text-gray-500 hover:text-gray-800 focus:outline-none">
+                聯絡我們
+            </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full px-4">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full bg-orange-100 border-4 border-giver/30 flex items-center justify-center text-3xl font-bold text-orange-600 mb-4 shadow-inner">👩‍💻</div>
-                <h3 class="text-xl font-bold text-gray-900 mb-1">胡僑耘</h3>
-                <p class="text-sm font-medium text-gray-400 mb-3">應經三</p>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-100 mb-6">前端視覺與使用者互動設計</span>
-                <div class="w-full pt-4 border-t border-gray-50 text-xs text-gray-500 space-y-2">
-                    <p class="flex items-center justify-center space-x-1"><span>📧</span><a href="mailto:9ana@email.nchu.edu.tw" class="hover:text-giver transition underline">9ana@email.nchu.edu.tw</a></p>
+        <div class="w-full">
+            
+            <div id="content-mission" class="fade-in space-y-16">
+                <div class="text-center max-w-2xl mx-auto">
+                    <span class="text-xs font-bold tracking-widest text-receiver bg-teal-50 px-3 py-1 rounded-full uppercase">Our Mission</span>
+                    <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight mt-3 mb-4">讓校園的每一份溫暖，都能在地圖上相遇。</h2>
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                          在想一下我們的初中要寫甚麼
+                    </p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full bg-teal-50 border-4 border-receiver/30 flex items-center justify-center text-3xl font-bold text-teal-600 mb-4 shadow-inner">👨‍💻</div>
-                <h3 class="text-xl font-bold text-gray-900 mb-1">鄭詠琳</h3>
-                <p class="text-sm font-medium text-gray-400 mb-3">資管二</p>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-teal-50 text-teal-600 border border-teal-100 mb-6">FastAPI 後端架構與 SQL 資料庫</span>
-                <div class="w-full pt-4 border-t border-gray-50 text-xs text-gray-500 space-y-2">
-                    <p class="flex items-center justify-center space-x-1"><span>📧</span><a href="mailto:backend@email.nchu.edu.tw" class="hover:text-receiver transition underline">backend@email.nchu.edu.tw</a></p>
+            <div id="content-feedback" class="fade-in hidden max-w-xl mx-auto">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-8">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">留下你的足跡 📝</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            謝謝你願意停留，與我們分享你的使用感受。你的每一份建議，都是我們前進的種子。<br>
+                            <span class="text-orange-400 font-medium">( 本表單未來將串接 Google 表單進行資料收集 )</span>
+                        </p>
+                    </div>
+                    
+                    <form class="space-y-4" onsubmit="event.preventDefault(); alert('感謝您的寶貴意見！期待未來與 Google 表單串接。');">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">同學怎麼稱呼</label>
+                            <input type="text" placeholder="例：王同學" class="w-full px-4 py-2 text-sm rounded-xl border border-gray-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">聯絡信箱</label>
+                            <input type="email" placeholder="學號@smail.nchu.edu.tw" class="w-full px-4 py-2 text-sm rounded-xl border border-gray-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">想對可愛組員們說的話 / 建議</label>
+                            <textarea rows="4" placeholder="歡迎寫下任何使用心得或遇到的 Bug..." class="w-full px-4 py-2 text-sm rounded-xl border border-gray-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition resize-none"></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-2.5 bg-receiver hover:bg-teal-600 text-white font-medium rounded-xl shadow-sm transition transform hover:-translate-y-0.5 text-sm">
+                            送出回饋
+                        </button>
+                    </form>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-50 to-teal-50 border-4 border-dashed border-gray-300 flex items-center justify-center text-3xl font-bold mb-4 shadow-inner">🛠️</div>
-                <h3 class="text-xl font-bold text-gray-900 mb-1">鄭儀蓁</h3>
-                <p class="text-sm font-medium text-gray-400 mb-3">應經三</p>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-600 border border-purple-100 mb-6">前後端串接、細節打磨與 PM 專案控制</span>
-                <div class="w-full pt-4 border-t border-gray-50 text-xs text-gray-500 space-y-2">
-                    <p class="flex items-center justify-center space-x-1"><span>📧</span><a href="mailto:pm@email.nchu.edu.tw" class="hover:text-purple-500 transition underline">pm@email.nchu.edu.tw</a></p>
+            <div id="content-contact" class="fade-in hidden max-w-2xl mx-auto space-y-12">
+                <div class="text-center mb-8">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">找到我們 📫</h3>
+                    <p class="text-xs text-gray-400">有任何突發狀況或商務合作，歡迎隨時透過下方管道聯繫。</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center group">
+                        <div class="w-20 h-20 rounded-full bg-orange-50 border-2 border-giver/20 flex items-center justify-center text-3xl mb-4 shadow-inner group-hover:scale-105 transition duration-300">👩‍💻</div>
+                        <h3 class="font-bold text-gray-900 mb-0.5">胡僑耘</h3>
+                        <p class="text-xs font-medium text-gray-400 mb-3">應經三 (輔資管)</p>
+                        <span class="px-3 py-1 text-[11px] font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-100/60 mb-5">前端視覺與 UI/UX 設計</span>
+                        <p class="text-xs text-gray-400 mt-auto flex items-center gap-1">
+                            <span>📧</span> <a href="mailto:9ana@email.nchu.edu.tw" class="hover:text-giver underline transition">9ana@email.nchu.edu.tw</a>
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center group">
+                        <div class="w-20 h-20 rounded-full bg-teal-50 border-2 border-receiver/20 flex items-center justify-center text-3xl mb-4 shadow-inner group-hover:scale-105 transition duration-300">👨‍💻</div>
+                        <h3 class="font-bold text-gray-900 mb-0.5">鄭詠琳</h3>
+                        <p class="text-xs font-medium text-gray-400 mb-3">資管二</p>
+                        <span class="px-3 py-1 text-[11px] font-semibold rounded-full bg-teal-50 text-teal-600 border border-teal-100/60 mb-5">FastAPI 後端與資料庫</span>
+                        <p class="text-xs text-gray-400 mt-auto flex items-center gap-1">
+                            <span>📧</span> <a href="mailto:backend@email.nchu.edu.tw" class="hover:text-receiver underline transition">backend@email.nchu.edu.tw</a>
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-6 text-center hover:shadow-md transition duration-300 flex flex-col items-center group">
+                        <div class="w-20 h-20 rounded-full bg-purple-50 border-2 border-purple-100 flex items-center justify-center text-3xl mb-4 shadow-inner group-hover:scale-105 transition duration-300">🧚‍♀️</div>
+                        <h3 class="font-bold text-gray-900 mb-0.5">鄭儀蓁</h3>
+                        <p class="text-xs font-medium text-gray-400 mb-3">應經三</p>
+                        <span class="px-3 py-1 text-[11px] font-semibold rounded-full bg-purple-50 text-purple-600 border border-purple-100 mb-5">系統串接與 PM 專案控制</span>
+                        <p class="text-xs text-gray-400 mt-auto flex items-center gap-1">
+                            <span>📧</span> <a href="mailto:pm@email.nchu.edu.tw" class="hover:text-purple-500 underline transition">pm@email.nchu.edu.tw</a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="rounded-2xl border border-orange-100 bg-orange-50/50 p-6 flex flex-col justify-between group hover:shadow-sm transition">
+                        
+                        <div>
+                            <span class="text-lg mb-2 inline-block">✉️</span>
+                            <p class="text-xs font-semibold text-gray-400 mb-1">官方 Email</p>
+                            <p class="font-bold text-gray-800 text-sm break-all">support@foodshare.nchu.edu.tw</p>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-4 group-hover:text-giver transition">團隊公用信箱，我們會在 24 小時內回覆。</p>
+                    </div>
+
+                    <div class="rounded-2xl border border-teal-100 bg-teal-50/40 p-6 flex flex-col justify-between group hover:shadow-sm transition">
+                        <div>
+                            <span class="text-lg mb-2 inline-block">📌</span>
+                            <p class="text-xs font-semibold text-gray-400 mb-1">專案備註</p>
+                            <p class="font-bold text-gray-800 text-sm">中興大學網際網路專題</p>
+                        </div>
+                        <p class="text-[11px] text-gray-400 mt-4 group-hover:text-receiver transition">由應用經濟學系與資訊管理學系同學聯合開發。</p>
+                    </div>
                 </div>
             </div>
+
         </div>
     </main>
 
-    <footer class="bg-white border-t border-gray-100 py-4 text-center text-xs text-gray-400">
-        &copy; 2026 中興大學食物共享平台專題小組.
+    <footer class="bg-white border-t border-gray-100 py-6 text-center text-xs text-gray-400">
+        &copy; 2026 中興大學食物共享平台專題小組. All rights reserved.
     </footer>
+
+    <script>
+        const btnMission = document.getElementById('tab-mission');
+        const btnFeedback = document.getElementById('tab-feedback');
+        const btnContact = document.getElementById('tab-contact');
+
+        const contentMission = document.getElementById('content-mission');
+        const contentFeedback = document.getElementById('content-feedback');
+        const contentContact = document.getElementById('content-contact');
+
+        function switchTab(activeBtn, activeContent) {
+            // 1. 先把所有按鈕恢復成未選取狀態
+            [btnMission, btnFeedback, btnContact].forEach(btn => {
+                btn.className = "w-1/3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 text-gray-500 hover:text-gray-800 focus:outline-none";
+            });
+            // 2. 把所有內容隱藏
+            [contentMission, contentFeedback, contentContact].forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // 3. 激活被選取的按鈕與內容
+            activeBtn.className = "w-1/3 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 bg-white text-gray-800 shadow-sm focus:outline-none";
+            activeContent.classList.remove('hidden');
+        }
+
+        btnMission.addEventListener('click', () => switchTab(btnMission, contentMission));
+        btnFeedback.addEventListener('click', () => switchTab(btnFeedback, contentFeedback));
+        btnContact.addEventListener('click', () => switchTab(btnContact, contentContact));
+    </script>
 </body>
 </html>

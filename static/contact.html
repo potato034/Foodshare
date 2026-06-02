@@ -1,46 +1,149 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>聯絡我們</title>
-	<script src="https://cdn.tailwindcss.com"></script>
-	<script>
-		tailwind.config = {
-			theme: {
-				extend: {
-					colors: {
-						giver: '#FBB28B',
-						receiver: '#A8CBCB'
-					}
-				}
-			}
-		}
-	</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>關於與聯絡我們 | 興大食物共享平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        giver: '#FBB28B',
+                        receiver: '#A8CBCB'
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col pt-24">
+    <!-- 導入共用的導覽列 -->
     <script src="./header.js"></script>
 
-	<main class="flex-grow max-w-4xl mx-auto w-full px-4 py-16">
-		<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-			<h1 class="text-3xl font-extrabold text-gray-900 mb-4 text-center">聯絡我們</h1>
-			<p class="text-center text-gray-500 mb-8">這一頁目前是空白頁，之後可以放聯絡方式、表單或社群資訊。</p>
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-12 flex flex-col items-center">
+        
+        <!-- ================= 標題與簡介區塊 ================= -->
+        <div class="text-center mb-16 max-w-3xl">
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl tracking-tight mb-4">關於我們 & 聯絡資訊 🌟</h1>
+            <p class="text-lg text-gray-500 leading-relaxed text-sm">
+                我們是來自不同背景的三人小組，致力於透過 FastAPI 與智慧地圖串接，打造減少校園剩食、促進社區互助的溫暖共享平台。如果有任何問題或合作提案，歡迎隨時與我們聯繫！
+            </p>
+        </div>
 
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<div class="rounded-2xl border border-gray-100 bg-orange-50 p-5">
-					<p class="text-xs font-semibold text-gray-500 mb-1">Email</p>
-					<p class="font-bold text-gray-900">support@example.com</p>
-				</div>
-				<div class="rounded-2xl border border-gray-100 bg-teal-50 p-5">
-					<p class="text-xs font-semibold text-gray-500 mb-1">回饋表單</p>
-					<p class="font-bold text-gray-900">可再補上 Google 表單</p>
-				</div>
-				<div class="rounded-2xl border border-gray-100 bg-gray-50 p-5">
-					<p class="text-xs font-semibold text-gray-500 mb-1">備註</p>
-					<p class="font-bold text-gray-900">目前先保留版面</p>
-				</div>
-			</div>
-		</div>
-	</main>
+        <!-- ================= 團隊成員卡片區塊 ================= -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-20">
+            <!-- 成員 1 -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center hover:shadow-lg transition duration-300 flex flex-col items-center group">
+                <div class="w-24 h-24 rounded-full bg-orange-50 border-4 border-giver/30 flex items-center justify-center text-4xl mb-5 group-hover:scale-110 transition duration-300 shadow-inner">👩‍💻</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-1">胡僑耘</h3>
+                <p class="text-sm font-medium text-gray-400 mb-3">應經三 (輔資管)</p>
+                <span class="px-4 py-1.5 text-xs font-semibold rounded-full bg-orange-50 text-orange-600 border border-orange-100 mb-6">前端視覺與 UI/UX 設計</span>
+                <div class="w-full pt-5 border-t border-gray-50 text-sm text-gray-500">
+                    <a href="mailto:9ana@email.nchu.edu.tw" class="flex items-center justify-center gap-2 hover:text-giver transition">
+                        <span>📧</span> 9ana@email.nchu.edu.tw
+                    </a>
+                </div>
+            </div>
+
+            <!-- 成員 2 -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center hover:shadow-lg transition duration-300 flex flex-col items-center group">
+                <div class="w-24 h-24 rounded-full bg-teal-50 border-4 border-receiver/30 flex items-center justify-center text-4xl mb-5 group-hover:scale-110 transition duration-300 shadow-inner">👨‍💻</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-1">鄭詠琳</h3>
+                <p class="text-sm font-medium text-gray-400 mb-3">資管二</p>
+                <span class="px-4 py-1.5 text-xs font-semibold rounded-full bg-teal-50 text-teal-600 border border-teal-100 mb-6">FastAPI 後端與資料庫</span>
+                <div class="w-full pt-5 border-t border-gray-50 text-sm text-gray-500">
+                    <a href="mailto:backend@email.nchu.edu.tw" class="flex items-center justify-center gap-2 hover:text-receiver transition">
+                        <span>📧</span> backend@email.nchu.edu.tw
+                    </a>
+                </div>
+            </div>
+
+            <!-- 成員 3 -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center hover:shadow-lg transition duration-300 flex flex-col items-center group">
+                <div class="w-24 h-24 rounded-full bg-purple-50 border-4 border-purple-200 flex items-center justify-center text-4xl mb-5 group-hover:scale-110 transition duration-300 shadow-inner">🛠️</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-1">鄭儀蓁</h3>
+                <p class="text-sm font-medium text-gray-400 mb-3">應經三</p>
+                <span class="px-4 py-1.5 text-xs font-semibold rounded-full bg-purple-50 text-purple-600 border border-purple-100 mb-6">系統串接與 PM 專案控制</span>
+                <div class="w-full pt-5 border-t border-gray-50 text-sm text-gray-500">
+                    <a href="mailto:pm@email.nchu.edu.tw" class="flex items-center justify-center gap-2 hover:text-purple-500 transition">
+                        <span>📧</span> pm@email.nchu.edu.tw
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 聯絡我們與表單區塊 ================= -->
+        <div class="w-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
+            
+            <!-- 左側：聯絡資訊 (深色質感背景) -->
+            <div class="md:w-2/5 bg-gray-900 text-white p-10 flex flex-col justify-center relative overflow-hidden">
+                <!-- 裝飾用光暈效果 -->
+                <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full bg-giver opacity-20 blur-2xl"></div>
+                <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-receiver opacity-20 blur-2xl"></div>
+                
+                <h2 class="text-2xl font-bold mb-6 relative z-10">聯絡資訊</h2>
+                <p class="text-gray-400 mb-8 text-sm leading-relaxed relative z-10">
+                    不論是系統回報、合作提案，或是單純想給我們一些建議，都非常歡迎透過以下方式與我們團隊聯繫。
+                </p>
+                
+                <div class="space-y-6 relative z-10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-giver">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400">官方 Email</p>
+                            <p class="font-medium">support@foodshare.nchu.edu.tw</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-receiver">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400">意見回饋</p>
+                            <a href="#" class="font-medium hover:text-receiver transition underline decoration-gray-500 underline-offset-2">填寫 Google 表單</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右側：聯絡表單 UI -->
+            <div class="md:w-3/5 p-10 lg:p-12">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">傳送訊息給我們</h3>
+                <!-- 表單預設阻止提交，並跳出提示 -->
+                <form class="space-y-5" onsubmit="event.preventDefault(); alert('感謝您的來信！此為前端展示版面，後續會交由後端處理。');">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">您的稱呼</label>
+                            <input type="text" placeholder="王小明" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">電子信箱</label>
+                            <input type="email" placeholder="example@email.com" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">主旨</label>
+                        <input type="text" placeholder="系統功能建議 / 合作詢問" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">訊息內容</label>
+                        <textarea rows="4" placeholder="請輸入您的訊息..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-receiver focus:border-transparent transition text-sm resize-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl shadow-sm transition transform hover:-translate-y-0.5">
+                        發送訊息
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-gray-100 py-6 text-center text-xs text-gray-400">
+        &copy; 2026 中興大學食物共享平台專題小組. All rights reserved.
+    </footer>
 </body>
 </html>
