@@ -100,6 +100,7 @@ def food_to_card(post: FoodPost, db: Session = None) -> dict:
         "main_location":   post.main_location or "",
         "detail_location": post.detail_location or "",
         "time_limit":      post.time_limit,   # 單位：分鐘（編輯頁預填用）
+        "waitlist_time_limit": post.waitlist_time_limit, # 單位：分鐘
         "time_ago":        time_ago(post.created_at),
         "coords":          coords,
         "emoji":           post.emoji or meta["emoji"], # 用戶自選優先
@@ -288,17 +289,18 @@ def get_food(food_id: int, uid: str = None, db: Session = Depends(get_db)):
 
 @app.post("/api/foods")
 async def create_food(
-    sharer_uid:      str        = Form(...),
-    title:           str        = Form(...),
-    category:        str        = Form(...),
-    emoji_choice:    str        = Form(None),   # 使用者自選的 emoji，沒選則用類別預設
-    quantity:        int        = Form(None),
-    main_location:   str        = Form(...),
-    detail_location: str        = Form(None),
-    time_limit:      int        = Form(2),
-    description:     str        = Form(None),
-    file:            UploadFile = File(None),
-    db:              Session    = Depends(get_db),
+    sharer_uid:          str        = Form(...),
+    title:               str        = Form(...),
+    category:            str        = Form(...),
+    emoji_choice:        str        = Form(None),   # 使用者自選的 emoji，沒選則用類別預設
+    quantity:            int        = Form(None),
+    main_location:       str        = Form(...),
+    detail_location:     str        = Form(None),
+    time_limit:          int        = Form(2),
+    waitlist_time_limit: int        = Form(15),     # 遞補後領取時限（分鐘）
+    description:         str        = Form(None),
+    file:                UploadFile = File(None),
+    db:                  Session    = Depends(get_db),
 ):
     """upload.html 發布食物用。"""
     user = db.query(User).filter(User.firebase_uid == sharer_uid).first()
@@ -333,6 +335,7 @@ async def create_food(
         lat=coords[0],
         lng=coords[1],
         time_limit=time_limit,
+        waitlist_time_limit=waitlist_time_limit,
         image_path=image_path,
         created_at=now,
         expires_at=now + timedelta(minutes=time_limit),
@@ -348,19 +351,20 @@ async def create_food(
 
 @app.put("/api/foods/{food_id}")
 async def update_food(
-    food_id:         int,
-    sharer_uid:      str        = Form(...),
-    title:           str        = Form(...),
-    category:        str        = Form(...),
-    emoji_choice:    str        = Form(None),
-    quantity:        int        = Form(None),
-    main_location:   str        = Form(...),
-    detail_location: str        = Form(None),
-    time_limit:      int        = Form(2),
-    description:     str        = Form(None),
-    status:          str        = Form(None),   # 分享者可手動改狀態
-    file:            UploadFile = File(None),
-    db:              Session    = Depends(get_db),
+    food_id:             int,
+    sharer_uid:          str        = Form(...),
+    title:               str        = Form(...),
+    category:            str        = Form(...),
+    emoji_choice:        str        = Form(None),
+    quantity:            int        = Form(None),
+    main_location:       str        = Form(...),
+    detail_location:     str        = Form(None),
+    time_limit:          int        = Form(2),
+    waitlist_time_limit: int        = Form(15),
+    description:         str        = Form(None),
+    status:              str        = Form(None),   # 分享者可手動改狀態
+    file:                UploadFile = File(None),
+    db:                  Session    = Depends(get_db),
 ):
     """share.html 編輯食物用。只有分享者本人可以編輯。"""
     post = db.query(FoodPost).filter(FoodPost.id == food_id).first()
@@ -381,17 +385,18 @@ async def update_food(
             f.write(contents)
         post.image_path = f"/images/{filename}"
 
-    post.title           = title
-    post.category        = category
-    post.emoji           = emoji
-    post.description     = description
-    post.quantity        = quantity
-    post.main_location   = main_location
-    post.detail_location = detail_location
-    post.lat             = coords[0]
-    post.lng             = coords[1]
-    post.time_limit      = time_limit
-    post.expires_at      = datetime.utcnow() + timedelta(minutes=time_limit)  # 從現在重新計時
+    post.title               = title
+    post.category            = category
+    post.emoji               = emoji
+    post.description         = description
+    post.quantity            = quantity
+    post.main_location       = main_location
+    post.detail_location     = detail_location
+    post.lat                 = coords[0]
+    post.lng                 = coords[1]
+    post.time_limit          = time_limit
+    post.waitlist_time_limit = waitlist_time_limit
+    post.expires_at          = datetime.utcnow() + timedelta(minutes=time_limit)  # 從現在重新計時
     if status in ("available", "completed"):   # 只允許分享者手動切這兩個狀態
         post.status = status
     db.commit()
@@ -425,6 +430,11 @@ def trigger_waiting_queue(post: FoodPost, released_qty: int, db: Session):
     for w in waiting_list:
         if released_qty >= w.quantity_reserved:
             w.status = "pending"
+            
+            # 設定候補遞補成功者的領取截止時間 (遞補成功時間 + 貼文指定的候補時限，且不得超過貼文原定截止時間)
+            now = datetime.utcnow()
+            w.pickup_deadline = min(now + timedelta(minutes=post.waitlist_time_limit), post.expires_at)
+            
             released_qty -= w.quantity_reserved
             requester = db.query(User).filter(User.firebase_uid == w.requester_uid).first()
             if requester:
@@ -475,9 +485,11 @@ def reserve_food(
         if post.quantity_left <= 0:
             post.status = "reserved"  # 設為已預約，但首頁仍可顯示，供他人候補
         res_status = "pending"
+        pickup_deadline = post.expires_at
     else:
         # 庫存不足，建立候補預約
         res_status = "waiting"
+        pickup_deadline = None
 
     reservation = Reservation(
         food_post_id=food_id,
@@ -487,6 +499,7 @@ def reserve_food(
         student_id=student_id,
         estimated_pickup_time=estimated_pickup_time,
         status=res_status,
+        pickup_deadline=pickup_deadline,
     )
     db.add(reservation)
 
@@ -738,6 +751,7 @@ def get_user_requests(uid: str, db: Session = Depends(get_db)):
         item["student_id"]            = r.student_id or ""
         item["estimated_pickup_time"] = r.estimated_pickup_time or ""
         item["reservation_status"]    = r.status
+        item["pickup_deadline"]       = r.pickup_deadline.isoformat() if r.pickup_deadline else None
         if r.status == "pending":
             item["status"] = "待領取"
         elif r.status == "completed":

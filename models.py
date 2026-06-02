@@ -51,6 +51,7 @@ class FoodPost(Base):
     lng             = Column(Float,       nullable=True)
 
     time_limit      = Column(Integer,     nullable=False, default=120)  # 單位：分鐘
+    waitlist_time_limit = Column(Integer,     nullable=False, default=30)   # 遞補後領取時限（分鐘）
     status          = Column(String(20),  nullable=False, default="available")
     # available → completed / expired
 
@@ -78,6 +79,7 @@ class Reservation(Base):
     estimated_pickup_time = Column(String(50),  nullable=True)   # 預計領取時間（文字描述）
 
     created_at            = Column(DateTime,    nullable=False, default=datetime.utcnow)
+    pickup_deadline       = Column(DateTime,    nullable=True)
 
     food_post = relationship("FoodPost",  back_populates="reservations")
     requester = relationship("User",      back_populates="reservations", foreign_keys=[requester_uid])
