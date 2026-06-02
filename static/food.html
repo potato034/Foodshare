@@ -26,8 +26,8 @@
         <section class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6">
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                    <p class="text-sm text-gray-500">你的覓食資料會綁定目前登入帳號</p>
-                    <p id="profile-key" class="font-semibold text-gray-900">已同步到個人帳號</p>
+                    <p class="text-sm text-gray-500">吃飽飽</p>
+                    <p id="profile-key" class="font-semibold text-gray-900">睡好好</p>
                 </div>
                 <div class="grid grid-cols-2 gap-3 text-sm">
                     <div class="rounded-xl bg-teal-50 px-4 py-3 border border-teal-100">
@@ -89,8 +89,8 @@
 
         function renderAll(items) {
             // 依預約狀態分成「尚未領取」和「歷史紀錄」
-            const pending = items.filter(i => i.status === '待領取');
-            const history = items.filter(i => i.status === '已完成' || i.status === '已取消');
+            const pending = items.filter(i => i.status === '待領取' || i.status.startsWith('候位中'));
+            const history = items.filter(i => i.status === '已完成' || i.status === '已取消' || i.status === '未取');
 
             document.getElementById('request-count').textContent         = String(pending.length);
             document.getElementById('request-finished-count').textContent = String(history.filter(i => i.status === '已完成').length);

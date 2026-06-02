@@ -261,7 +261,16 @@
 
             // 申請索取按鈕導向 detail.html
             const reqBtn = document.getElementById('request-food-btn');
-            if (reqBtn) reqBtn.href = `./static/detail.html?id=${item.id}`;
+            if (reqBtn) {
+                reqBtn.href = `./static/detail.html?id=${item.id}`;
+                if (item.status === 'reserved') {
+                    reqBtn.textContent = '排隊候補 →';
+                    reqBtn.className = "mt-3 w-full py-2 bg-orange-400 hover:bg-orange-500 text-white font-medium rounded-lg text-sm transition text-center block";
+                } else {
+                    reqBtn.textContent = '申請索取 →';
+                    reqBtn.className = "mt-3 w-full py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition text-center block";
+                }
+            }
 
             const card = document.querySelector(`[data-food-card="${item.id}"]`);
             document.querySelectorAll('[data-food-card]').forEach((el) => el.classList.remove('food-card-active'));
