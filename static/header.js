@@ -1,6 +1,7 @@
 (() => {
-    // 判斷目前執行腳本的頁面是否在 static 資料夾內，以給予正確的相對路徑
-    const inStatic = /[/\\]static[/\\]/.test(window.location.pathname);
+    // 判斷目前執行腳本的頁面是否為首頁，以給予正確的相對路徑（首頁在根目錄，其餘頁面皆在 static 目錄）
+    const isHomePage = window.location.pathname.endsWith('/index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/');
+    const inStatic = !isHomePage;
     const root = inStatic ? '../' : './';
     const s = inStatic ? './' : './static/';
 
