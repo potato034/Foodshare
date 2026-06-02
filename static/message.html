@@ -24,7 +24,7 @@
 
         <!-- ── 左側：對話列表 ─────────────────────────── -->
         <aside id="sidebar"
-               class="w-full md:w-80 shrink-0 bg-white border-r border-gray-100 flex flex-col">
+               class="w-48 sm:w-64 md:w-80 shrink-0 bg-white border-r border-gray-100 flex flex-col transition-all duration-300">
             <div class="px-4 pt-5 pb-3 border-b border-gray-100">
                 <h1 class="text-lg font-extrabold text-gray-900">私訊</h1>
             </div>
@@ -35,7 +35,7 @@
 
         <!-- ── 右側：聊天區 ──────────────────────────── -->
         <main id="chat-panel"
-              class="hidden md:flex flex-col flex-1 overflow-hidden bg-gray-50">
+               class="flex flex-col flex-1 overflow-hidden bg-gray-50">
 
             <!-- 未選取時的提示 -->
             <div id="chat-empty" class="flex-1 flex items-center justify-center text-gray-400 text-sm">
@@ -49,11 +49,19 @@
                 <div class="bg-white border-b border-gray-100 px-5 py-3 shrink-0">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <button id="back-btn" class="md:hidden text-gray-400 hover:text-gray-600 text-xl">←</button>
+                            <button id="back-btn" class="text-gray-400 hover:text-gray-600 text-xl hidden">←</button>
                             <div id="chat-avatar" class="w-9 h-9 rounded-full bg-receiver text-white font-bold flex items-center justify-center text-sm shrink-0"></div>
                             <span id="chat-name" class="font-bold text-gray-900"></span>
                         </div>
-                        <button id="toggle-order-btn" class="text-xs text-receiver hover:underline hidden">查看訂單資訊 ▾</button>
+                        <div class="flex items-center gap-3">
+                            <button id="toggle-order-btn" class="text-xs text-receiver hover:underline hidden">查看訂單資訊 ▾</button>
+                            <button id="fullscreen-btn" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 shrink-0">
+                                <svg id="fullscreen-svg" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" />
+                                </svg>
+                                <span id="fullscreen-btn-text">全螢幕</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 訂單資訊卡（可收合） -->
@@ -115,6 +123,10 @@
     const sidebar       = document.getElementById('sidebar');
     const orderCard     = document.getElementById('order-card');
     const toggleOrderBtn = document.getElementById('toggle-order-btn');
+    const fullscreenBtn     = document.getElementById('fullscreen-btn');
+    const fullscreenBtnText = document.getElementById('fullscreen-btn-text');
+    const fullscreenSvg     = document.getElementById('fullscreen-svg');
+    let isFullscreen        = false;
 
     // 目前對話的狀態
     let currentOther   = null;
@@ -200,10 +212,6 @@
             el.addEventListener('click', () => {
                 const postId = el.dataset.post ? parseInt(el.dataset.post) : null;
                 openChat(el.dataset.uid, postId);
-                // 手機版：隱藏 sidebar，顯示 chat panel
-                sidebar.classList.add('hidden');
-                chatPanel.classList.remove('hidden');
-                chatPanel.classList.add('flex');
             });
         });
     }
@@ -341,12 +349,33 @@
         toggleOrderBtn.textContent = hidden ? '查看訂單資訊 ▾' : '收起 ▴';
     });
 
-    // 手機版返回
+    // 全螢幕切換邏輯
+    function toggleFullscreen() {
+        isFullscreen = !isFullscreen;
+        if (isFullscreen) {
+            sidebar.classList.add('hidden');
+            backBtn.classList.remove('hidden');
+            fullscreenBtnText.textContent = '視窗化';
+            fullscreenSvg.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H6m4 0v4m4-4h4m-4 0v4M14 10h4m-4 0V6m-8 4H4m4 0V6" />
+            `;
+        } else {
+            sidebar.classList.remove('hidden');
+            backBtn.classList.add('hidden');
+            fullscreenBtnText.textContent = '全螢幕';
+            fullscreenSvg.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" />
+            `;
+        }
+    }
+
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    // 手機版返回 (當在全螢幕模式下)
     backBtn.addEventListener('click', () => {
-        sidebar.classList.remove('hidden');
-        chatPanel.classList.add('hidden');
-        chatPanel.classList.remove('flex');
-        clearInterval(pollTimer);
+        if (isFullscreen) {
+            toggleFullscreen();
+        }
     });
 
     // 頁面離開時清 timer
