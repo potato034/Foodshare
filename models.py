@@ -98,3 +98,14 @@ class Message(Base):
     sender    = relationship("User",     foreign_keys=[sender_uid])
     receiver  = relationship("User",     foreign_keys=[receiver_uid])
     food_post = relationship("FoodPost", foreign_keys=[food_post_id])
+
+
+class Feedback(Base):
+    """使用者提交的意見回饋。"""
+    __tablename__ = "feedbacks"
+
+    id         = Column(Integer,     primary_key=True, autoincrement=True)
+    name       = Column(String(100), nullable=True)
+    email      = Column(String(255), nullable=True)
+    content    = Column(Text,        nullable=False)
+    created_at = Column(DateTime,    nullable=False, default=datetime.utcnow)

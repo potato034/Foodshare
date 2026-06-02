@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import os, uuid
 
 from database import engine, get_db
-from models import Base, User, FoodPost, Reservation, Location, Message
+from models import Base, User, FoodPost, Reservation, Location, Message, Feedback
 
 # 啟動時自動建立所有資料表
 Base.metadata.create_all(bind=engine)
@@ -829,3 +829,33 @@ def get_unread_count(uid: str, db: Session = Depends(get_db)):
         Message.is_read      == False,
     ).count()
     return {"unread": count}
+
+
+@app.post("/api/feedback")
+def create_feedback(
+    name: str = Form(None),
+    email: str = Form(None),
+    content: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    if not content or not content.strip():
+        raise HTTPException(status_code=400, detail="回饋內容不能為空")
+    fb = Feedback(name=name, email=email, content=content)
+    db.add(fb)
+    db.commit()
+    return {"ok": True}
+
+
+@app.get("/api/admin/feedbacks")
+def get_feedbacks(db: Session = Depends(get_db)):
+    """管理員後台 API：取得所有回饋。"""
+    fbs = db.query(Feedback).order_by(Feedback.created_at.desc()).all()
+    return [
+        {
+            "id": f.id,
+            "name": f.name,
+            "email": f.email,
+            "content": f.content,
+            "created_at": f.created_at.isoformat()
+        } for f in fbs
+    ]

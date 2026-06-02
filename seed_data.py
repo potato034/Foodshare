@@ -4,7 +4,7 @@
 """
 from datetime import datetime, timedelta
 from database import SessionLocal, engine
-from models import Base, User, FoodPost, Location
+from models import Base, User, FoodPost, Location, Feedback
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,6 +28,15 @@ LOCATIONS = [
 def seed():
     db = SessionLocal()
     try:
+        # 建立測試回饋資料 (即便已有食物資料也執行，確保回饋表存在並有測試資料)
+        if db.query(Feedback).count() == 0:
+            db.add_all([
+                Feedback(name="張同學", email="s109012345@smail.nchu.edu.tw", content="這個食物共享平台真的太棒了，省了好多餐費！"),
+                Feedback(name="李同學", email="s110054321@smail.nchu.edu.tw", content="希望可以新增地圖篩選類別的功能，謝謝組員！")
+            ])
+            db.commit()
+            print("回饋測試資料建立完成！共 2 筆回饋。")
+
         # 安全檢查：如果資料庫已有 FoodPost 資料，則不執行種子程式，避免覆蓋現有資料
         if db.query(FoodPost).count() > 0:
             print("資料庫已有資料，略過。")
@@ -130,6 +139,8 @@ def seed():
         db.add_all(sample_posts)
         db.commit()
         print("測試資料建立完成！共 5 筆食物。")
+
+
 
     finally:
         db.close()
