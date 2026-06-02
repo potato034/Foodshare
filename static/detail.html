@@ -317,11 +317,15 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">預計領取時間 <span class="text-red-500">*</span></label>
-                                <select id="f-time"
-                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
-                                    <option value="">請選擇領取時間</option>
-                                    ${pickupTimeOptions}
-                                </select>
+                                ${isReserved 
+                                    ? `<input id="f-time" type="text" value="系統自動候補" readonly disabled
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100 text-gray-500 cursor-not-allowed outline-none">`
+                                    : `<select id="f-time"
+                                           class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
+                                           <option value="">請選擇領取時間</option>
+                                           ${pickupTimeOptions}
+                                       </select>`
+                                }
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">預約份數 <span class="text-red-500">*</span></label>
