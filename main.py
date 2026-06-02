@@ -357,7 +357,7 @@ async def update_food(
 
     meta  = CATEGORY_META.get(category, CATEGORY_META["其他"])
     emoji = emoji_choice.strip() if emoji_choice and emoji_choice.strip() else meta["emoji"]
-    coords = LOCATION_COORDS.get(main_location, [post.lat or 24.1232, post.lng or 120.6776])
+    coords = get_location_coords(main_location, db)
 
     if file and file.filename:
         ext      = os.path.splitext(file.filename)[1]

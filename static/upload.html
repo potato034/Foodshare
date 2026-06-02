@@ -17,6 +17,9 @@
             }
         }
     </script>
+    <!-- Leaflet 地圖套件 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen pt-24">
     <script src="./header.js"></script>
@@ -66,7 +69,6 @@
                             <option value="披薩">披薩</option>
                             <option value="炸物">炸物</option>
                             <option value="其他">其他</option>
-
                         </select>
                     </div>
                 </div>
@@ -135,6 +137,8 @@
                         <input type="text" name="detail_location" placeholder="詳細位置 (例：4樓系辦外桌上)" class="w-full sm:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giver focus:border-transparent outline-none transition">
                     </div>
                     <p class="text-xs text-gray-500 mt-1">選擇鄰近的地標能幫助索取者在地圖上更快找到喔！</p>
+                    <!-- 興大校園地標定位小地圖 -->
+                    <div id="upload-map" class="h-60 rounded-xl border border-gray-200 mt-3 shadow-inner relative z-10 overflow-hidden"></div>
                 </div>
 
                 <div>
@@ -201,13 +205,71 @@
         const form    = document.getElementById('upload-form');
         const submitBtn = form?.querySelector('[type="submit"]');
 
-        // ── 自訂可搜尋地點下拉 ──────────────────────────────────
+        // ── 自訂可搜尋地點下拉與小地圖整合 ──────────────────────
         let allLocations = [];
+        let locationsData = [];
+        let map = null;
+        let selectMarker = null;
+
         const locInput    = document.getElementById('main-location-input');
         const locHidden   = document.getElementById('main-location-hidden');
         const locDropdown = document.getElementById('loc-dropdown');
         const locSearch   = document.getElementById('loc-search');
         const locList     = document.getElementById('loc-list');
+
+        function initUploadMap() {
+            try {
+                // 中心設在中興大學圖書館附近
+                map = L.map('upload-map', {
+                    center: [24.122, 120.6755],
+                    zoom: 16,
+                    zoomControl: true
+                });
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(map);
+
+                // 建立當前選取地標的紅色定位 Marker
+                selectMarker = L.marker([0, 0], {
+                    icon: L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    })
+                });
+
+                // 標記所有興大主要地標
+                locationsData.forEach(loc => {
+                    // 藍色小圓點地標
+                    const marker = L.circleMarker([loc.lat, loc.lng], {
+                        radius: 8,
+                        fillColor: '#A8CBCB', // 鼠尾草綠
+                        color: '#ffffff',
+                        weight: 2,
+                        fillOpacity: 0.95
+                    }).addTo(map);
+
+                    // 綁定地標名稱標籤
+                    marker.bindTooltip(loc.name, {
+                        permanent: true,
+                        direction: 'top',
+                        className: 'bg-white border border-gray-200 px-1 py-0.5 rounded text-[10px] font-bold text-gray-700 shadow-sm'
+                    });
+
+                    // 點擊地標圓點 -> 連動下拉選單與選取狀態
+                    marker.on('click', () => {
+                        selectLocation(loc.name);
+                    });
+                });
+            } catch (err) {
+                console.error('Initialize upload map failed:', err);
+            }
+        }
 
         function renderLocList(keyword = '') {
             const kw = keyword.toLowerCase();
@@ -219,7 +281,7 @@
                 : filtered.map(name => `
                     <li class="loc-option px-4 py-2 hover:bg-orange-50 hover:text-giver cursor-pointer transition rounded-lg mx-1
                                ${locInput.value === name ? 'bg-orange-50 text-giver font-semibold' : 'text-gray-700'}"
-                        data-name="${name}">${name}</li>`
+                         data-name="${name}">${name}</li>`
                 ).join('');
             locList.querySelectorAll('.loc-option').forEach(li => {
                 li.addEventListener('mousedown', e => {
@@ -233,6 +295,16 @@
             locInput.value  = name;
             locHidden.value = name;
             closeDropdown();
+
+            // 連動小地圖定位
+            if (map && locationsData.length > 0) {
+                const found = locationsData.find(l => l.name === name);
+                if (found) {
+                    const pos = [found.lat, found.lng];
+                    selectMarker.setLatLng(pos).addTo(map);
+                    map.setView(pos, 17, { animate: true, duration: 0.8 });
+                }
+            }
         }
 
         function openDropdown() {
@@ -256,9 +328,16 @@
             if (!document.getElementById('loc-wrapper').contains(e.target)) closeDropdown();
         });
 
-        // 從 API 載入地點
+        // 從 API 載入地點並初始化小地圖
         fetch('/api/locations').then(r => r.json()).then(locs => {
+            locationsData = locs;
             allLocations = locs.map(l => l.name);
+            initUploadMap();
+
+            // 如果已有預填地點 (例如編輯模式載入後)，立刻同步小地圖 Marker
+            if (locHidden.value) {
+                selectLocation(locHidden.value);
+            }
         }).catch(() => {});
 
         // 頁面標題顯示登入者名字
@@ -278,7 +357,15 @@
                     document.getElementById('category').value    = food.category || '';
                     document.getElementById('emoji-input').value = food.emoji || '';
                     document.getElementById('quantity').value    = food.quantity || '';
-                    document.getElementById('time-limit').value  = food.time_limit || 2;
+                    // 這裡的 time-limit 需要做分鐘/小時的反向轉換以正確填入表單
+                    const mins = food.time_limit || 120;
+                    if (mins % 60 === 0) {
+                        document.getElementById('time-limit-value').value = mins / 60;
+                        document.getElementById('time-limit-unit').value = 'hour';
+                    } else {
+                        document.getElementById('time-limit-value').value = mins;
+                        document.getElementById('time-limit-unit').value = 'min';
+                    }
                     document.getElementById('description').value = food.description || '';
                     // main_location / detail_location 現在 API 直接回傳
                     if (food.main_location) selectLocation(food.main_location);
