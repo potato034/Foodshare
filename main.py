@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Form, File, UploadFile, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Form, File, UploadFile, Depends, HTTPException, Request
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -34,6 +34,20 @@ def index():
 @app.get("/index.html")
 def index_html():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+@app.get("/{page_name}.html")
+def redirect_html_pages(page_name: str, request: Request):
+    known_pages = {
+        "message", "detail", "share", "food", "browse",
+        "cart", "profile", "upload", "teach", "aboutus", "setting"
+    }
+    if page_name in known_pages:
+        query_params = request.url.query
+        url = f"/static/{page_name}.html"
+        if query_params:
+            url += f"?{query_params}"
+        return RedirectResponse(url=url)
+    raise HTTPException(status_code=404, detail="Not Found")
 
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 app.mount("/images", StaticFiles(directory=UPLOAD_DIR), name="images")
@@ -97,6 +111,7 @@ def food_to_card(post: FoodPost, db: Session = None) -> dict:
         "quantity":        post.quantity if post.quantity is not None else "",
         "quantity_left":   post.quantity_left if post.quantity_left is not None else post.quantity,
         "sharer_name":     sharer_name,
+        "sharer_uid":      post.sharer_uid,
         "image_path":      post.image_path or "",
         "expires_at_iso":  (post.expires_at.isoformat() + "Z") if post.expires_at else None,
     }
@@ -732,7 +747,7 @@ def get_conversations(uid: str, db: Session = Depends(get_db)):
             "food_title":    m.food_post.title if m.food_post else None,
             "food_emoji":    m.food_post.emoji if m.food_post else None,
             "last_message":  m.content,
-            "last_time":     m.created_at.isoformat(),
+            "last_time":     m.created_at.isoformat() + "Z",
             "unread":        unread,
         }
         result.append(entry)
@@ -800,7 +815,7 @@ def get_thread(
                 "sender_uid": m.sender_uid,
                 "content":    m.content,
                 "is_read":    m.is_read,
-                "created_at": m.created_at.isoformat(),
+                "created_at": m.created_at.isoformat() + "Z",
             }
             for m in msgs
         ],
