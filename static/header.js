@@ -20,8 +20,8 @@
             <a href="${s}aboutus.html" class="hover:text-receiver transition">關於我們</a>
             <a href="${s}teach.html" class="hover:text-receiver transition">使用教學</a>
             
-            <a href="${s}share.html" class="text-giver hover:opacity-80 transition font-bold">🎁 分享清單</a>
-            <a href="${s}food.html" class="text-receiver hover:opacity-80 transition font-bold">🍴 覓食清單</a>
+            <a href="${s}share.html" class="text-giver hover:opacity-80 transition font-bold">分享清單</a>
+            <a href="${s}food.html" class="text-receiver hover:opacity-80 transition font-bold">預約清單</a>
         </nav>
         <div class="ml-auto w-[360px] relative hidden xl:block">
             <input type="text" id="header-search-input" placeholder="搜尋關鍵字或地點…"
