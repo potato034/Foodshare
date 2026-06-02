@@ -733,7 +733,7 @@ def get_conversations(uid: str, db: Session = Depends(get_db)):
             "food_title":    m.food_post.title if m.food_post else None,
             "food_emoji":    m.food_post.emoji if m.food_post else None,
             "last_message":  m.content,
-            "last_time":     m.created_at.isoformat(),
+            "last_time":     m.created_at.isoformat() + "Z",
             "unread":        unread,
         }
         result.append(entry)
@@ -801,7 +801,7 @@ def get_thread(
                 "sender_uid": m.sender_uid,
                 "content":    m.content,
                 "is_read":    m.is_read,
-                "created_at": m.created_at.isoformat(),
+                "created_at": m.created_at.isoformat() + "Z",
             }
             for m in msgs
         ],
