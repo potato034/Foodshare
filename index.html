@@ -147,10 +147,16 @@
                                     <div class="flex items-center gap-1">📍 <span id="detail-location">—</span></div>
                                 </div>
                             </div>
-                            <a id="request-food-btn" href="#"
-                               class="mt-3 w-full py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition text-center block">
-                                申請索取 →
-                            </a>
+                            <div class="mt-3 flex items-center gap-2">
+                                <a id="request-food-btn" href="#"
+                                   class="flex-1 py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition text-center block">
+                                    申請索取 →
+                                </a>
+                                <a id="detail-food-btn" href="#"
+                                   class="py-2 px-3 border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium rounded-lg text-sm transition text-center block whitespace-nowrap">
+                                    看詳細 →
+                                </a>
+                            </div>
                         </div>
                     </div>
 
@@ -259,16 +265,18 @@
             activeFoodId = item.id;
             updateDetailPanel(item);
 
-            // 申請索取按鈕導向 detail.html
-            const reqBtn = document.getElementById('request-food-btn');
+            // 申請索取 / 看詳細 按鈕導向 detail.html
+            const reqBtn    = document.getElementById('request-food-btn');
+            const detailBtn = document.getElementById('detail-food-btn');
+            if (detailBtn) detailBtn.href = `./static/detail.html?id=${item.id}`;
             if (reqBtn) {
                 reqBtn.href = `./static/detail.html?id=${item.id}`;
                 if (item.status === 'reserved') {
                     reqBtn.textContent = '排隊候補 →';
-                    reqBtn.className = "mt-3 w-full py-2 bg-orange-400 hover:bg-orange-500 text-white font-medium rounded-lg text-sm transition text-center block";
+                    reqBtn.className = "flex-1 py-2 bg-orange-400 hover:bg-orange-500 text-white font-medium rounded-lg text-sm transition text-center block";
                 } else {
                     reqBtn.textContent = '申請索取 →';
-                    reqBtn.className = "mt-3 w-full py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition text-center block";
+                    reqBtn.className = "flex-1 py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-lg text-sm transition text-center block";
                 }
             }
 
