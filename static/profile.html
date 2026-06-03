@@ -409,8 +409,8 @@
                             shareHistory: currentProfile.shareHistory,
                             requestHistory: currentProfile.requestHistory
                         };
-                        saveUserProfile(firebaseUser.uid, nextProfile);
-                        applyProfile(nextProfile, firebaseUser);
+                        saveUserProfile(finalUser.uid, nextProfile);
+                        applyProfile(nextProfile, finalUser);
                     };
                     reader.readAsDataURL(file);
                 });
@@ -427,7 +427,7 @@
                 cancelEditBtn.dataset.bound = 'true';
                 cancelEditBtn.addEventListener('click', () => {
                     editPanel.classList.add('hidden');
-                    applyProfile(loadUserProfile(firebaseUser.uid, firebaseUser), firebaseUser);
+                    applyProfile(loadUserProfile(finalUser.uid, finalUser), finalUser);
                 });
             }
 
@@ -440,22 +440,22 @@
                         shareHistory: currentProfile.shareHistory,
                         requestHistory: currentProfile.requestHistory
                     };
-                    saveUserProfile(firebaseUser.uid, nextProfile);
+                    saveUserProfile(finalUser.uid, nextProfile);
                     localStorage.setItem('fs_currentUser', JSON.stringify({
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email || '',
-                        displayName: nextProfile.displayName || firebaseUser.email?.split('@')[0] || ''
+                        uid: finalUser.uid,
+                        email: finalUser.email || '',
+                        displayName: nextProfile.displayName || finalUser.email?.split('@')[0] || ''
                     }));
-                    applyProfile(nextProfile, firebaseUser);
+                    applyProfile(nextProfile, finalUser);
                     if (editPanel) editPanel.classList.add('hidden');
                     alert('個人資料已更新');
                 });
             }
 
             window.addEventListener('storage', (event) => {
-                if (event.key !== getProfileKey(firebaseUser.uid)) return;
-                const nextProfile = loadUserProfile(firebaseUser.uid, firebaseUser);
-                applyProfile(nextProfile, firebaseUser);
+                if (event.key !== getProfileKey(finalUser.uid)) return;
+                const nextProfile = loadUserProfile(finalUser.uid, finalUser);
+                applyProfile(nextProfile, finalUser);
             });
         });
 
