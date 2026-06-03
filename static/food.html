@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的覓食清單</title>
+    <title>預約清單</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -22,21 +22,22 @@
     <script src="./header.js"></script>
 
     <main class="max-w-5xl mx-auto w-full p-6 space-y-8 flex-grow">
-        <h1 id="page-title" class="text-2xl font-bold text-receiver">我的覓食清單</h1>
+        <h1 id="page-title" class="text-2xl font-bold text-receiver">預約清單</h1>
+
         <section class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6">
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                    <p class="text-sm text-gray-500">吃飽飽</p>
-                    <p id="profile-key" class="font-semibold text-gray-900">睡好好</p>
+                    <p class="text-sm text-gray-500">你的預約資料會綁定目前登入帳號</p>
+                    <p id="profile-key" class="font-semibold text-gray-900">已同步到個人帳號</p>
                 </div>
                 <div class="grid grid-cols-2 gap-3 text-sm">
                     <div class="rounded-xl bg-teal-50 px-4 py-3 border border-teal-100">
                         <p class="text-gray-500 text-xs">待處理</p>
                         <p id="request-count" class="text-2xl font-extrabold text-receiver">0</p>
                     </div>
-                    <div class="rounded-xl bg-gray-50 px-4 py-3 border border-gray-100">
-                        <p class="text-gray-500 text-xs">完成</p>
-                        <p id="request-finished-count" class="text-2xl font-extrabold text-gray-700">0</p>
+                    <div class="rounded-xl bg-teal-50 px-4 py-3 border border-teal-100">
+                        <p class="text-gray-500 text-xs">已完成</p>
+                        <p id="request-finished-count" class="text-2xl font-extrabold text-receiver">0</p>
                     </div>
                 </div>
             </div>
@@ -48,7 +49,7 @@
                     <span class="w-3 h-6 bg-receiver rounded-full mr-2 inline-block"></span>
                     尚未領取
                 </h2>
-                <span id="empty-note" class="text-xs text-gray-400 hidden">目前沒有覓食紀錄</span>
+                <span id="empty-note" class="text-xs text-gray-400 hidden">目前沒有預約紀錄</span>
             </div>
             <div id="request-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
         </section>
@@ -69,30 +70,35 @@
 
         if (!snapshot?.uid) {
             document.getElementById('page-title').textContent = '請先登入';
-            document.getElementById('profile-key').textContent = '登入後才能查看覓食清單';
+            document.getElementById('profile-key').textContent = '登入後才能查看預約清單';
         } else {
             const profile = loadUserProfile(snapshot.uid, snapshot);
             const name = profile.displayName || snapshot.email?.split('@')[0] || '我的';
-            document.getElementById('page-title').textContent = `${name} 的覓食清單`;
+            document.getElementById('page-title').textContent = `${name} 的預約清單`;
+            document.getElementById('profile-key').textContent = '同步中…';
             loadRequests(snapshot.uid);
         }
 
         async function loadRequests(uid) {
+            const keyEl = document.getElementById('profile-key');
             try {
-                const res   = await fetch(`/api/users/${uid}/requests`);
+                const res = await fetch(`/api/users/${uid}/requests`);
+                if (!res.ok) throw new Error();
                 const items = await res.json();
+                keyEl.textContent = '已同步到個人帳號';
+                keyEl.className = 'font-semibold text-gray-900';
                 renderAll(items);
             } catch (err) {
-                document.getElementById('profile-key').textContent = '載入失敗，請確認伺服器是否啟動';
+                keyEl.textContent = '同步失敗，請確認伺服器是否啟動';
+                keyEl.className = 'font-semibold text-red-500';
             }
         }
 
         function renderAll(items) {
-            // 依預約狀態分成「尚未領取」和「歷史紀錄」
             const pending = items.filter(i => i.status === '待領取' || i.status.startsWith('候位中'));
             const history = items.filter(i => i.status === '已完成' || i.status === '已取消' || i.status === '未取');
 
-            document.getElementById('request-count').textContent         = String(pending.length);
+            document.getElementById('request-count').textContent          = String(pending.length);
             document.getElementById('request-finished-count').textContent = String(history.filter(i => i.status === '已完成').length);
             document.getElementById('empty-note').classList.toggle('hidden', pending.length !== 0);
 
@@ -108,14 +114,13 @@
                 if (!isoString) return '';
                 const date = new Date(isoString);
                 if (isNaN(date.getTime())) return '';
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const dd = String(date.getDate()).padStart(2, '0');
-                const hh = String(date.getHours()).padStart(2, '0');
+                const mm  = String(date.getMonth() + 1).padStart(2, '0');
+                const dd  = String(date.getDate()).padStart(2, '0');
+                const hh  = String(date.getHours()).padStart(2, '0');
                 const min = String(date.getMinutes()).padStart(2, '0');
                 return `🔴 領取期限：${mm}/${dd} ${hh}:${min} 前`;
             };
 
-            // 卡片 HTML 結構與原本完全相同，資料來源改成 API
             listEl.innerHTML = items.map(item => `
                 <a href="${item.href}" class="block bg-white rounded-xl shadow-sm border ${mode === 'request' ? 'border-receiver/30 hover:border-receiver' : 'border-gray-200 hover:border-gray-300'} hover:shadow-md transition duration-200 overflow-hidden">
                     <div class="p-4 flex items-start space-x-4">

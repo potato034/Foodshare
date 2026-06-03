@@ -18,11 +18,12 @@
         }
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen pt-24">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col pt-24">
     <script src="./header.js?v999"></script>
 
-    <main class="max-w-6xl mx-auto w-full p-6 space-y-8">
+    <main class="max-w-5xl mx-auto w-full p-6 space-y-8 flex-grow">
         <h1 id="page-title" class="text-2xl font-bold text-giver">分享清單</h1>
+
         <section class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6">
             <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
@@ -34,9 +35,9 @@
                         <p class="text-gray-500 text-xs">進行中</p>
                         <p id="share-count" class="text-2xl font-extrabold text-giver">0</p>
                     </div>
-                    <div class="rounded-xl bg-teal-50 px-4 py-3 border border-teal-100">
+                    <div class="rounded-xl bg-orange-50 px-4 py-3 border border-orange-100">
                         <p class="text-gray-500 text-xs">已完成</p>
-                        <p id="share-finished-count" class="text-2xl font-extrabold text-receiver">0</p>
+                        <p id="share-finished-count" class="text-2xl font-extrabold text-giver">0</p>
                     </div>
                 </div>
             </div>
@@ -46,11 +47,19 @@
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-bold text-gray-900 flex items-center">
                     <span class="w-3 h-6 bg-giver rounded-full mr-2 inline-block"></span>
-                    你的分享清單
+                    尚未完成
                 </h2>
                 <span id="empty-note" class="text-xs text-gray-400 hidden">目前沒有分享紀錄</span>
             </div>
-            <div id="share-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            <div id="share-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        </section>
+
+        <section>
+            <h2 class="text-lg font-bold text-gray-400 mb-4 flex items-center">
+                <span class="w-3 h-6 bg-gray-300 rounded-full mr-2 inline-block"></span>
+                歷史紀錄
+            </h2>
+            <div id="history-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-80"></div>
         </section>
     </main>
 
@@ -66,10 +75,10 @@
             const profile = loadUserProfile(snapshot.uid, snapshot);
             const name = profile.displayName || snapshot.email?.split('@')[0] || '我的';
             document.getElementById('page-title').textContent = `${name} 的分享清單`;
+            document.getElementById('profile-key').textContent = '同步中…';
             loadShares(snapshot.uid);
         }
 
-        // 刪除食物
         window.deleteFood = async function(foodId) {
             if (!confirm('確定要刪除這筆分享嗎？')) return;
             const data = new FormData();
@@ -84,48 +93,56 @@
         };
 
         async function loadShares(uid) {
+            const keyEl = document.getElementById('profile-key');
             try {
-                const res   = await fetch(`/api/users/${uid}/shares`);
+                const res = await fetch(`/api/users/${uid}/shares`);
+                if (!res.ok) throw new Error();
                 const items = await res.json();
+                keyEl.textContent = '已同步到個人帳號';
+                keyEl.className = 'font-semibold text-gray-900';
                 renderShares(items);
             } catch (err) {
-                document.getElementById('profile-key').textContent = '載入失敗，請確認伺服器是否啟動';
+                keyEl.textContent = '同步失敗，請確認伺服器是否啟動';
+                keyEl.className = 'font-semibold text-red-500';
             }
         }
 
         function renderShares(items) {
-            const activeCount   = items.filter(i => i.status !== '已完成').length;
-            const finishedCount = items.filter(i => i.status === '已完成').length;
+            const active  = items.filter(i => i.status !== '已完成' && i.status !== '已過期');
+            const history = items.filter(i => i.status === '已完成' || i.status === '已過期');
 
-            document.getElementById('share-count').textContent         = String(activeCount);
-            document.getElementById('share-finished-count').textContent = String(finishedCount);
+            document.getElementById('share-count').textContent          = String(active.length);
+            document.getElementById('share-finished-count').textContent = String(history.length);
 
-            const listEl    = document.getElementById('share-list');
-            const emptyNote = document.getElementById('empty-note');
+            document.getElementById('empty-note').classList.toggle('hidden', active.length !== 0);
 
-            if (items.length === 0) {
-                emptyNote?.classList.remove('hidden');
-                listEl.innerHTML = '';
-                return;
-            }
-            emptyNote?.classList.add('hidden');
+            renderList(document.getElementById('share-list'),   active,  'active');
+            renderList(document.getElementById('history-list'), history, 'history');
+        }
+
+        function renderList(listEl, items, mode) {
+            if (!listEl) return;
+            if (items.length === 0) { listEl.innerHTML = ''; return; }
 
             listEl.innerHTML = items.map(item => `
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-giver hover:shadow-md transition overflow-hidden group">
+                <div class="bg-white rounded-xl shadow-sm border ${mode === 'active' ? 'border-giver/30 hover:border-giver' : 'border-gray-200 hover:border-gray-300'} hover:shadow-md transition duration-200 overflow-hidden">
                     <a href="${item.href}" class="block p-4 flex items-start space-x-4">
-                        ${item.image_path
-                            ? `<img src="${item.image_path}" class="w-20 h-20 rounded-xl object-cover shrink-0">`
-                            : `<div class="w-20 h-20 bg-orange-50 rounded-xl flex items-center justify-center text-3xl shrink-0">${item.emoji || '🎁'}</div>`
-                        }
+                        <div class="w-20 h-20 ${mode === 'active' ? 'bg-orange-50' : 'bg-gray-100'} rounded-lg flex items-center justify-center text-3xl shrink-0 ${mode === 'history' ? 'grayscale' : ''}">
+                            ${item.image_path
+                                ? `<img src="${item.image_path}" class="w-full h-full object-cover rounded-lg">`
+                                : (item.emoji || '🎁')
+                            }
+                        </div>
                         <div class="flex-grow min-w-0">
                             <div class="flex justify-between items-start mb-1 gap-2">
-                                <span class="bg-giver text-white text-xs font-bold px-2 py-0.5 rounded shadow-sm">${item.status}</span>
+                                <span class="${mode === 'active' ? 'bg-giver text-white' : 'bg-gray-300 text-gray-700'} text-xs font-bold px-2 py-0.5 rounded shadow-sm">${item.status}</span>
                                 <span class="text-xs text-gray-400 whitespace-nowrap">${item.timeLabel}</span>
                             </div>
-                            <h3 class="font-bold text-gray-900 text-base mb-1 truncate group-hover:text-orange-600 transition">${item.title}</h3>
-                            <p class="text-sm text-gray-500 flex items-center truncate">📍 ${item.location}</p>
+                            <h3 class="font-bold ${mode === 'active' ? 'text-gray-900' : 'text-gray-600'} text-base mb-1 truncate">${item.title}</h3>
+                            <p class="text-sm ${mode === 'active' ? 'text-gray-500' : 'text-gray-400'} truncate">📍 ${item.location}</p>
                         </div>
                     </a>
+                    ${mode === 'active' ? `
                     <div class="px-4 pb-3 pt-0 flex gap-2 border-t border-gray-50">
                         <a href="./upload.html?edit=${item.id}"
                            class="flex-1 text-center text-xs font-semibold py-1.5 rounded-lg border border-giver text-giver hover:bg-orange-50 transition">
@@ -135,7 +152,7 @@
                                 class="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition">
                             🗑 刪除
                         </button>
-                    </div>
+                    </div>` : ''}
                 </div>
             `).join('');
         }
