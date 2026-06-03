@@ -14,6 +14,7 @@
         }
         @media (min-width: 541px) {
             .header-icon-mobile { display: none !important; }
+            #avatar-red-dot { display: none !important; }
         }
         .notification-role-sharer { border-left-color: #FBB28B !important; background-color: #fff7f2 !important; }
         .notification-role-requester { border-left-color: #A8CBCB !important; background-color: #f3fbfb !important; }
@@ -57,8 +58,10 @@
         <!-- 右側控制區 (全尺寸顯示，但內部較寬按鈕在手機版 <=540px 會隱藏並移至頭像選單) -->
         <div class="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
             <div id="user-controls" class="flex items-center gap-2 sm:gap-3 hidden">
-                <a id="msg-icon-link" href="${s}message.html" class="header-icon-desktop text-gray-600 hover:text-gray-900 transition" title="私訊">
+                <a id="msg-icon-link" href="${s}message.html" class="header-icon-desktop inline-block relative text-gray-600 hover:text-gray-900 transition" title="私訊">
                     <svg id="msg-icon-svg" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    <!-- 訊息未讀紅點提示 -->
+                    <span id="msg-red-dot" class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white hidden z-10"></span>
                 </a>
                 
                 <button id="notification-btn-desktop" class="header-icon-desktop relative text-gray-600 hover:text-gray-900 transition" title="系統通知">
@@ -233,7 +236,7 @@
                                 badge.classList.add('hidden');
                             }
                         }
-                        updateAvatarRedDot();
+                        updateMsgRedDot();
                     })
                     .catch(() => {});
                 loadNotifications();
@@ -325,7 +328,17 @@
     function updateAvatarRedDot() {
         const dot = header.querySelector('#avatar-red-dot');
         if (!dot) return;
-        if (unreadNotificationsCount > 0 || unreadMessagesCount > 0) {
+        if (unreadNotificationsCount > 0) {
+            dot.classList.remove('hidden');
+        } else {
+            dot.classList.add('hidden');
+        }
+    }
+
+    function updateMsgRedDot() {
+        const dot = header.querySelector('#msg-red-dot');
+        if (!dot) return;
+        if (unreadMessagesCount > 0) {
             dot.classList.remove('hidden');
         } else {
             dot.classList.add('hidden');
@@ -415,24 +428,39 @@
         } catch {}
     });
 
-    // ================= 獲取未讀訊息數量（頭像選單專用） =================
-    if (snapshot?.uid) {
-        loadNotifications();
-        fetch(`${root}api/messages/unread/${snapshot.uid}`)
-            .then(res => res.json())
-            .then(data => {
-                unreadMessagesCount = data?.unread || 0;
-                const badge = header.querySelector('#avatar-unread-badge');
-                if (badge) {
-                    if (unreadMessagesCount > 0) {
-                        badge.textContent = unreadMessagesCount;
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
-                }
-                updateAvatarRedDot();
-            })
-            .catch(() => {});
+    // ================= 獲取未讀與狀態自動同步（輪詢監聽） =================
+    let lastUid = null;
+    function syncLoginState() {
+        const currentSnapshot = getSnapshot();
+        const currentUid = currentSnapshot?.uid || null;
+        if (currentUid !== lastUid) {
+            lastUid = currentUid;
+            snapshot = currentSnapshot;
+            if (currentUid) {
+                loadNotifications();
+                fetch(`${root}api/messages/unread/${currentUid}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        unreadMessagesCount = data?.unread || 0;
+                        const badge = header.querySelector('#avatar-unread-badge');
+                        if (badge) {
+                            if (unreadMessagesCount > 0) {
+                                badge.textContent = unreadMessagesCount;
+                                badge.classList.remove('hidden');
+                            } else {
+                                badge.classList.add('hidden');
+                            }
+                        }
+                        updateMsgRedDot();
+                    })
+                    .catch(() => {});
+            } else {
+                setNotificationBadges(0);
+                unreadMessagesCount = 0;
+                updateMsgRedDot();
+            }
+        }
     }
+    syncLoginState();
+    setInterval(syncLoginState, 1000);
 })();
