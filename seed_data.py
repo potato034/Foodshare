@@ -94,7 +94,7 @@ def seed():
                 description="全新未拆封，微糖微冰。買一送一多一杯喝不完。",
                 quantity=2, quantity_left=1,
                 main_location="校門口",
-                detail_location="誠軒前",
+                detail_location="警衛室旁邊",
                 lat=24.1209, lng=120.6762,
                 time_limit=120,   # 120 分鐘
                 status="available",
