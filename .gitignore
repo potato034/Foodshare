@@ -1,6 +1,5 @@
 # Python 快取與編譯檔
 __pycache__/
-uploaded_images/
 *.py[cod]
 *$py.class
 # SQLite 本機資料庫
