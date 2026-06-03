@@ -998,6 +998,15 @@ def mark_notifications_read(uid: str, db: Session = Depends(get_db)):
     db.commit()
     return {"ok": True, "read": len(rows)}
 
+@app.post("/api/notifications/read-single/{notification_id}")
+def mark_single_notification_read(notification_id: int, db: Session = Depends(get_db)):
+    n = db.query(Notification).filter(Notification.id == notification_id).first()
+    if not n:
+        raise HTTPException(status_code=404, detail="找不到該通知")
+    n.is_read = True
+    db.commit()
+    return {"ok": True}
+
 # ══════════════════════════════════════════════════════════════
 # API：私訊
 # ══════════════════════════════════════════════════════════════

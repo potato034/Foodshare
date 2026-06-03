@@ -18,6 +18,11 @@
         }
         .notification-role-sharer { border-left-color: #FBB28B !important; background-color: #fff7f2 !important; }
         .notification-role-requester { border-left-color: #A8CBCB !important; background-color: #f3fbfb !important; }
+        .notification-read {
+            opacity: 0.55 !important;
+            filter: saturate(0.25) !important;
+            background-color: #fafafa !important;
+        }
     `;
     document.head.appendChild(style);
 
@@ -375,8 +380,9 @@
             const roleLabel = item.role === 'sharer' ? '分享者' : '預約者';
             const roleColor = item.role === 'sharer' ? '#FBB28B' : '#A8CBCB';
             const href = item.food_post_id ? `${s}detail.html?id=${encodeURIComponent(item.food_post_id)}` : '#';
+            const readClass = item.is_read ? 'notification-read' : '';
             return `
-                <a href="${href}" class="block border-l-4 ${roleClass} rounded-lg px-3 py-2.5 hover:shadow-sm transition ${item.is_read ? 'opacity-70' : ''}">
+                <a href="${href}" data-id="${item.id}" class="notification-item block border-l-4 ${roleClass} rounded-lg px-3 py-2.5 hover:shadow-sm transition ${readClass}">
                     <div class="flex items-start justify-between gap-3">
                         <p class="text-sm font-bold text-gray-800 leading-snug">${escapeHtml(item.title)}</p>
                         <span class="shrink-0 text-[11px] font-semibold text-white px-2 py-0.5 rounded-full" style="background:${roleColor}">${roleLabel}</span>
@@ -426,6 +432,36 @@
             await fetch(`${root}api/notifications/${snapshot.uid}/read`, { method: 'POST' });
             await loadNotifications();
         } catch {}
+    });
+
+    notificationList?.addEventListener('click', async (event) => {
+        const item = event.target.closest('.notification-item');
+        if (!item) return;
+
+        const href = item.getAttribute('href');
+        const notifId = item.getAttribute('data-id');
+
+        if (notifId && !item.classList.contains('notification-read')) {
+            event.preventDefault();
+            
+            // visually mark as read immediately
+            item.classList.add('notification-read');
+
+            // decrement unread count locally
+            if (unreadNotificationsCount > 0) {
+                setNotificationBadges(unreadNotificationsCount - 1);
+            }
+
+            try {
+                await fetch(`${root}api/notifications/read-single/${notifId}`, { method: 'POST' });
+            } catch (e) {
+                console.error("Failed to mark single notification read:", e);
+            }
+
+            if (href && href !== '#') {
+                window.location.href = href;
+            }
+        }
     });
 
     // ================= 獲取未讀與狀態自動同步（輪詢監聽） =================
