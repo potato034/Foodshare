@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import os, uuid, re
 
 from database import engine, get_db
-from models import Base, User, FoodPost, Reservation, Location, Message, Feedback, UserMap
+from models import Base, User, FoodPost, Reservation, Location, Message, Notification, Feedback, UserMap
 
 # 啟動時自動建立所有資料表
 Base.metadata.create_all(bind=engine)
@@ -82,6 +82,109 @@ def time_ago(dt: datetime) -> str:
     if minutes < 60:  return f"{minutes} 分鐘前"
     if minutes < 1440: return f"{minutes // 60} 小時前"
     return f"{minutes // 1440} 天前"
+
+def format_tw_time(dt: datetime) -> str:
+    if not dt:
+        return "未設定"
+    tw = dt + timedelta(hours=8)
+    return tw.strftime("%m/%d %H:%M")
+
+def create_notification(
+    db: Session,
+    user_uid: str,
+    role: str,
+    event_type: str,
+    event_key: str,
+    title: str,
+    body: str,
+    food_post_id: int = None,
+):
+    if not user_uid or db.query(Notification).filter(Notification.event_key == event_key).first():
+        return None
+    notification = Notification(
+        user_uid=user_uid,
+        role=role,
+        event_type=event_type,
+        event_key=event_key,
+        title=title,
+        body=body,
+        food_post_id=food_post_id,
+    )
+    db.add(notification)
+    return notification
+
+def notification_to_dict(n: Notification) -> dict:
+    return {
+        "id": n.id,
+        "role": n.role,
+        "event_type": n.event_type,
+        "title": n.title,
+        "body": n.body,
+        "food_post_id": n.food_post_id,
+        "is_read": n.is_read,
+        "created_at": n.created_at.isoformat() + "Z",
+        "time_ago": time_ago(n.created_at),
+    }
+
+def sync_time_based_notifications(uid: str, db: Session):
+    """在使用者讀通知時補上逾期與領取前 10 分鐘提醒。"""
+    now = datetime.utcnow()
+
+    expired_posts = db.query(FoodPost).filter(
+        FoodPost.sharer_uid == uid,
+        FoodPost.status.in_(["available", "reserved"]),
+        FoodPost.expires_at < now
+    ).all()
+    for post in expired_posts:
+        post.status = "expired"
+        create_notification(
+            db,
+            post.sharer_uid,
+            "sharer",
+            "post_expired",
+            f"post_expired_{post.id}",
+            "分享已逾期",
+            f"你分享的「{post.title}」已在 {format_tw_time(post.expires_at)} 逾期。",
+            post.id,
+        )
+
+    already_expired = db.query(FoodPost).filter(
+        FoodPost.sharer_uid == uid,
+        FoodPost.status == "expired",
+        FoodPost.expires_at.isnot(None)
+    ).all()
+    for post in already_expired:
+        create_notification(
+            db,
+            post.sharer_uid,
+            "sharer",
+            "post_expired",
+            f"post_expired_{post.id}",
+            "分享已逾期",
+            f"你分享的「{post.title}」已在 {format_tw_time(post.expires_at)} 逾期。",
+            post.id,
+        )
+
+    deadline_start = now
+    deadline_end = now + timedelta(minutes=10)
+    due_reservations = db.query(Reservation).filter(
+        Reservation.requester_uid == uid,
+        Reservation.status == "pending",
+        Reservation.pickup_deadline.isnot(None),
+        Reservation.pickup_deadline > deadline_start,
+        Reservation.pickup_deadline <= deadline_end
+    ).all()
+    for r in due_reservations:
+        create_notification(
+            db,
+            r.requester_uid,
+            "requester",
+            "pickup_deadline_10m",
+            f"pickup_deadline_10m_{r.id}",
+            "領取期限剩餘 10 分鐘",
+            f"「{r.food_post.title}」的領取期限到 {format_tw_time(r.pickup_deadline)}，請盡快前往領取。",
+            r.food_post_id,
+        )
 
 def food_to_card(post: FoodPost, db: Session = None) -> dict:
     """轉換成首頁地圖卡片格式。"""
@@ -274,6 +377,16 @@ def get_foods(db: Session = Depends(get_db)):
     ).all()
     for p in expired_posts:
         p.status = "expired"
+        create_notification(
+            db,
+            p.sharer_uid,
+            "sharer",
+            "post_expired",
+            f"post_expired_{p.id}",
+            "分享已逾期",
+            f"你分享的「{p.title}」已在 {format_tw_time(p.expires_at)} 逾期。",
+            p.id,
+        )
     if expired_posts:
         db.commit()
 
@@ -450,6 +563,7 @@ def delete_food(
         raise HTTPException(status_code=404, detail="找不到此食物貼文")
     if post.sharer_uid != sharer_uid:
         raise HTTPException(status_code=403, detail="只有分享者才能刪除")
+    db.query(Notification).filter(Notification.food_post_id == food_id).delete()
     db.query(Reservation).filter(Reservation.food_post_id == food_id).delete()
     db.delete(post)
     db.commit()
@@ -458,6 +572,7 @@ def delete_food(
 def trigger_waiting_queue(post: FoodPost, released_qty: int, db: Session):
     """當有預約被取消或標記未取釋放份數時，自動由候補隊列中依序遞補。"""
     db.flush()
+    promoted = []
     waiting_list = db.query(Reservation).filter(
         Reservation.food_post_id == post.id,
         Reservation.status == "waiting"
@@ -475,6 +590,17 @@ def trigger_waiting_queue(post: FoodPost, released_qty: int, db: Session):
             requester = db.query(User).filter(User.firebase_uid == w.requester_uid).first()
             if requester:
                 requester.total_reservations += 1
+            promoted.append(w)
+            create_notification(
+                db,
+                w.requester_uid,
+                "requester",
+                "waitlist_promoted",
+                f"waitlist_promoted_{w.id}",
+                "候補到了",
+                f"你候補的「{post.title}」已遞補成功，領取期限到 {format_tw_time(w.pickup_deadline)}。",
+                post.id,
+            )
             if released_qty == 0:
                 break
 
@@ -490,6 +616,7 @@ def trigger_waiting_queue(post: FoodPost, released_qty: int, db: Session):
             post.status = "completed"
         else:
             post.status = "reserved"
+    return promoted
 
 @app.post("/api/foods/{food_id}/reserve")
 def reserve_food(
@@ -539,12 +666,23 @@ def reserve_food(
         pickup_deadline=pickup_deadline,
     )
     db.add(reservation)
+    db.flush()
 
     if not is_waiting:
         # 只有正式預約才累加預約次數
         requester = db.query(User).filter(User.firebase_uid == requester_uid).first()
         if requester:
             requester.total_reservations += 1
+        create_notification(
+            db,
+            post.sharer_uid,
+            "sharer",
+            "reservation_created",
+            f"reservation_created_{reservation.id}",
+            "有人預約了你的分享",
+            f"{requester_name or '有同學'} 預約「{post.title}」{quantity_reserved} 份，預計 {estimated_pickup_time or '未填寫時間'} 領取。",
+            post.id,
+        )
 
     db.commit()
     return {"ok": True, "quantity_left": post.quantity_left, "waiting": is_waiting}
@@ -633,11 +771,24 @@ def cancel_food(
             raise HTTPException(status_code=400, detail="距過期不足 10 分鐘，無法取消")
 
     is_pending = (r.status == "pending")
+    cancelled_name = r.requester_name or "原預約者"
+    cancelled_qty = r.quantity_reserved
     r.status = "cancelled"
 
     if is_pending:
         # 自動依序遞補候補隊列或退還庫存
-        trigger_waiting_queue(r.food_post, r.quantity_reserved, db)
+        promoted = trigger_waiting_queue(r.food_post, r.quantity_reserved, db)
+        for p in promoted:
+            create_notification(
+                db,
+                r.food_post.sharer_uid,
+                "sharer",
+                "reservation_cancelled_promoted",
+                f"reservation_cancelled_promoted_{r.id}_{p.id}",
+                "預約取消並完成遞補",
+                f"{cancelled_name} 取消「{r.food_post.title}」{cancelled_qty} 份，已由 {p.requester_name or '候補者'} 遞補，預計 {p.estimated_pickup_time or '候補時限內'} 領取。",
+                r.food_post_id,
+            )
 
     db.commit()
     return {"ok": True}
@@ -810,6 +961,39 @@ def get_user_requests(uid: str, db: Session = Depends(get_db)):
                 item["status"] = "候位中"
         result.append(item)
     return result
+
+# ══════════════════════════════════════════════════════════════
+# API：系統通知
+# ══════════════════════════════════════════════════════════════
+
+@app.get("/api/notifications/{uid}")
+def get_notifications(uid: str, db: Session = Depends(get_db)):
+    sync_time_based_notifications(uid, db)
+    db.commit()
+    rows = (db.query(Notification)
+              .filter(Notification.user_uid == uid)
+              .order_by(Notification.created_at.desc())
+              .limit(30)
+              .all())
+    unread = db.query(Notification).filter(
+        Notification.user_uid == uid,
+        Notification.is_read == False
+    ).count()
+    return {
+        "unread": unread,
+        "notifications": [notification_to_dict(n) for n in rows]
+    }
+
+@app.post("/api/notifications/{uid}/read")
+def mark_notifications_read(uid: str, db: Session = Depends(get_db)):
+    rows = db.query(Notification).filter(
+        Notification.user_uid == uid,
+        Notification.is_read == False
+    ).all()
+    for n in rows:
+        n.is_read = True
+    db.commit()
+    return {"ok": True, "read": len(rows)}
 
 # ══════════════════════════════════════════════════════════════
 # API：私訊

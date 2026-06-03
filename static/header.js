@@ -15,6 +15,8 @@
         @media (min-width: 541px) {
             .header-icon-mobile { display: none !important; }
         }
+        .notification-role-sharer { border-left-color: #FBB28B; background: #fff7f2; }
+        .notification-role-requester { border-left-color: #A8CBCB; background: #f3fbfb; }
     `;
     document.head.appendChild(style);
 
@@ -59,8 +61,9 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                 </a>
                 
-                <button class="header-icon-desktop text-gray-600 hover:text-gray-900 transition" title="系統通知">
+                <button id="notification-btn-desktop" class="header-icon-desktop relative text-gray-600 hover:text-gray-900 transition" title="系統通知">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    <span id="notification-badge-desktop" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 px-1 rounded-full hidden items-center justify-center leading-4">0</span>
                 </button>
                 
                 <div class="relative overflow-visible">
@@ -77,7 +80,10 @@
                                 <span>💬 私訊對話</span>
                                 <span id="avatar-unread-badge" class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full hidden">0</span>
                             </a>
-                            <button class="header-icon-mobile w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-50">🔔 系統通知</button>
+                            <button id="notification-btn-mobile" class="header-icon-mobile w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-50 items-center justify-between">
+                                <span>🔔 系統通知</span>
+                                <span id="notification-badge-mobile" class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full hidden">0</span>
+                            </button>
                             <a href="${s}upload.html" class="header-icon-mobile block px-4 py-2 text-sm text-giver hover:bg-orange-50 font-bold border-b border-gray-50">＋ 我要分享</a>
                             
                             <a href="${s}profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👤 個人檔案</a>
@@ -104,6 +110,18 @@
             <a href="${s}teach.html" class="hover:text-receiver transition py-2 font-medium border-b border-gray-50"> 使用教學</a>
             <a href="${s}share.html" class="text-giver hover:opacity-80 transition py-2 font-bold border-b border-gray-50"> 分享清單</a>
             <a href="${s}food.html" class="text-receiver hover:opacity-80 transition py-2 font-bold">預約清單</a>
+        </div>
+
+        <div id="notification-panel" class="absolute right-4 top-full mt-2 w-[min(360px,calc(100vw-2rem))] invisible opacity-0 transition-all duration-200 z-[99999]">
+            <div class="bg-white rounded-xl border border-gray-100 shadow-xl overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <p class="text-sm font-bold text-gray-800">系統通知</p>
+                    <button id="notification-read-btn" class="text-xs text-gray-400 hover:text-gray-700">全部已讀</button>
+                </div>
+                <div id="notification-list" class="max-h-96 overflow-y-auto p-3 space-y-2">
+                    <p class="text-center text-gray-400 text-sm py-6">載入中…</p>
+                </div>
+            </div>
         </div>
     `;
 
@@ -251,8 +269,106 @@
         });
     }
 
+    // ================= 系統通知 =================
+    const notificationPanel = header.querySelector('#notification-panel');
+    const notificationList = header.querySelector('#notification-list');
+    const notificationReadBtn = header.querySelector('#notification-read-btn');
+    const notificationButtons = [
+        header.querySelector('#notification-btn-desktop'),
+        header.querySelector('#notification-btn-mobile')
+    ].filter(Boolean);
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[ch]));
+    }
+
+    function setNotificationBadges(count) {
+        const badges = [
+            header.querySelector('#notification-badge-desktop'),
+            header.querySelector('#notification-badge-mobile')
+        ].filter(Boolean);
+        badges.forEach(badge => {
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.classList.remove('hidden');
+                if (badge.id === 'notification-badge-desktop') badge.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+            }
+        });
+    }
+
+    function renderNotifications(items) {
+        if (!notificationList) return;
+        if (!items.length) {
+            notificationList.innerHTML = '<p class="text-center text-gray-400 text-sm py-6">目前沒有系統通知</p>';
+            return;
+        }
+        notificationList.innerHTML = items.map(item => {
+            const roleClass = item.role === 'sharer' ? 'notification-role-sharer' : 'notification-role-requester';
+            const roleLabel = item.role === 'sharer' ? '分享者' : '預約者';
+            const roleColor = item.role === 'sharer' ? '#FBB28B' : '#A8CBCB';
+            const href = item.food_post_id ? `${s}detail.html?id=${encodeURIComponent(item.food_post_id)}` : '#';
+            return `
+                <a href="${href}" class="block border-l-4 ${roleClass} rounded-lg px-3 py-2.5 hover:shadow-sm transition ${item.is_read ? 'opacity-70' : ''}">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="text-sm font-bold text-gray-800 leading-snug">${escapeHtml(item.title)}</p>
+                        <span class="shrink-0 text-[11px] font-semibold text-white px-2 py-0.5 rounded-full" style="background:${roleColor}">${roleLabel}</span>
+                    </div>
+                    <p class="text-xs text-gray-600 leading-relaxed mt-1">${escapeHtml(item.body)}</p>
+                    <p class="text-[11px] text-gray-400 mt-1.5">${escapeHtml(item.time_ago)}</p>
+                </a>
+            `;
+        }).join('');
+    }
+
+    async function loadNotifications() {
+        if (!snapshot?.uid) return;
+        try {
+            const res = await fetch(`${root}api/notifications/${snapshot.uid}`);
+            const data = await res.json();
+            setNotificationBadges(data.unread || 0);
+            renderNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+        } catch {
+            if (notificationList) {
+                notificationList.innerHTML = '<p class="text-center text-gray-400 text-sm py-6">通知載入失敗</p>';
+            }
+        }
+    }
+
+    function toggleNotifications(event) {
+        event.stopPropagation();
+        notificationPanel?.classList.toggle('invisible');
+        notificationPanel?.classList.toggle('opacity-0');
+        avatarMenu?.classList.add('invisible');
+        avatarMenu?.classList.add('opacity-0');
+        loadNotifications();
+    }
+
+    notificationButtons.forEach(btn => btn.addEventListener('click', toggleNotifications));
+    notificationPanel?.addEventListener('click', event => event.stopPropagation());
+    document.addEventListener('click', () => {
+        notificationPanel?.classList.add('invisible');
+        notificationPanel?.classList.add('opacity-0');
+    });
+    notificationReadBtn?.addEventListener('click', async () => {
+        if (!snapshot?.uid) return;
+        try {
+            await fetch(`${root}api/notifications/${snapshot.uid}/read`, { method: 'POST' });
+            await loadNotifications();
+        } catch {}
+    });
+
     // ================= 獲取未讀訊息數量（頭像選單專用） =================
     if (snapshot?.uid) {
+        loadNotifications();
         fetch(`${root}api/messages/unread/${snapshot.uid}`)
             .then(res => res.json())
             .then(data => {
