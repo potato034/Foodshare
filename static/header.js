@@ -19,9 +19,8 @@
         .notification-role-sharer { border-left-color: #FBB28B !important; background-color: #fff7f2 !important; }
         .notification-role-requester { border-left-color: #A8CBCB !important; background-color: #f3fbfb !important; }
         .notification-read {
-            opacity: 0.55 !important;
-            filter: saturate(0.25) !important;
-            background-color: #fafafa !important;
+            opacity: 0.8 !important;
+            filter: saturate(0.65) !important;
         }
     `;
     document.head.appendChild(style);
