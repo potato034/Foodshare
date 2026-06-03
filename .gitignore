@@ -1,11 +1,8 @@
 # Python 快取與編譯檔
 __pycache__/
-uploaded_images/
 *.py[cod]
 *$py.class
 # SQLite 本機資料庫
 *.db
 *.sqlite
 *.sqlite3
-
-# 本機上傳的圖片（每個人各自測試，不共享）
