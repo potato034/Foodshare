@@ -15,8 +15,8 @@
         @media (min-width: 541px) {
             .header-icon-mobile { display: none !important; }
         }
-        .notification-role-sharer { border-left-color: #FBB28B; background: #fff7f2; }
-        .notification-role-requester { border-left-color: #A8CBCB; background: #f3fbfb; }
+        .notification-role-sharer { border-left-color: #FBB28B !important; background-color: #fff7f2 !important; }
+        .notification-role-requester { border-left-color: #A8CBCB !important; background-color: #f3fbfb !important; }
     `;
     document.head.appendChild(style);
 
@@ -71,6 +71,8 @@
                         <img id="avatar-btn-image" alt="使用者頭貼" class="hidden h-full w-full object-cover">
                         <span id="avatar-btn-fallback" class="text-xs">?</span>
                     </button>
+                    <!-- 紅色點點提示 -->
+                    <span id="avatar-red-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden z-10"></span>
                     <div id="avatar-menu" class="absolute right-0 top-full mt-2 w-48 invisible opacity-0 transition-all duration-200 z-[9999]">
                         <div class="bg-white shadow-lg rounded-xl py-1 border border-gray-100">
                             <div id="user-name-display" class="px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-100 bg-gray-50 rounded-t-xl">嗨，同學</div>
@@ -129,9 +131,16 @@
     script.parentNode.insertBefore(header, script);
 
     // ================= 登入狀態與頭像邏輯 =================
+    function getSnapshot() {
+        try {
+            return JSON.parse(localStorage.getItem('fs_currentUser') || 'null');
+        } catch {
+            return null;
+        }
+    }
     let snapshot = null;
     let profile = null;
-    try { snapshot = JSON.parse(localStorage.getItem('fs_currentUser') || 'null'); } catch {}
+    try { snapshot = getSnapshot(); } catch {}
     if (snapshot?.uid) {
         try { profile = JSON.parse(localStorage.getItem(`fs_user_${snapshot.uid}`) || 'null'); } catch {}
     }
@@ -207,6 +216,28 @@
             e.stopPropagation();
             avatarMenu.classList.toggle('invisible');
             avatarMenu.classList.toggle('opacity-0');
+            notificationPanel?.classList.add('invisible');
+            notificationPanel?.classList.add('opacity-0');
+            snapshot = getSnapshot();
+            if (snapshot?.uid) {
+                fetch(`${root}api/messages/unread/${snapshot.uid}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        unreadMessagesCount = data?.unread || 0;
+                        const badge = header.querySelector('#avatar-unread-badge');
+                        if (badge) {
+                            if (unreadMessagesCount > 0) {
+                                badge.textContent = unreadMessagesCount;
+                                badge.classList.remove('hidden');
+                            } else {
+                                badge.classList.add('hidden');
+                            }
+                        }
+                        updateAvatarRedDot();
+                    })
+                    .catch(() => {});
+                loadNotifications();
+            }
         });
         document.addEventListener('click', e => {
             if (!avatarMenu.contains(e.target)) {
@@ -288,6 +319,19 @@
         }[ch]));
     }
 
+    let unreadNotificationsCount = 0;
+    let unreadMessagesCount = 0;
+
+    function updateAvatarRedDot() {
+        const dot = header.querySelector('#avatar-red-dot');
+        if (!dot) return;
+        if (unreadNotificationsCount > 0 || unreadMessagesCount > 0) {
+            dot.classList.remove('hidden');
+        } else {
+            dot.classList.add('hidden');
+        }
+    }
+
     function setNotificationBadges(count) {
         const badges = [
             header.querySelector('#notification-badge-desktop'),
@@ -303,6 +347,8 @@
                 badge.classList.remove('flex');
             }
         });
+        unreadNotificationsCount = count;
+        updateAvatarRedDot();
     }
 
     function renderNotifications(items) {
@@ -330,6 +376,7 @@
     }
 
     async function loadNotifications() {
+        snapshot = getSnapshot();
         if (!snapshot?.uid) return;
         try {
             const res = await fetch(`${root}api/notifications/${snapshot.uid}`);
@@ -349,6 +396,7 @@
         notificationPanel?.classList.toggle('opacity-0');
         avatarMenu?.classList.add('invisible');
         avatarMenu?.classList.add('opacity-0');
+        snapshot = getSnapshot();
         loadNotifications();
     }
 
@@ -359,6 +407,7 @@
         notificationPanel?.classList.add('opacity-0');
     });
     notificationReadBtn?.addEventListener('click', async () => {
+        snapshot = getSnapshot();
         if (!snapshot?.uid) return;
         try {
             await fetch(`${root}api/notifications/${snapshot.uid}/read`, { method: 'POST' });
@@ -372,13 +421,17 @@
         fetch(`${root}api/messages/unread/${snapshot.uid}`)
             .then(res => res.json())
             .then(data => {
-                if (data && data.unread > 0) {
-                    const badge = header.querySelector('#avatar-unread-badge');
-                    if (badge) {
-                        badge.textContent = data.unread;
+                unreadMessagesCount = data?.unread || 0;
+                const badge = header.querySelector('#avatar-unread-badge');
+                if (badge) {
+                    if (unreadMessagesCount > 0) {
+                        badge.textContent = unreadMessagesCount;
                         badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
                     }
                 }
+                updateAvatarRedDot();
             })
             .catch(() => {});
     }

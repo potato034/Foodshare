@@ -148,22 +148,7 @@ def sync_time_based_notifications(uid: str, db: Session):
             post.id,
         )
 
-    already_expired = db.query(FoodPost).filter(
-        FoodPost.sharer_uid == uid,
-        FoodPost.status == "expired",
-        FoodPost.expires_at.isnot(None)
-    ).all()
-    for post in already_expired:
-        create_notification(
-            db,
-            post.sharer_uid,
-            "sharer",
-            "post_expired",
-            f"post_expired_{post.id}",
-            "分享已逾期",
-            f"你分享的「{post.title}」已在 {format_tw_time(post.expires_at)} 逾期。",
-            post.id,
-        )
+
 
     deadline_start = now
     deadline_end = now + timedelta(minutes=10)
@@ -784,15 +769,27 @@ def cancel_food(
             requester.total_reservations -= 1
         # 自動依序遞補候補隊列或退還庫存
         promoted = trigger_waiting_queue(r.food_post, r.quantity_reserved, db)
-        for p in promoted:
+        if promoted:
+            for p in promoted:
+                create_notification(
+                    db,
+                    r.food_post.sharer_uid,
+                    "sharer",
+                    "reservation_cancelled_promoted",
+                    f"reservation_cancelled_promoted_{r.id}_{p.id}",
+                    "預約取消並完成遞補",
+                    f"{cancelled_name} 取消「{r.food_post.title}」{cancelled_qty} 份，已由 {p.requester_name or '候補者'} 遞補，預計 {p.estimated_pickup_time or '候補時限內'} 領取。",
+                    r.food_post_id,
+                )
+        else:
             create_notification(
                 db,
                 r.food_post.sharer_uid,
                 "sharer",
-                "reservation_cancelled_promoted",
-                f"reservation_cancelled_promoted_{r.id}_{p.id}",
-                "預約取消並完成遞補",
-                f"{cancelled_name} 取消「{r.food_post.title}」{cancelled_qty} 份，已由 {p.requester_name or '候補者'} 遞補，預計 {p.estimated_pickup_time or '候補時限內'} 領取。",
+                "reservation_cancelled",
+                f"reservation_cancelled_{r.id}",
+                "預約已取消",
+                f"{cancelled_name} 取消了「{r.food_post.title}」{cancelled_qty} 份的預約。",
                 r.food_post_id,
             )
 
