@@ -466,7 +466,7 @@
                 const rateData = await rateRes.json();
                 const rateEl   = document.getElementById('pickup-rate-text');
                 const detailEl = document.getElementById('pickup-rate-detail');
-                if (rateEl) rateEl.textContent = `${rateData.rate}%`;
+                if (rateEl) rateEl.textContent = rateData.total === 0 ? '—' : `${rateData.rate}%`;
                 if (detailEl) {
                     detailEl.textContent = rateData.total === 0
                         ? '尚無預約紀錄'

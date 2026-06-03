@@ -229,6 +229,8 @@ def sync_user(
     db: Session = Depends(get_db),
 ):
     """Firebase 登入後，把使用者資料同步到 SQLite。支援秩序化 user_id 去亂碼。"""
+    if ".nchu.edu.tw" not in email:
+        raise HTTPException(status_code=403, detail="僅限中興大學校園信箱（.nchu.edu.tw）")
     # 1. 處理有秩序的 ID 對照
     # 如果原本就是 ordered_id (例如 demo_user_001 或 user_001)，就直接使用
     if firebase_uid.startswith("user_") or firebase_uid.startswith("demo_"):
@@ -636,6 +638,10 @@ def cancel_food(
     r.status = "cancelled"
 
     if is_pending:
+        # 取消正式預約：扣回 total_reservations（不計入取貨率）
+        requester = db.query(User).filter(User.firebase_uid == requester_uid).first()
+        if requester and requester.total_reservations > 0:
+            requester.total_reservations -= 1
         # 自動依序遞補候補隊列或退還庫存
         trigger_waiting_queue(r.food_post, r.quantity_reserved, db)
 
@@ -955,9 +961,16 @@ def get_thread(
 
 @app.get("/api/messages/unread/{uid}")
 def get_unread_count(uid: str, db: Session = Depends(get_db)):
-    """頁首用：取得未讀訊息數。"""
+    """頁首用：取得未讀訊息數。支援 Firebase UID 或 ordered_id 兩種格式。"""
+    # 若傳入的是 Firebase UID，嘗試透過 UserMap 找到對應的 ordered_id
+    resolved_uid = uid
+    if not uid.startswith("user_") and not uid.startswith("demo_"):
+        mapping = db.query(UserMap).filter(UserMap.firebase_uid == uid).first()
+        if mapping:
+            resolved_uid = mapping.ordered_id
+
     count = db.query(Message).filter(
-        Message.receiver_uid == uid,
+        Message.receiver_uid == resolved_uid,
         Message.is_read      == False,
     ).count()
     return {"unread": count}
