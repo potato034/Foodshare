@@ -1,0 +1,135 @@
+(Foodshare 系統文件 — 頁面流程、按鈕功能、防呆、API 規格)
+
+說明：此檔彙整專案中每個前端頁面之互動流程、按鈕功能描述、前端防呆建議，以及對應的後端 API 與常見錯誤處理建議，方便開發與測試使用。
+
+一覽
+- 核心檔案：`main.py`（API 與後端邏輯）、靜態頁面位於 `static/`。
+- 主要頁面：index.html、browse.html、detail.html、upload.html、share.html、food.html、cart.html、profile.html、message.html、teach.html、aboutus.html、contact.html、setting.html
+
+共通規範（所有頁面）
+- 登入驗證：對於需身份的操作（發佈、預約、編輯、刪除、私訊），前端應保證含有效 `uid`（Firebase UID 或 ordered_id），若未登入顯示登入提示並阻止操作。
+- API 錯誤處理：對所有 POST/PUT/DELETE，前端需處理 4xx/5xx 回應，顯示友善錯誤訊息，並在必要時提供重試或聯絡管理員選項。
+- 按鈕節流：關鍵操作按鈕在請求期間須禁用並顯示 loading，避免重複請求。
+- 權限 UI：前端隱藏不該顯示的操作（例如非分享者看不到編輯/刪除按鈕），但後端必須仍執行最終權限檢查。
+- 表單驗證：所有表單在提交前做前端驗證（必填、型別、範圍、長度），並在後端再次驗證。
+- 檔案上傳：限制副檔名（jpg/png/webp）、大小上限（建議 5MB），顯示上傳進度與預覽。
+
+API 總表（重點）
+- GET `/api/foods`：首頁地圖/清單使用，會自動將過期貼文標記為 `expired`。
+- GET `/api/foods/{food_id}`：取得單一貼文完整資訊；可帶 `uid` 查詢使用者的預約狀態與順位。
+- POST `/api/foods`：建立貼文（上傳圖片支援）；參數：`sharer_uid`,`title`,`category`,`emoji_choice`,`quantity`,`main_location`,`detail_location`,`time_limit`,`waitlist_time_limit`,`description`,`file`。
+- PUT `/api/foods/{food_id}`：編輯貼文（分享者限定）；可傳 `delete_image` 或上傳新 `file`，亦可更改 `status`（僅允許 `available|completed` 手動切換）。
+- DELETE `/api/foods/{food_id}`：分享者刪除貼文（會同時刪除該貼文所有預約）。
+- POST `/api/foods/{food_id}/reserve`：預約（detail.html 用）；參數：`requester_uid`,`quantity_reserved`,`requester_name`,`student_id`,`estimated_pickup_time`。
+	- 回傳：`waiting` 布林表示是否為候補；若成功會回傳新的 `quantity_left`。
+- POST `/api/foods/{food_id}/complete`：分享者確認取貨；需 `sharer_uid`,`reservation_id`。
+- POST `/api/foods/{food_id}/no_show`：分享者標記未取；會觸發候補遞補或退還庫存，並記入取貨率統計。
+- POST `/api/foods/{food_id}/cancel`：使用者取消預約；若距 expire < 10 分鐘且為正式預約，後端會拒絕。
+- GET `/api/users/{uid}/requests`：取得使用者所有預約（food.html）。
+- GET `/api/users/{uid}/pickup-rate`：取得使用者取貨率統計。
+- GET `/api/users/{uid}/shares`：取得使用者發布之貼文（share.html）。
+- GET/POST/PUT/DELETE `/api/locations`：地點管理（上傳時的下拉清單來源與新增/編輯/刪除）。
+- POST `/api/messages`：傳送私訊（`sender_uid`,`receiver_uid`,`content`,`food_post_id` 可選）。
+- GET `/api/messages/conversations/{uid}`：取得會話列表（依最新訊息排序，含未讀數）。
+- GET `/api/messages/thread/{uid}/{other_uid}`：取得雙方對話紀錄（可選 `food_post_id` 篩選）；會把對方未讀訊息標為已讀。
+- GET `/api/messages/unread/{uid}`：頁首未讀計數（接受 Firebase UID 或 ordered_id）。
+- POST `/api/feedback`：回饋表單送出（`content` 不可為空）。
+- Admin API：`/api/admin/*` 包含查詢貼文、修改狀態、刪除貼文、取得使用者與預約紀錄、回饋列表。注意尚未看到管理員認證機制。
+
+詳細頁面規格（逐頁）
+
+1) 首頁（index.html）
+- 目標：地圖與卡片視覺，快速導覽到 `detail.html`。
+- 主要按鈕 / 互動：
+	- 卡片「查看詳情」→ 前往 `detail.html?id={id}`。
+	- 篩選/搜尋元件（類別、地區、關鍵字）→ 更新地圖與清單（前端過濾或向 `/api/foods` 取全部後過濾）。
+- 前端防呆：
+	- 載入失敗：顯示重試按鈕並能重新呼叫 `/api/foods`。
+	- 空資料：顯示友善提示（例如「目前沒有可領取的分享」）並連結至 `upload.html` 或 `browse.html`。
+
+2) 瀏覽清單（browse.html）
+- 目標：清單式瀏覽與關鍵字搜尋，快速點進詳情。
+- 互動：點擊項目進入 `detail.html`，支援分頁/載入更多（若資料量多）。
+- 防呆：搜尋空字串不送請求、篩選變更顯示載入狀態。
+
+3) 詳細頁（detail.html）
+- 目標：顯示貼文完整資訊、提供預約與私訊功能；分享者可在此管理預約（完成/未取）。
+- 主要按鈕：
+	- 預約（開啟 modal 表單）→ 呼叫 POST `/api/foods/{food_id}/reserve`。
+	- 取消預約（若為 requester 且後端允許）→ 呼叫 POST `/api/foods/{food_id}/cancel`。
+	- 私訊分享者 → 呼叫 POST `/api/messages`（並可能跳至對話頁面）。
+	- 分享者按鈕（若為 sharer）：查看預約清單（GET `/api/foods/{food_id}/reservations`）、標記完成（POST `/api/foods/{food_id}/complete`）、標記未取（POST `/api/foods/{food_id}/no_show`）、編輯（PUT `/api/foods/{food_id}`）、刪除（DELETE `/api/foods/{food_id}`）。
+- 防呆細節：
+	- 預約前檢查：數量為正整數；若顯示可預約數量，前端確認不超過該數。若超出，仍可提交候補（後端會回 `waiting=true`）。
+	- 不能預約自己貼文（後端已檢查）；前端可隱藏預約按鈕。
+	- estimated_pickup_time 格式檢查（建議格式：「今天 HH:MM」或「MM/DD HH:MM」），解析失敗應顯示提醒並以貼文到期時間為 fallback。
+	- 取消限制：如果距離貼文過期 < 10 分鐘，後端拒絕取消，前端應提前禁用取消按鈕並顯示原因提示。
+
+4) 發佈 / 上傳（upload.html）
+- 目標：使用者建立新貼文。
+- 欄位：`title`（必填）、`category`（必填）、`emoji_choice`、`quantity`、`main_location`（必填，從 `/api/locations` 取得）、`detail_location`、`time_limit`（分鐘）、`waitlist_time_limit`（分鐘）、`description`、`file`（圖片）。
+- 主要 API：POST `/api/foods`；地點下拉用 GET `/api/locations`，若允許新增地點則 POST `/api/locations`。
+- 防呆：
+	- 必填檢查、數值範圍檢查（`time_limit` 例如 1 ~ 1440）、`quantity` 為正整數或空（表示不限制）。
+	- 圖片副檔名與大小限制（建議限制 5MB）。上傳失敗應保留表單資料以便重試。
+	- 提交後禁用送出按鈕並顯示上傳進度；成功後導至分享頁或顯示成功訊息。
+
+5) 分享管理（share.html）
+- 目標：管理自己所有貼文、查看各貼文的預約清單。
+- 互動：GET `/api/users/{uid}/shares` 取得貼文列表；對單筆貼文可編輯（PUT `/api/foods/{id}`）、刪除（DELETE `/api/foods/{id}`）、查看預約（GET `/api/foods/{id}/reservations`）、手動改狀態（PUT `/api/foods/{id}` 傳 `status`）。
+- 防呆：
+	- 編輯/刪除前雙重確認 modal。
+	- 刪除會同時刪除所有預約（後端已實作），前端提示受影響預約數。
+
+6) 我的預約（food.html）
+- 目標：顯示使用者所有預約紀錄與狀態（pending/completed/cancelled/no_show/waiting）。
+- API：GET `/api/users/{uid}/requests`。
+- 互動：對 pending 可取消（呼叫 `/api/foods/{food_id}/cancel`），但若距到期 <10 分鐘則不能取消。
+
+7) 私訊（message.html）
+- 目標：使用者間私訊，支援附帶貼文訂單資訊。
+- API：
+	- GET `/api/messages/conversations/{uid}`：會話列表（含未讀數）
+	- GET `/api/messages/thread/{uid}/{other_uid}`：取得對話並標為已讀
+	- POST `/api/messages`：傳送訊息
+	- GET `/api/messages/unread/{uid}`：頁首未讀計數
+- 防呆：禁止傳訊給自己、內容不得空白、節流按鈕避免連續送出。
+
+8) 回饋 / 聯絡（contact.html）
+- API：POST `/api/feedback`（`content` 必填且不可全空白）。
+- 防呆：送出前檢查內容不為空，送出後顯示成功回饋。
+
+9) 教學 / 說明（teach.html）
+- 目標：說明如何格式化時間、候補與遞補機制、上傳建議（照片規格）、常見錯誤與解法。
+
+10) 關於 / 設定（aboutus.html / setting.html）
+- 功能：顯示團隊資訊、設定選項（通知開關、登出）。
+- 防呆：登出前確認、設定變更顯示儲存成功。
+
+後端常見錯誤與前端處理建議
+- 400 Bad Request：表單格式或商業邏輯錯誤（例如預約數量不正確、嘗試預約自己）；顯示 API 回傳 detail 並提供修改建議。
+- 403 Forbidden：權限錯誤（例如不是分享者嘗試編輯或刪除）；告知使用者無權限並建議登出重登入或聯絡分享者。
+- 404 Not Found：資源不存在（貼文、使用者或預約找不到）；提示可能已被刪除並建議回到列表頁。
+- 409 / 狀態衝突（若未使用此 code，後端可考慮）：用於競態條件，例如最後一份已被預約。
+- 5xx：伺服器錯誤，顯示通用錯誤訊息並建議稍後重試或聯絡管理員。
+
+建議的前端 UX 細節（可改善體驗）
+- 在 `detail.html` 的預約 modal 中實時顯示「預估領取時間解析結果」；若解析失敗則自動填入截止時間並提示。
+- 候補狀態視覺化：若 API 回傳 `waiting=true`，於 UI 顯示「已加入候補」與候補順位（若可取得）。
+- 未讀訊息紅點：頁首應定時（例如每 60 秒）輪詢 `/api/messages/unread/{uid}` 更新未讀數。
+- 異常回滾：若一連串操作（例如完成 -> 觸發候補）中出錯，顯示詳細錯誤並建議手動刷新頁面檢查實際狀態。
+
+安全與部署建議
+- 管理後台的 API 應加入驗證機制（JWT、Admin role 或 IP 限制），避免未授權存取。後端目前未見 admin auth 設置，建議補上。
+- 檔案儲存：避免公開寫入任意路徑，檔案名稱已使用 uuid，建議定期掃描與清理舊檔（過期貼文的圖片）。
+
+附錄：常見前端檢核清單（供 QA 使用）
+- 表單必填檢查是否正確。
+- 圖片上傳副檔名/大小限制測試。
+- 時間字串解析包含各種邊界（午夜、跨年、錯誤格式）。
+- 預約/取消/遞補競態條件模擬（多使用者同時預約最後一份）。
+- 權限測試：非分享者嘗試編輯/刪除，分享者操作正常。
+- 私訊功能：不能傳給自己、未讀數更新、thread 標為已讀。
+
+-- End of document
+
