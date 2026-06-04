@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用教學 | 興大食物共享平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        giver: '#FBB28B',    // 暖杏橘
+                        receiver: '#A8CBCB'  // 鼠尾草綠
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 輕微的文青風手感淡入動畫 */
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-gray-700 font-sans min-h-screen flex flex-col pt-24">
+    <script src="./header.js?v=999"></script>
+
+    <main class="flex-grow max-w-5xl mx-auto w-full px-6 py-12 flex flex-col items-center">
+        
+        <div class="text-center max-w-2xl mx-auto mb-8">
+            <span class="text-xs font-bold tracking-widest text-receiver bg-teal-50 px-3 py-1 rounded-full uppercase">User Guide</span>
+            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight mt-3 mb-4">平台使用教學指引</h2>
+            <p class="text-sm text-gray-500 leading-relaxed">
+                歡迎來到食物共享平台！不論您是想分享食物的「分享者」，還是尋找物資的「需求者」，都可以透過下方的操作手冊，快速熟悉平台功能。
+            </p>
+        </div>
+
+        <!-- 外部開啟按鈕 -->
+        <div class="mb-6">
+            <a href="https://drive.google.com/file/d/11IxCOYli3geE01rl3DRwpo5vc64KfyZg/view?usp=sharing" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-receiver hover:bg-teal-600 text-white font-medium rounded-xl shadow-sm hover:shadow transition duration-300 transform hover:-translate-y-0.5 text-sm">
+                <span>📖</span> 在新分頁開啟 / 下載教學手冊 PDF
+            </a>
+        </div>
+
+        <!-- PDF 嵌入 iframe -->
+        <div class="w-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-2">
+            <iframe src="https://drive.google.com/file/d/11IxCOYli3geE01rl3DRwpo5vc64KfyZg/preview" class="w-full h-[750px] rounded-xl border-0" allow="autoplay"></iframe>
+        </div>
+
+        <!-- 貼心提醒 -->
+        <div class="max-w-2xl mt-12 bg-orange-50/50 border border-orange-100 rounded-2xl p-6 text-center">
+            <h4 class="font-bold text-gray-800 text-sm mb-2">💡 貼心提醒</h4>
+            <p class="text-xs text-gray-500 leading-relaxed">
+                若下方的預覽畫面因瀏覽器隱私設定（例如封鎖第三方 Cookie）而無法顯示，請點選上方按鈕在新分頁中直接檢視操作指南。
+            </p>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-gray-100 py-6 text-center text-xs text-gray-400">
+        &copy; 2026 中興大學食物共享平台專題小組. All rights reserved.
+    </footer>
+</body>
+</html>
