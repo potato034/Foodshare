@@ -102,6 +102,25 @@ class Message(Base):
     food_post = relationship("FoodPost", foreign_keys=[food_post_id])
 
 
+class Notification(Base):
+    """系統通知，分成分享者與預約者兩種角色顯示。"""
+    __tablename__ = "notifications"
+
+    id           = Column(Integer,     primary_key=True, autoincrement=True)
+    user_uid     = Column(String(128), ForeignKey("users.firebase_uid"), nullable=False)
+    role         = Column(String(20),  nullable=False)  # sharer / requester
+    event_type   = Column(String(50),  nullable=False)
+    event_key    = Column(String(120), nullable=False, unique=True)
+    title        = Column(String(100), nullable=False)
+    body         = Column(Text,        nullable=False)
+    food_post_id = Column(Integer,     ForeignKey("food_posts.id"), nullable=True)
+    is_read      = Column(Boolean,     nullable=False, default=False)
+    created_at   = Column(DateTime,    nullable=False, default=datetime.utcnow)
+
+    user      = relationship("User",     foreign_keys=[user_uid])
+    food_post = relationship("FoodPost", foreign_keys=[food_post_id])
+
+
 class Feedback(Base):
     """使用者提交的意見回饋。"""
     __tablename__ = "feedbacks"

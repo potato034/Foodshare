@@ -14,6 +14,13 @@
         }
         @media (min-width: 541px) {
             .header-icon-mobile { display: none !important; }
+            #avatar-red-dot { display: none !important; }
+        }
+        .notification-role-sharer { border-left-color: #FBB28B !important; background-color: #fff7f2 !important; }
+        .notification-role-requester { border-left-color: #A8CBCB !important; background-color: #f3fbfb !important; }
+        .notification-read {
+            opacity: 0.8 !important;
+            filter: saturate(0.65) !important;
         }
     `;
     document.head.appendChild(style);
@@ -55,12 +62,15 @@
         <!-- 右側控制區 (全尺寸顯示，但內部較寬按鈕在手機版 <=540px 會隱藏並移至頭像選單) -->
         <div class="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
             <div id="user-controls" class="flex items-center gap-2 sm:gap-3 hidden">
-                <a id="msg-icon-link" href="${s}message.html" class="header-icon-desktop text-gray-600 hover:text-gray-900 transition" title="私訊">
+                <a id="msg-icon-link" href="${s}message.html" class="header-icon-desktop inline-block relative text-gray-600 hover:text-gray-900 transition" title="私訊">
                     <svg id="msg-icon-svg" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    <!-- 訊息未讀紅點提示 -->
+                    <span id="msg-red-dot" class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white hidden z-10"></span>
                 </a>
                 
-                <button class="header-icon-desktop text-gray-600 hover:text-gray-900 transition" title="系統通知">
+                <button id="notification-btn-desktop" class="header-icon-desktop relative text-gray-600 hover:text-gray-900 transition" title="系統通知">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    <span id="notification-badge-desktop" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[16px] h-4 px-1 rounded-full hidden items-center justify-center leading-4">0</span>
                 </button>
                 
                 <div class="relative overflow-visible">
@@ -68,6 +78,8 @@
                         <img id="avatar-btn-image" alt="使用者頭貼" class="hidden h-full w-full object-cover">
                         <span id="avatar-btn-fallback" class="text-xs">?</span>
                     </button>
+                    <!-- 紅色點點提示 -->
+                    <span id="avatar-red-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden z-10"></span>
                     <div id="avatar-menu" class="absolute right-0 top-full mt-2 w-48 invisible opacity-0 transition-all duration-200 z-[9999]">
                         <div class="bg-white shadow-lg rounded-xl py-1 border border-gray-100">
                             <div id="user-name-display" class="px-4 py-2 text-xs font-bold text-gray-500 border-b border-gray-100 bg-gray-50 rounded-t-xl">嗨，同學</div>
@@ -77,7 +89,10 @@
                                 <span>💬 私訊對話</span>
                                 <span id="avatar-unread-badge" class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full hidden">0</span>
                             </a>
-                            <button class="header-icon-mobile w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-50">🔔 系統通知</button>
+                            <button id="notification-btn-mobile" class="header-icon-mobile w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-50 items-center justify-between">
+                                <span>🔔 系統通知</span>
+                                <span id="notification-badge-mobile" class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full hidden">0</span>
+                            </button>
                             <a href="${s}upload.html" class="header-icon-mobile block px-4 py-2 text-sm text-giver hover:bg-orange-50 font-bold border-b border-gray-50">＋ 我要分享</a>
                             
                             <a href="${s}profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">👤 個人檔案</a>
@@ -105,15 +120,34 @@
             <a href="${s}share.html" class="text-giver hover:opacity-80 transition py-2 font-bold border-b border-gray-50"> 分享清單</a>
             <a href="${s}food.html" class="text-receiver hover:opacity-80 transition py-2 font-bold">預約清單</a>
         </div>
+
+        <div id="notification-panel" class="absolute right-4 top-full mt-2 w-[min(360px,calc(100vw-2rem))] invisible opacity-0 transition-all duration-200 z-[99999]">
+            <div class="bg-white rounded-xl border border-gray-100 shadow-xl overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <p class="text-sm font-bold text-gray-800">系統通知</p>
+                    <button id="notification-read-btn" class="text-xs text-gray-400 hover:text-gray-700">全部已讀</button>
+                </div>
+                <div id="notification-list" class="max-h-96 overflow-y-auto p-3 space-y-2">
+                    <p class="text-center text-gray-400 text-sm py-6">載入中…</p>
+                </div>
+            </div>
+        </div>
     `;
 
     const script = document.currentScript;
     script.parentNode.insertBefore(header, script);
 
     // ================= 登入狀態與頭像邏輯 =================
+    function getSnapshot() {
+        try {
+            return JSON.parse(localStorage.getItem('fs_currentUser') || 'null');
+        } catch {
+            return null;
+        }
+    }
     let snapshot = null;
     let profile = null;
-    try { snapshot = JSON.parse(localStorage.getItem('fs_currentUser') || 'null'); } catch {}
+    try { snapshot = getSnapshot(); } catch {}
     if (snapshot?.uid) {
         try { profile = JSON.parse(localStorage.getItem(`fs_user_${snapshot.uid}`) || 'null'); } catch {}
     }
@@ -189,6 +223,28 @@
             e.stopPropagation();
             avatarMenu.classList.toggle('invisible');
             avatarMenu.classList.toggle('opacity-0');
+            notificationPanel?.classList.add('invisible');
+            notificationPanel?.classList.add('opacity-0');
+            snapshot = getSnapshot();
+            if (snapshot?.uid) {
+                fetch(`${root}api/messages/unread/${snapshot.uid}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        unreadMessagesCount = data?.unread || 0;
+                        const badge = header.querySelector('#avatar-unread-badge');
+                        if (badge) {
+                            if (unreadMessagesCount > 0) {
+                                badge.textContent = unreadMessagesCount;
+                                badge.classList.remove('hidden');
+                            } else {
+                                badge.classList.add('hidden');
+                            }
+                        }
+                        updateMsgRedDot();
+                    })
+                    .catch(() => {});
+                loadNotifications();
+            }
         });
         document.addEventListener('click', e => {
             if (!avatarMenu.contains(e.target)) {
@@ -251,4 +307,195 @@
         });
     }
 
+    // ================= 系統通知 =================
+    const notificationPanel = header.querySelector('#notification-panel');
+    const notificationList = header.querySelector('#notification-list');
+    const notificationReadBtn = header.querySelector('#notification-read-btn');
+    const notificationButtons = [
+        header.querySelector('#notification-btn-desktop'),
+        header.querySelector('#notification-btn-mobile')
+    ].filter(Boolean);
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[ch]));
+    }
+
+    let unreadNotificationsCount = 0;
+    let unreadMessagesCount = 0;
+
+    function updateAvatarRedDot() {
+        const dot = header.querySelector('#avatar-red-dot');
+        if (!dot) return;
+        if (unreadNotificationsCount > 0) {
+            dot.classList.remove('hidden');
+        } else {
+            dot.classList.add('hidden');
+        }
+    }
+
+    function updateMsgRedDot() {
+        const dot = header.querySelector('#msg-red-dot');
+        if (!dot) return;
+        if (unreadMessagesCount > 0) {
+            dot.classList.remove('hidden');
+        } else {
+            dot.classList.add('hidden');
+        }
+    }
+
+    function setNotificationBadges(count) {
+        const badges = [
+            header.querySelector('#notification-badge-desktop'),
+            header.querySelector('#notification-badge-mobile')
+        ].filter(Boolean);
+        badges.forEach(badge => {
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.classList.remove('hidden');
+                if (badge.id === 'notification-badge-desktop') badge.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+            }
+        });
+        unreadNotificationsCount = count;
+        updateAvatarRedDot();
+    }
+
+    function renderNotifications(items) {
+        if (!notificationList) return;
+        if (!items.length) {
+            notificationList.innerHTML = '<p class="text-center text-gray-400 text-sm py-6">目前沒有系統通知</p>';
+            return;
+        }
+        notificationList.innerHTML = items.map(item => {
+            const roleClass = item.role === 'sharer' ? 'notification-role-sharer' : 'notification-role-requester';
+            const roleLabel = item.role === 'sharer' ? '分享者' : '預約者';
+            const roleColor = item.role === 'sharer' ? '#FBB28B' : '#A8CBCB';
+            const href = item.food_post_id ? `${s}detail.html?id=${encodeURIComponent(item.food_post_id)}` : '#';
+            const readClass = item.is_read ? 'notification-read' : '';
+            return `
+                <a href="${href}" data-id="${item.id}" class="notification-item block border-l-4 ${roleClass} rounded-lg px-3 py-2.5 hover:shadow-sm transition ${readClass}">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="text-sm font-bold text-gray-800 leading-snug">${escapeHtml(item.title)}</p>
+                        <span class="shrink-0 text-[11px] font-semibold text-white px-2 py-0.5 rounded-full" style="background:${roleColor}">${roleLabel}</span>
+                    </div>
+                    <p class="text-xs text-gray-600 leading-relaxed mt-1">${escapeHtml(item.body)}</p>
+                    <p class="text-[11px] text-gray-400 mt-1.5">${escapeHtml(item.time_ago)}</p>
+                </a>
+            `;
+        }).join('');
+    }
+
+    async function loadNotifications() {
+        snapshot = getSnapshot();
+        if (!snapshot?.uid) return;
+        try {
+            const res = await fetch(`${root}api/notifications/${snapshot.uid}`);
+            const data = await res.json();
+            setNotificationBadges(data.unread || 0);
+            renderNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+        } catch {
+            if (notificationList) {
+                notificationList.innerHTML = '<p class="text-center text-gray-400 text-sm py-6">通知載入失敗</p>';
+            }
+        }
+    }
+
+    function toggleNotifications(event) {
+        event.stopPropagation();
+        notificationPanel?.classList.toggle('invisible');
+        notificationPanel?.classList.toggle('opacity-0');
+        avatarMenu?.classList.add('invisible');
+        avatarMenu?.classList.add('opacity-0');
+        snapshot = getSnapshot();
+        loadNotifications();
+    }
+
+    notificationButtons.forEach(btn => btn.addEventListener('click', toggleNotifications));
+    notificationPanel?.addEventListener('click', event => event.stopPropagation());
+    document.addEventListener('click', () => {
+        notificationPanel?.classList.add('invisible');
+        notificationPanel?.classList.add('opacity-0');
+    });
+    notificationReadBtn?.addEventListener('click', async () => {
+        snapshot = getSnapshot();
+        if (!snapshot?.uid) return;
+        try {
+            await fetch(`${root}api/notifications/${snapshot.uid}/read`, { method: 'POST' });
+            await loadNotifications();
+        } catch {}
+    });
+
+    notificationList?.addEventListener('click', async (event) => {
+        const item = event.target.closest('.notification-item');
+        if (!item) return;
+
+        const href = item.getAttribute('href');
+        const notifId = item.getAttribute('data-id');
+
+        if (notifId && !item.classList.contains('notification-read')) {
+            event.preventDefault();
+            
+            // visually mark as read immediately
+            item.classList.add('notification-read');
+
+            // decrement unread count locally
+            if (unreadNotificationsCount > 0) {
+                setNotificationBadges(unreadNotificationsCount - 1);
+            }
+
+            try {
+                await fetch(`${root}api/notifications/read-single/${notifId}`, { method: 'POST' });
+            } catch (e) {
+                console.error("Failed to mark single notification read:", e);
+            }
+
+            if (href && href !== '#') {
+                window.location.href = href;
+            }
+        }
+    });
+
+    // ================= 獲取未讀與狀態自動同步（輪詢監聽） =================
+    let lastUid = null;
+    function syncLoginState() {
+        const currentSnapshot = getSnapshot();
+        const currentUid = currentSnapshot?.uid || null;
+        if (currentUid !== lastUid) {
+            lastUid = currentUid;
+            snapshot = currentSnapshot;
+            if (currentUid) {
+                loadNotifications();
+                fetch(`${root}api/messages/unread/${currentUid}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        unreadMessagesCount = data?.unread || 0;
+                        const badge = header.querySelector('#avatar-unread-badge');
+                        if (badge) {
+                            if (unreadMessagesCount > 0) {
+                                badge.textContent = unreadMessagesCount;
+                                badge.classList.remove('hidden');
+                            } else {
+                                badge.classList.add('hidden');
+                            }
+                        }
+                        updateMsgRedDot();
+                    })
+                    .catch(() => {});
+            } else {
+                setNotificationBadges(0);
+                unreadMessagesCount = 0;
+                updateMsgRedDot();
+            }
+        }
+    }
+    syncLoginState();
+    setInterval(syncLoginState, 1000);
 })();

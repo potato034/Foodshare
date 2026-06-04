@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { receiver: '#0d9488', giver: '#f97316' } } }
+            theme: { extend: { colors: { receiver: '#A8CBCB', giver: '#FBB28B', chatGreen: '#0d9488' } } }
         };
     </script>
     <style>
@@ -50,11 +50,11 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <button id="back-btn" class="text-gray-400 hover:text-gray-600 text-xl hidden">←</button>
-                            <div id="chat-avatar" class="w-9 h-9 rounded-full bg-receiver text-white font-bold flex items-center justify-center text-sm shrink-0"></div>
+                            <div id="chat-avatar" class="w-9 h-9 rounded-full bg-chatGreen text-white font-bold flex items-center justify-center text-sm shrink-0"></div>
                             <span id="chat-name" class="font-bold text-gray-900"></span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button id="toggle-order-btn" class="text-xs text-receiver hover:underline hidden">查看訂單資訊 ▾</button>
+                            <button id="toggle-order-btn" class="text-xs text-chatGreen hover:underline hidden">查看訂單資訊 ▾</button>
                             <button id="fullscreen-btn" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 shrink-0">
                                 <svg id="fullscreen-svg" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" />
@@ -78,7 +78,7 @@
                                 <p id="order-rsv-time"></p>
                             </div>
                         </div>
-                        <a id="order-link" href="#" class="text-xs text-receiver hover:underline shrink-0">查看貼文 →</a>
+                        <a id="order-link" href="#" class="text-xs text-chatGreen hover:underline shrink-0">查看貼文 →</a>
                     </div>
                 </div>
 
@@ -88,9 +88,9 @@
                 <!-- 輸入框 -->
                 <div class="bg-white border-t border-gray-100 px-4 py-3 flex gap-2 shrink-0">
                     <textarea id="msg-input" rows="1" placeholder="輸入訊息…"
-                        class="flex-1 resize-none px-4 py-2.5 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-receiver bg-gray-50 max-h-32"></textarea>
+                        class="flex-1 resize-none px-4 py-2.5 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-chatGreen bg-gray-50 max-h-32"></textarea>
                     <button id="send-btn"
-                        class="px-5 py-2.5 bg-receiver hover:bg-teal-600 text-white font-bold rounded-2xl text-sm transition shrink-0">
+                        class="px-5 py-2.5 bg-chatGreen hover:bg-teal-600 text-white font-bold rounded-2xl text-sm transition shrink-0">
                         傳送
                     </button>
                 </div>
@@ -202,16 +202,16 @@
             return `
             <div class="conv-item flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition ${isActive ? 'bg-teal-50' : ''}"
                  data-uid="${c.other_uid}" data-post="${c.food_post_id ?? ''}">
-                <div class="w-10 h-10 rounded-full bg-receiver text-white font-bold flex items-center justify-center text-sm shrink-0">${initials}</div>
+                <div class="w-10 h-10 rounded-full bg-chatGreen text-white font-bold flex items-center justify-center text-sm shrink-0">${initials}</div>
                 <div class="flex-1 min-w-0">
                     <div class="flex justify-between items-baseline gap-1">
                         <span class="font-semibold text-gray-800 text-sm truncate">${c.other_name}</span>
                         <span class="text-xs text-gray-400 shrink-0">${timeStr}</span>
                     </div>
-                    ${c.food_title ? `<p class="text-xs text-receiver truncate">🍱 ${c.food_title}</p>` : ''}
+                    ${c.food_title ? `<p class="text-xs text-chatGreen truncate">🍱 ${c.food_title}</p>` : ''}
                     <p class="text-xs text-gray-500 truncate">${c.last_message}</p>
                 </div>
-                ${c.unread > 0 ? `<span class="w-5 h-5 rounded-full bg-receiver text-white text-xs font-bold flex items-center justify-center shrink-0">${c.unread}</span>` : ''}
+                ${c.unread > 0 ? `<span class="w-5 h-5 rounded-full bg-chatGreen text-white text-xs font-bold flex items-center justify-center shrink-0">${c.unread}</span>` : ''}
             </div>`;
         }).join('');
 
