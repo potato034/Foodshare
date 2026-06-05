@@ -19,8 +19,17 @@
         .notification-role-sharer { border-left-color: #FBB28B !important; background-color: #fff7f2 !important; }
         .notification-role-requester { border-left-color: #A8CBCB !important; background-color: #f3fbfb !important; }
         .notification-read {
-            opacity: 0.8 !important;
-            filter: saturate(0.65) !important;
+            background-color: #faf9f6 !important;
+            border-left-color: #d6d3d1 !important;
+            opacity: 0.75 !important;
+        }
+        .notification-unread-dot {
+            width: 7px;
+            height: 7px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
         }
 
         /* 自訂 Alert / Confirm 彈窗樣式 */
@@ -525,6 +534,12 @@
             const roleColor = item.role === 'sharer' ? '#FBB28B' : '#A8CBCB';
             const href = item.food_post_id ? `${s}detail.html?id=${encodeURIComponent(item.food_post_id)}` : '#';
             const readClass = item.is_read ? 'notification-read' : '';
+            
+            // 已讀/未讀右下角標籤形式
+            const statusLabel = item.is_read 
+                ? '<span class="notification-status-label text-[10px] text-gray-400 font-normal self-center ml-2 shrink-0">✓ 已讀</span>' 
+                : '<span class="notification-unread-dot self-center ml-2" title="未讀"></span>';
+
             return `
                 <a href="${href}" data-id="${item.id}" class="notification-item block border-l-4 ${roleClass} rounded-lg px-3 py-2.5 hover:shadow-sm transition ${readClass}">
                     <div class="flex items-start justify-between gap-3">
@@ -532,7 +547,12 @@
                         <span class="shrink-0 text-[11px] font-semibold text-white px-2 py-0.5 rounded-full" style="background:${roleColor}">${roleLabel}</span>
                     </div>
                     <p class="text-xs text-gray-600 leading-relaxed mt-1">${escapeHtml(item.body)}</p>
-                    <p class="text-[11px] text-gray-400 mt-1.5">${escapeHtml(item.time_ago)}</p>
+                    <div class="flex items-center justify-between mt-1.5">
+                        <p class="text-[11px] text-gray-400">${escapeHtml(item.time_ago)}</p>
+                        <div class="notification-status-container flex items-center justify-end">
+                            ${statusLabel}
+                        </div>
+                    </div>
                 </a>
             `;
         }).join('');
@@ -590,6 +610,14 @@
             
             // visually mark as read immediately
             item.classList.add('notification-read');
+            const dot = item.querySelector('.notification-unread-dot');
+            if (dot) {
+                const container = item.querySelector('.notification-status-container');
+                dot.remove();
+                if (container) {
+                    container.insertAdjacentHTML('beforeend', '<span class="notification-status-label text-[10px] text-gray-400 font-normal self-center ml-2 shrink-0">✓ 已讀</span>');
+                }
+            }
 
             // decrement unread count locally
             if (unreadNotificationsCount > 0) {
