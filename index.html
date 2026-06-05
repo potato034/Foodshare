@@ -277,7 +277,7 @@
             window._panelCountdown = setInterval(tickPanel, 1000);
         }
 
-        function focusFood(item) {
+        function focusFood(item, panMap = true) {
             // 切換回單一商品詳細顯示模式
             document.getElementById('detail-list-view')?.classList.add('hidden');
             document.getElementById('detail-single-view')?.classList.remove('hidden');
@@ -308,8 +308,10 @@
 
             const marker = mapMarkers.get(item.id);
             if (marker) {
-                campusMap.setView(item.coords, 17, { animate: true });
-                marker.openPopup();
+                if (panMap) {
+                    campusMap.setView(item.coords, 17, { animate: true });
+                    marker.openTooltip();
+                }
             }
         }
 
@@ -426,16 +428,23 @@
                         html: `<div style="width:40px;height:40px;background:rgba(255,255,255,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,0.22);cursor:pointer">${firstItem.emoji}</div>`,
                         iconSize: [40, 40],
                         iconAnchor: [20, 20],
-                        popupAnchor: [0, -22],
                     });
                     marker = L.marker(firstItem.coords, { icon: emojiIcon }).addTo(campusMap);
                     
                     const popupLoc = firstItem.detail_location
                         ? `${firstItem.main_location} - ${firstItem.detail_location}`
                         : firstItem.main_location || firstItem.pickup_location;
-                    marker.bindPopup(`<b>${firstItem.title}</b><br>📍 ${popupLoc}`);
                     
-                    marker.on('click', () => focusFood(firstItem));
+                    // 改用 Tooltip，滑鼠移到上方才顯示
+                    marker.bindTooltip(`<b>${firstItem.title}</b><br>📍 ${popupLoc}`, {
+                        direction: 'top',
+                        offset: [0, -20]
+                    });
+                    
+                    // 點擊直接跳轉至商品詳細頁面 (detail.html)
+                    marker.on('click', () => {
+                        window.location.href = `./static/detail.html?id=${firstItem.id}`;
+                    });
                     mapMarkers.set(firstItem.id, marker);
                 } else {
                     // 多個商品重疊：顯示數字角標的 Marker
@@ -451,14 +460,18 @@
                         `,
                         iconSize: [40, 40],
                         iconAnchor: [20, 20],
-                        popupAnchor: [0, -22],
                     });
                     marker = L.marker(firstItem.coords, { icon: emojiIcon }).addTo(campusMap);
-                    marker.bindPopup(`<b>${locName}</b><br>此處共有 ${items.length} 項分享項目`);
                     
+                    // 改用 Tooltip，滑鼠移到上方才顯示
+                    marker.bindTooltip(`<b>${locName}</b><br>此處共有 ${items.length} 項分享項目`, {
+                        direction: 'top',
+                        offset: [0, -20]
+                    });
+                    
+                    // 點擊多商品 Marker 展開左側列表
                     marker.on('click', () => {
                         campusMap.setView(firstItem.coords, 17, { animate: true });
-                        marker.openPopup();
                         showLocationList(items, locName);
                     });
 
@@ -492,7 +505,12 @@
                 ? window.foodData
                 : window.foodData.filter(f => f.category === category);
             renderFoodCards(filtered);
-            if (filtered.length > 0) focusFood(filtered[0]);
+            if (filtered.length > 0) {
+                // 選中第一筆食物更新資訊面板，但不讓地圖跟隨 pan 到該筆食物
+                focusFood(filtered[0], false);
+            }
+            // 點擊上方類別時，地圖直接跳回正中間（中興大學中心點）
+            campusMap.setView([24.1232, 120.6776], 16);
 
             // 更新按鈕樣式
             document.querySelectorAll('[data-filter-btn]').forEach(btn => {
@@ -522,7 +540,9 @@
                     return;
                 }
                 renderFoodCards(data);
-                focusFood(data[0]);
+                // 初始載入時僅更新左側面板而不飛移地圖或開啟 Tooltip
+                focusFood(data[0], false);
+                campusMap.setView([24.1232, 120.6776], 16);
             } catch (err) {
                 console.error('載入食物資料失敗', err);
                 if (foodGrid) foodGrid.innerHTML = '<p class="text-center text-red-400 col-span-full py-8">載入失敗，請確認伺服器是否啟動</p>';
