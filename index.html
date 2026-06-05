@@ -796,7 +796,7 @@
             });
         }
 
-        // 處理從其他頁面跳轉過來的登出請求
+        // 處理從其他頁面跳轉過來的登出請求 (放在監聽器外部，只執行一次，避免 signOut 觸發監聽器的死循環)
         if (new URLSearchParams(window.location.search).get('action') === 'logout') {
             signOut(auth).finally(() => {
                 window.history.replaceState({}, '', window.location.pathname);
@@ -805,11 +805,18 @@
 
         // 核心邏輯：監聽登入狀態 (決定顯示右上角選單)
         onAuthStateChanged(auth, async (user) => {
+            // 如果 URL 指明要進行登出，且此時監聽到有登入狀態（Firebase 還在登出處理中），我們直接忽略
+            if (new URLSearchParams(window.location.search).get('action') === 'logout') {
+                if (window.hidePageLoader) window.hidePageLoader();
+                return;
+            }
+
             if (user) {
                 // 如果是信箱密碼登入，且信箱尚未驗證，強制登出並阻擋
                 if (!user.emailVerified) {
                     await signOut(auth);
                     alert("您的信箱尚未驗證！請先至信箱點開驗證連結。");
+                    if (window.hidePageLoader) window.hidePageLoader();
                     return;
                 }
 
@@ -850,6 +857,7 @@
                         if (userNameDisplay) {
                             userNameDisplay.textContent = `嗨，${profile.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
                         }
+                        if (window.hidePageLoader) window.hidePageLoader();
                     })
                     .catch(err => {
                         console.error("Sync user error:", err);
@@ -861,6 +869,7 @@
                         if (userNameDisplay) {
                             userNameDisplay.textContent = `嗨，${profile.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
                         }
+                        if (window.hidePageLoader) window.hidePageLoader();
                     });
             } else {
                 // 清除本地登入快照
@@ -878,6 +887,7 @@
                     fallbackEl.classList.remove('hidden');
                     fallbackEl.textContent = '9';
                 }
+                if (window.hidePageLoader) window.hidePageLoader();
             }
         });
 

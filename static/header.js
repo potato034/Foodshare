@@ -5,7 +5,7 @@
     const root = inStatic ? '../' : './';
     const s = inStatic ? './' : './static/';
 
-    // 動態插入自適應 CSS 樣式與自訂彈窗樣式
+    // 動態插入自適應 CSS 樣式、自訂彈窗樣式與全螢幕載入動畫樣式
     const style = document.createElement('style');
     style.textContent = `
         @media (max-width: 540px) {
@@ -19,17 +19,8 @@
         .notification-role-sharer { border-left-color: #FBB28B !important; background-color: #fff7f2 !important; }
         .notification-role-requester { border-left-color: #A8CBCB !important; background-color: #f3fbfb !important; }
         .notification-read {
-            background-color: #faf9f6 !important;
-            border-left-color: #d6d3d1 !important;
-            opacity: 0.75 !important;
-        }
-        .notification-unread-dot {
-            width: 7px;
-            height: 7px;
-            background-color: #ef4444;
-            border-radius: 50%;
-            display: inline-block;
-            flex-shrink: 0;
+            opacity: 0.8 !important;
+            filter: saturate(0.65) !important;
         }
 
         /* 自訂 Alert / Confirm 彈窗樣式 */
@@ -65,8 +56,79 @@
         .custom-modal-overlay.show .custom-modal-card {
             transform: scale(1);
         }
+
+        /* 全螢幕加載動畫樣式 */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fcfbf9; /* 溫馨的石子白背景 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999999;
+            transition: opacity 0.35s ease-out, visibility 0.35s ease-out;
+        }
+        .page-loader.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none !important;
+        }
+        .loader-spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(251, 178, 139, 0.25);
+            border-top: 4px solid #A8CBCB; /* 鼠尾草綠 */
+            border-right: 4px solid #FBB28B; /* 暖杏橘 */
+            border-radius: 50%;
+            animation: spin 0.9s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     `;
     document.head.appendChild(style);
+
+    // 立即建立並插入全螢幕 Loader DOM
+    const loader = document.createElement('div');
+    loader.className = 'page-loader';
+    loader.innerHTML = `
+        <div class="flex flex-col items-center">
+            <div class="loader-spinner mb-4"></div>
+            <p class="text-xs text-stone-400 font-semibold tracking-wider">溫暖傳遞中，請稍候...</p>
+        </div>
+    `;
+    document.body.appendChild(loader);
+
+    // 定義隱藏 Loader 函數
+    window.hidePageLoader = function() {
+        if (loader && !loader.classList.contains('fade-out')) {
+            loader.classList.add('fade-out');
+            setTimeout(() => {
+                try {
+                    if (loader.parentNode) {
+                        loader.parentNode.removeChild(loader);
+                    }
+                } catch {}
+            }, 350);
+        }
+    };
+
+    // 安全防呆機制：最長 2.5 秒後自動解鎖頁面
+    setTimeout(window.hidePageLoader, 2500);
+
+    // 當 window 載入完成，非 Firebase 狀態驅動的靜態頁面可直接淡出 Loader
+    window.addEventListener('load', () => {
+        const path = window.location.pathname;
+        const isAuthDrivenPage = path.endsWith('index.html') || path === '/' || path.endsWith('/') || path.includes('profile.html');
+        if (!isAuthDrivenPage) {
+            window.hidePageLoader();
+        }
+    });
 
     // 覆寫 window.alert
     const originalAlert = window.alert;
@@ -535,10 +597,10 @@
             const href = item.food_post_id ? `${s}detail.html?id=${encodeURIComponent(item.food_post_id)}` : '#';
             const readClass = item.is_read ? 'notification-read' : '';
             
-            // 已讀/未讀右下角標籤形式
+            // 只有已讀通知在右下角加上小小的已讀字樣，未讀不加任何狀態
             const statusLabel = item.is_read 
-                ? '<span class="notification-status-label text-[10px] text-gray-400 font-normal self-center ml-2 shrink-0">✓ 已讀</span>' 
-                : '<span class="notification-unread-dot self-center ml-2" title="未讀"></span>';
+                ? '<span class="notification-status-label text-[10px] text-gray-400 font-normal self-center ml-2 shrink-0">已讀</span>' 
+                : '';
 
             return `
                 <a href="${href}" data-id="${item.id}" class="notification-item block border-l-4 ${roleClass} rounded-lg px-3 py-2.5 hover:shadow-sm transition ${readClass}">
@@ -610,13 +672,9 @@
             
             // visually mark as read immediately
             item.classList.add('notification-read');
-            const dot = item.querySelector('.notification-unread-dot');
-            if (dot) {
-                const container = item.querySelector('.notification-status-container');
-                dot.remove();
-                if (container) {
-                    container.insertAdjacentHTML('beforeend', '<span class="notification-status-label text-[10px] text-gray-400 font-normal self-center ml-2 shrink-0">✓ 已讀</span>');
-                }
+            const container = item.querySelector('.notification-status-container');
+            if (container && !container.querySelector('.notification-status-label')) {
+                container.insertAdjacentHTML('beforeend', '<span class="notification-status-label text-[10px] text-gray-400 font-normal self-center ml-2 shrink-0">已讀</span>');
             }
 
             // decrement unread count locally
