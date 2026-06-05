@@ -90,6 +90,20 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* 漸層按鈕載入動畫 */
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .btn-loading-gradient {
+            background: linear-gradient(270deg, #A8CBCB, #FBB28B, #A8CBCB);
+            background-size: 600% 600%;
+            animation: gradient-shift 2s ease infinite !important;
+            pointer-events: none !important;
+            opacity: 0.95;
+        }
     `;
     document.head.appendChild(style);
 
@@ -116,6 +130,28 @@
                 } catch {}
             }, 350);
         }
+    };
+
+    // 定義顯示 Loader 函數
+    window.showPageLoader = function(message) {
+        let existingLoader = document.querySelector('.page-loader');
+        if (existingLoader) {
+            existingLoader.classList.remove('fade-out');
+            const p = existingLoader.querySelector('p');
+            if (p) p.textContent = message || '溫暖傳遞中，請稍候...';
+            return;
+        }
+
+        const newLoader = document.createElement('div');
+        newLoader.className = 'page-loader';
+        newLoader.innerHTML = `
+            <div class="flex flex-col items-center">
+                <div class="loader-spinner mb-4"></div>
+                <p class="text-xs text-stone-400 font-semibold tracking-wider">${message || '溫暖傳遞中，請稍候...'}</p>
+            </div>
+        `;
+        document.body.appendChild(newLoader);
+        newLoader.offsetHeight; // 強制 Reflow
     };
 
     // 安全防呆機制：最長 2.5 秒後自動解鎖頁面

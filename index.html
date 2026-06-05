@@ -908,12 +908,26 @@
                     return;
                 }
 
+                // 註冊中狀態樣式
+                registerBtn.disabled = true;
+                const originalRegText = registerBtn.textContent;
+                registerBtn.textContent = "註冊中…";
+                registerBtn.classList.add('btn-loading-gradient');
+                if (window.showPageLoader) window.showPageLoader("正在建立帳號，請稍候...");
+
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
                     // 傳送驗證郵件
                     await sendEmailVerification(user);
+                    
+                    // 恢復按鈕
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = originalRegText;
+                    registerBtn.classList.remove('btn-loading-gradient');
+                    if (window.hidePageLoader) window.hidePageLoader();
+
                     alert("註冊成功！系統已發送驗證信。請至信箱點擊連結開通帳號後，再重新登入。", async () => {
                         // 強制登出
                         await signOut(auth);
@@ -924,6 +938,12 @@
 
                 } catch (error) {
                     console.error("註冊異常", error);
+                    // 恢復按鈕
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = originalRegText;
+                    registerBtn.classList.remove('btn-loading-gradient');
+                    if (window.hidePageLoader) window.hidePageLoader();
+
                     if (error.code === 'auth/email-already-in-use') {
                         alert("此信箱已被註冊過！");
                     } else if (error.code === 'auth/weak-password') {
@@ -953,19 +973,46 @@
                     return;
                 }
 
+                // 登入中狀態樣式
+                emailLoginBtn.disabled = true;
+                const originalText = emailLoginBtn.textContent;
+                emailLoginBtn.textContent = "登入中…";
+                emailLoginBtn.classList.add('btn-loading-gradient');
+                if (window.showPageLoader) window.showPageLoader("正在登入，請稍候...");
+
                 try {
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
                     if (!user.emailVerified) {
                         await signOut(auth);
+                        
+                        // 恢復按鈕
+                        emailLoginBtn.disabled = false;
+                        emailLoginBtn.textContent = originalText;
+                        emailLoginBtn.classList.remove('btn-loading-gradient');
+                        if (window.hidePageLoader) window.hidePageLoader();
+
                         alert("您的信箱尚未驗證！請先至信箱點開驗證連結。");
                     } else {
                         loginEmailInput.value = "";
                         loginPasswordInput.value = "";
+                        // 登入成功後，onAuthStateChanged 的成功回調會重新刷新頭像並關閉 Loader，
+                        // 我們在 500ms 後重置登入按鈕狀態，以備下次開啟彈窗時是乾淨的
+                        setTimeout(() => {
+                            emailLoginBtn.disabled = false;
+                            emailLoginBtn.textContent = originalText;
+                            emailLoginBtn.classList.remove('btn-loading-gradient');
+                        }, 500);
                     }
                 } catch (error) {
                     console.error("信箱登入異常", error);
+                    // 恢復按鈕
+                    emailLoginBtn.disabled = false;
+                    emailLoginBtn.textContent = originalText;
+                    emailLoginBtn.classList.remove('btn-loading-gradient');
+                    if (window.hidePageLoader) window.hidePageLoader();
+
                     if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                         alert("信箱或密碼錯誤！");
                     } else {
