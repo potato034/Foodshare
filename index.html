@@ -784,10 +784,15 @@
             });
         }
         if (loginView) {
-            loginView.addEventListener('click', (e) => {
-                if (e.target === loginView) {
+            let isMouseDownOnBg = false;
+            loginView.addEventListener('mousedown', (e) => {
+                isMouseDownOnBg = (e.target === loginView);
+            });
+            loginView.addEventListener('mouseup', (e) => {
+                if (isMouseDownOnBg && e.target === loginView) {
                     loginView.classList.add('hidden');
                 }
+                isMouseDownOnBg = false;
             });
         }
 
