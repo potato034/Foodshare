@@ -182,6 +182,10 @@
                         <div class="absolute bottom-3 right-3 z-[500] text-gray-500 text-xs bg-white/85 px-2 py-1 rounded shadow-sm">
                             🗺️ OpenStreetMap / Leaflet
                         </div>
+                        <!-- 類別無分享時地圖中間提示彈窗 -->
+                        <div id="map-toast" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000] bg-black/80 backdrop-blur-sm text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 pointer-events-none transition duration-300 transform scale-95 opacity-0">
+                            <span>🍱</span> 此類別尚無分享
+                        </div>
                     </div>
                 </div>
             </section>
@@ -497,6 +501,43 @@
             });
         }
 
+        // 顯示地圖中央提示彈窗 (Toast)
+        function showMapToast(message = "此類別尚無分享") {
+            const toast = document.getElementById('map-toast');
+            if (!toast) return;
+            
+            // 替換提示文字
+            const textNode = toast.querySelector('span').nextSibling;
+            if (textNode) {
+                textNode.textContent = ` ${message}`;
+            }
+            
+            // 清除已有的計時器
+            if (window._toastTimeout) {
+                clearTimeout(window._toastTimeout);
+            }
+            if (window._toastHideTimeout) {
+                clearTimeout(window._toastHideTimeout);
+            }
+            
+            // 顯示與動畫淡入
+            toast.classList.remove('hidden');
+            toast.offsetHeight; // 強制瀏覽器重繪
+            toast.classList.remove('scale-95', 'opacity-0');
+            toast.classList.add('scale-100', 'opacity-100');
+            
+            // 1.5 秒後淡出
+            window._toastTimeout = setTimeout(() => {
+                toast.classList.remove('scale-100', 'opacity-100');
+                toast.classList.add('scale-95', 'opacity-0');
+                
+                // 300ms 動畫完成後完全隱藏
+                window._toastHideTimeout = setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 300);
+            }, 1500);
+        }
+
         // Fix 4：類別篩選邏輯
         let activeCategory = '全部';
         function applyFilter(category) {
@@ -508,6 +549,9 @@
             if (filtered.length > 0) {
                 // 選中第一筆食物更新資訊面板，但不讓地圖跟隨 pan 到該筆食物
                 focusFood(filtered[0], false);
+            } else {
+                // 若此類別沒有任何分享，在地圖中間彈出提示
+                showMapToast("此類別尚無分享");
             }
             // 點擊上方類別時，地圖直接跳回正中間（中興大學中心點）
             campusMap.setView([24.1232, 120.6776], 16);
