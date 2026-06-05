@@ -330,11 +330,12 @@
 
     // ── 清空 ─────────────────────────────────────────────────
     document.getElementById('clear-all-btn').addEventListener('click', () => {
-        if (!confirm('確定清空購物車嗎？')) return;
-        cart = [];
-        selectedIds.clear();
-        saveCart();
-        render();
+        confirm('確定清空購物車嗎？', () => {
+            cart = [];
+            selectedIds.clear();
+            saveCart();
+            render();
+        });
     });
 
     // ── 倒數計時 ─────────────────────────────────────────────

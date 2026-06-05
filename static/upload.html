@@ -562,8 +562,9 @@
                     const res    = await fetch(url, { method, body: data });
                     const json   = await res.json();
                     if (!res.ok) throw new Error(json.detail || (isEdit ? '儲存失敗' : '發布失敗'));
-                    alert(isEdit ? '已儲存變更 ✅' : '發布成功！已加入分享清單 🎉');
-                    window.location.href = './share.html';
+                    alert(isEdit ? '已儲存變更 ✅' : '發布成功！已加入分享清單 🎉', () => {
+                        window.location.href = './share.html';
+                    });
                 } catch (err) {
                     alert(`操作失敗：${err.message}`);
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = isEdit ? '儲存變更' : '確認發布分享'; }

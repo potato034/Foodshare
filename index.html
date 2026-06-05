@@ -590,6 +590,9 @@
             signInWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
+        // 強制模組內部呼叫的 alert 對應到 window.alert 覆寫
+        const alert = (msg, cb) => window.alert(msg, cb);
+
         // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDYIH5q916EjCrvtaSMSFEDPTgRBFehJws",
@@ -888,14 +891,13 @@
 
                     // 傳送驗證郵件
                     await sendEmailVerification(user);
-                    alert("註冊成功！系統已發送驗證信。請至信箱點擊連結開通帳號後，再重新登入。");
-
-                    // 強制登出
-                    await signOut(auth);
-                    
-                    regEmailInput.value = "";
-                    regPasswordInput.value = "";
-                    if (tabLogin) tabLogin.click();
+                    alert("註冊成功！系統已發送驗證信。請至信箱點擊連結開通帳號後，再重新登入。", async () => {
+                        // 強制登出
+                        await signOut(auth);
+                        regEmailInput.value = "";
+                        regPasswordInput.value = "";
+                        if (tabLogin) tabLogin.click();
+                    });
 
                 } catch (error) {
                     console.error("註冊異常", error);

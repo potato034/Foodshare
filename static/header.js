@@ -5,7 +5,7 @@
     const root = inStatic ? '../' : './';
     const s = inStatic ? './' : './static/';
 
-    // 動態插入自適應 CSS 樣式
+    // 動態插入自適應 CSS 樣式與自訂彈窗樣式
     const style = document.createElement('style');
     style.textContent = `
         @media (max-width: 540px) {
@@ -22,8 +22,153 @@
             opacity: 0.8 !important;
             filter: saturate(0.65) !important;
         }
+
+        /* 自訂 Alert / Confirm 彈窗樣式 */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(28, 25, 23, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999999;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+        }
+        .custom-modal-overlay.show {
+            opacity: 1;
+        }
+        .custom-modal-card {
+            background-color: #ffffff;
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(245, 245, 244, 0.8);
+            width: 90%;
+            max-width: 380px;
+            padding: 1.5rem;
+            transform: scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .custom-modal-overlay.show .custom-modal-card {
+            transform: scale(1);
+        }
     `;
     document.head.appendChild(style);
+
+    // 覆寫 window.alert
+    const originalAlert = window.alert;
+    window.alert = function(message, callback) {
+        if (!document.body) {
+            originalAlert(message);
+            if (callback) callback();
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        overlay.innerHTML = `
+            <div class="custom-modal-card flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-teal-50 text-receiver flex items-center justify-center text-2xl mb-3 shadow-inner">
+                    🔔
+                </div>
+                <p class="text-sm font-semibold text-gray-800 leading-relaxed mb-5 whitespace-pre-line">${message}</p>
+                <button class="custom-modal-confirm-btn w-full py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-xl text-xs transition transform hover:-translate-y-0.5 shadow-sm">
+                    確定
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        setTimeout(() => overlay.classList.add('show'), 10);
+
+        const closeAlert = () => {
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.remove();
+                if (callback) callback();
+            }, 200);
+        };
+
+        overlay.querySelector('.custom-modal-confirm-btn').addEventListener('click', closeAlert);
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter' || e.key === 'Escape') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleKeyDown);
+                closeAlert();
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+    };
+
+    // 覆寫 window.confirm
+    const originalConfirm = window.confirm;
+    window.confirm = function(message, onConfirm, onCancel) {
+        if (typeof onConfirm !== 'function') {
+            return originalConfirm(message);
+        }
+
+        if (!document.body) {
+            const result = originalConfirm(message);
+            if (result) onConfirm();
+            else if (onCancel) onCancel();
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        overlay.innerHTML = `
+            <div class="custom-modal-card flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-orange-50 text-giver flex items-center justify-center text-2xl mb-3 shadow-inner">
+                    ❓
+                </div>
+                <p class="text-sm font-semibold text-gray-800 leading-relaxed mb-5 whitespace-pre-line">${message}</p>
+                <div class="flex gap-3 w-full">
+                    <button class="custom-modal-cancel-btn flex-1 py-2 bg-stone-100 hover:bg-stone-200 text-gray-600 font-medium rounded-xl text-xs transition">
+                        取消
+                    </button>
+                    <button class="custom-modal-confirm-btn flex-1 py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-xl text-xs transition transform hover:-translate-y-0.5 shadow-sm">
+                        確定
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        setTimeout(() => overlay.classList.add('show'), 10);
+
+        const closeConfirm = (confirmed) => {
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.remove();
+                if (confirmed) {
+                    if (onConfirm) onConfirm();
+                } else {
+                    if (onCancel) onCancel();
+                }
+            }, 200);
+        };
+
+        overlay.querySelector('.custom-modal-confirm-btn').addEventListener('click', () => closeConfirm(true));
+        overlay.querySelector('.custom-modal-cancel-btn').addEventListener('click', () => closeConfirm(false));
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleKeyDown);
+                closeConfirm(true);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleKeyDown);
+                closeConfirm(false);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+    };
 
     const header = document.createElement('header');
     header.className = 'fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-[10000] px-4 py-3 lg:px-6 lg:py-4 flex items-center gap-3 lg:gap-8';

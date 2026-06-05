@@ -79,17 +79,18 @@
             loadShares(snapshot.uid);
         }
 
-        window.deleteFood = async function(foodId) {
-            if (!confirm('確定要刪除這筆分享嗎？')) return;
-            const data = new FormData();
-            data.append('sharer_uid', snapshot.uid);
-            const res = await fetch(`/api/foods/${foodId}`, { method: 'DELETE', body: data });
-            if (res.ok) {
-                loadShares(snapshot.uid);
-            } else {
-                const json = await res.json();
-                alert(json.detail || '刪除失敗');
-            }
+        window.deleteFood = function(foodId) {
+            confirm('確定要刪除這筆分享嗎？', async () => {
+                const data = new FormData();
+                data.append('sharer_uid', snapshot.uid);
+                const res = await fetch(`/api/foods/${foodId}`, { method: 'DELETE', body: data });
+                if (res.ok) {
+                    loadShares(snapshot.uid);
+                } else {
+                    const json = await res.json();
+                    alert(json.detail || '刪除失敗');
+                }
+            });
         };
 
         async function loadShares(uid) {
