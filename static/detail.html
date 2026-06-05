@@ -305,7 +305,7 @@
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">學號 <span class="text-red-500">*</span></label>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">學號/教職員編號 <span class="text-red-500">*</span></label>
                                 <input id="f-sid" type="text" placeholder=" "
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-receiver outline-none">
                             </div>
@@ -384,11 +384,14 @@
                 const json = await res.json();
                 if (!res.ok) throw new Error(json.detail || '預約失敗');
                 if (json.waiting) {
-                    alert('已排入候補名單！如果有預約者取消，系統將自動依序為您遞補。');
+                    alert('已排入候補名單！如果有預約者取消，系統將自動依序為您遞補。', () => {
+                        window.location.reload();
+                    });
                 } else {
-                alert(`預約成功！剩餘 ${json.quantity_left} 份`);
+                    alert(`預約成功！剩餘 ${json.quantity_left} 份`, () => {
+                        window.location.reload();
+                    });
                 }
-                window.location.reload();
             } catch (err) {
                 alert(`預約失敗：${err.message}`);
                 if (btn) { btn.disabled = false; btn.textContent = food.status === 'reserved' ? '⏳ 排隊候補' : '🙋 直接預約'; }
@@ -396,24 +399,26 @@
         }
 
         // 取消預約
-        async function cancelReservation(food) {
-            if (!confirm('確定要取消預約嗎？')) return;
-            // 先撈 reservation_id
-            const res2   = await fetch(`/api/users/${uid}/requests`);
-            const items  = await res2.json();
-            const mine   = items.find(i => i.id == food.id || i.food_id == food.id);
-            const resId  = mine?.reservation_id;
-            if (!resId) { alert('找不到預約資料'); return; }
+        function cancelReservation(food) {
+            confirm('確定要取消預約嗎？', async () => {
+                // 先撈 reservation_id
+                const res2   = await fetch(`/api/users/${uid}/requests`);
+                const items  = await res2.json();
+                const mine   = items.find(i => i.id == food.id || i.food_id == food.id);
+                const resId  = mine?.reservation_id;
+                if (!resId) { alert('找不到預約資料'); return; }
 
-            const data = new FormData();
-            data.append('requester_uid',  uid);
-            data.append('reservation_id', resId);
+                const data = new FormData();
+                data.append('requester_uid',  uid);
+                data.append('reservation_id', resId);
 
-            const res = await fetch(`/api/foods/${food.id}/cancel`, { method: 'POST', body: data });
-            const json = await res.json();
-            if (!res.ok) { alert(json.detail || '取消失敗'); return; }
-            alert('預約已取消');
-            window.location.reload();
+                const res = await fetch(`/api/foods/${food.id}/cancel`, { method: 'POST', body: data });
+                const json = await res.json();
+                if (!res.ok) { alert(json.detail || '取消失敗'); return; }
+                alert('預約已取消', () => {
+                    window.location.reload();
+                });
+            });
         }
 
         // 分享者查看訂單
@@ -463,15 +468,16 @@
         };
 
         window.confirmNoShow = async (foodId, resId) => {
-            if (!confirm('確定標記為「未取」？此操作會計入對方的取貨率')) return;
-            const data = new FormData();
-            data.append('sharer_uid', uid);
-            data.append('reservation_id', resId);
-            const res = await fetch(`/api/foods/${foodId}/no_show`, { method: 'POST', body: data });
-            const json = await res.json();
-            if (!res.ok) { alert(json.detail); return; }
-            alert('已標記未取');
-            loadOrders(foodId);
+            confirm('確定標記為「未取」？此操作會計入對方的取貨率', async () => {
+                const data = new FormData();
+                data.append('sharer_uid', uid);
+                data.append('reservation_id', resId);
+                const res = await fetch(`/api/foods/${foodId}/no_show`, { method: 'POST', body: data });
+                const json = await res.json();
+                if (!res.ok) { alert(json.detail); return; }
+                alert('已標記未取');
+                loadOrders(foodId);
+            });
         };
     </script>
 </body>

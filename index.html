@@ -23,6 +23,12 @@
     <style>
         #campus-map {
             min-height: 450px;
+            background-color: #0f172a !important; /* 深色背景作為遮罩底色 */
+        }
+        /* 讓地圖瓦片半透明並微調亮度對比，使食物標記 (Markers) 在深色背景襯托下更加突出 */
+        .leaflet-tile-pane {
+            opacity: 0.75;
+            filter: brightness(0.9) contrast(1.05);
         }
         .food-card-active {
             box-shadow: 0 0 0 2px rgba(168, 203, 203, 0.65);
@@ -182,6 +188,10 @@
                         <div class="absolute bottom-3 right-3 z-[500] text-gray-500 text-xs bg-white/85 px-2 py-1 rounded shadow-sm">
                             🗺️ OpenStreetMap / Leaflet
                         </div>
+                        <!-- 類別無分享時地圖中間提示彈窗 -->
+                        <div id="map-toast" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000] bg-black/80 backdrop-blur-sm text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 pointer-events-none transition duration-300 transform scale-95 opacity-0">
+                            <span>🍱</span> 此類別尚無分享
+                        </div>
                     </div>
                 </div>
             </section>
@@ -277,7 +287,7 @@
             window._panelCountdown = setInterval(tickPanel, 1000);
         }
 
-        function focusFood(item) {
+        function focusFood(item, panMap = true) {
             // 切換回單一商品詳細顯示模式
             document.getElementById('detail-list-view')?.classList.add('hidden');
             document.getElementById('detail-single-view')?.classList.remove('hidden');
@@ -308,8 +318,10 @@
 
             const marker = mapMarkers.get(item.id);
             if (marker) {
-                campusMap.setView(item.coords, 17, { animate: true });
-                marker.openPopup();
+                if (panMap) {
+                    campusMap.setView(item.coords, 17, { animate: true });
+                    marker.openTooltip();
+                }
             }
         }
 
@@ -426,16 +438,23 @@
                         html: `<div style="width:40px;height:40px;background:rgba(255,255,255,0.92);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,0.22);cursor:pointer">${firstItem.emoji}</div>`,
                         iconSize: [40, 40],
                         iconAnchor: [20, 20],
-                        popupAnchor: [0, -22],
                     });
                     marker = L.marker(firstItem.coords, { icon: emojiIcon }).addTo(campusMap);
                     
                     const popupLoc = firstItem.detail_location
                         ? `${firstItem.main_location} - ${firstItem.detail_location}`
                         : firstItem.main_location || firstItem.pickup_location;
-                    marker.bindPopup(`<b>${firstItem.title}</b><br>📍 ${popupLoc}`);
                     
-                    marker.on('click', () => focusFood(firstItem));
+                    // 改用 Tooltip，滑鼠移到上方才顯示
+                    marker.bindTooltip(`<b>${firstItem.title}</b><br>📍 ${popupLoc}`, {
+                        direction: 'top',
+                        offset: [0, -20]
+                    });
+                    
+                    // 點擊直接跳轉至商品詳細頁面 (detail.html)
+                    marker.on('click', () => {
+                        window.location.href = `./static/detail.html?id=${firstItem.id}`;
+                    });
                     mapMarkers.set(firstItem.id, marker);
                 } else {
                     // 多個商品重疊：顯示數字角標的 Marker
@@ -451,14 +470,18 @@
                         `,
                         iconSize: [40, 40],
                         iconAnchor: [20, 20],
-                        popupAnchor: [0, -22],
                     });
                     marker = L.marker(firstItem.coords, { icon: emojiIcon }).addTo(campusMap);
-                    marker.bindPopup(`<b>${locName}</b><br>此處共有 ${items.length} 項分享項目`);
                     
+                    // 改用 Tooltip，滑鼠移到上方才顯示
+                    marker.bindTooltip(`<b>${locName}</b><br>此處共有 ${items.length} 項分享項目`, {
+                        direction: 'top',
+                        offset: [0, -20]
+                    });
+                    
+                    // 點擊多商品 Marker 展開左側列表
                     marker.on('click', () => {
                         campusMap.setView(firstItem.coords, 17, { animate: true });
-                        marker.openPopup();
                         showLocationList(items, locName);
                     });
 
@@ -484,6 +507,43 @@
             });
         }
 
+        // 顯示地圖中央提示彈窗 (Toast)
+        function showMapToast(message = "此類別尚無分享") {
+            const toast = document.getElementById('map-toast');
+            if (!toast) return;
+            
+            // 替換提示文字
+            const textNode = toast.querySelector('span').nextSibling;
+            if (textNode) {
+                textNode.textContent = ` ${message}`;
+            }
+            
+            // 清除已有的計時器
+            if (window._toastTimeout) {
+                clearTimeout(window._toastTimeout);
+            }
+            if (window._toastHideTimeout) {
+                clearTimeout(window._toastHideTimeout);
+            }
+            
+            // 顯示與動畫淡入
+            toast.classList.remove('hidden');
+            toast.offsetHeight; // 強制瀏覽器重繪
+            toast.classList.remove('scale-95', 'opacity-0');
+            toast.classList.add('scale-100', 'opacity-100');
+            
+            // 1.5 秒後淡出
+            window._toastTimeout = setTimeout(() => {
+                toast.classList.remove('scale-100', 'opacity-100');
+                toast.classList.add('scale-95', 'opacity-0');
+                
+                // 300ms 動畫完成後完全隱藏
+                window._toastHideTimeout = setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 300);
+            }, 1500);
+        }
+
         // Fix 4：類別篩選邏輯
         let activeCategory = '全部';
         function applyFilter(category) {
@@ -492,7 +552,15 @@
                 ? window.foodData
                 : window.foodData.filter(f => f.category === category);
             renderFoodCards(filtered);
-            if (filtered.length > 0) focusFood(filtered[0]);
+            if (filtered.length > 0) {
+                // 選中第一筆食物更新資訊面板，但不讓地圖跟隨 pan 到該筆食物
+                focusFood(filtered[0], false);
+            } else {
+                // 若此類別沒有任何分享，在地圖中間彈出提示
+                showMapToast("此類別尚無分享");
+            }
+            // 點擊上方類別時，地圖直接跳回正中間（中興大學中心點）
+            campusMap.setView([24.1232, 120.6776], 16);
 
             // 更新按鈕樣式
             document.querySelectorAll('[data-filter-btn]').forEach(btn => {
@@ -522,7 +590,9 @@
                     return;
                 }
                 renderFoodCards(data);
-                focusFood(data[0]);
+                // 初始載入時僅更新左側面板而不飛移地圖或開啟 Tooltip
+                focusFood(data[0], false);
+                campusMap.setView([24.1232, 120.6776], 16);
             } catch (err) {
                 console.error('載入食物資料失敗', err);
                 if (foodGrid) foodGrid.innerHTML = '<p class="text-center text-red-400 col-span-full py-8">載入失敗，請確認伺服器是否啟動</p>';
@@ -589,6 +659,9 @@
             sendEmailVerification,
             signInWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // 強制模組內部呼叫的 alert 對應到 window.alert 覆寫
+        const alert = (msg, cb) => window.alert(msg, cb);
 
         // Firebase Config
         const firebaseConfig = {
@@ -781,14 +854,19 @@
             });
         }
         if (loginView) {
-            loginView.addEventListener('click', (e) => {
-                if (e.target === loginView) {
+            let isMouseDownOnBg = false;
+            loginView.addEventListener('mousedown', (e) => {
+                isMouseDownOnBg = (e.target === loginView);
+            });
+            loginView.addEventListener('mouseup', (e) => {
+                if (isMouseDownOnBg && e.target === loginView) {
                     loginView.classList.add('hidden');
                 }
+                isMouseDownOnBg = false;
             });
         }
 
-        // 處理從其他頁面跳轉過來的登出請求
+        // 處理從其他頁面跳轉過來的登出請求 (放在監聽器外部，只執行一次，避免 signOut 觸發監聽器的死循環)
         if (new URLSearchParams(window.location.search).get('action') === 'logout') {
             signOut(auth).finally(() => {
                 window.history.replaceState({}, '', window.location.pathname);
@@ -797,12 +875,28 @@
 
         // 核心邏輯：監聽登入狀態 (決定顯示右上角選單)
         onAuthStateChanged(auth, async (user) => {
+            // 如果 URL 指明要進行登出，且此時監聽到有登入狀態（Firebase 還在登出處理中），我們直接忽略
+            if (new URLSearchParams(window.location.search).get('action') === 'logout') {
+                if (window.hidePageLoader) window.hidePageLoader();
+                return;
+            }
+
             if (user) {
                 // 如果是信箱密碼登入，且信箱尚未驗證，強制登出並阻擋
                 if (!user.emailVerified) {
                     await signOut(auth);
                     alert("您的信箱尚未驗證！請先至信箱點開驗證連結。");
+                    if (window.hidePageLoader) window.hidePageLoader();
                     return;
+                }
+
+                // 立即更新當前登入者快照與清除前一個使用者的殘留畫面，避免同步 API 延遲造成的 bug
+                syncCurrentUserSnapshot(user);
+                const profileBefore = loadUserProfile(user.uid, user);
+                renderAvatarButton(profileBefore, user);
+                updateAvatarMenu(profileBefore, user);
+                if (userNameDisplay) {
+                    userNameDisplay.textContent = `嗨，${profileBefore.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
                 }
 
                 // 登入狀態：隱藏登入/註冊按鈕，顯示個人控制項
@@ -811,7 +905,6 @@
                 if (loginView) loginView.classList.add('hidden'); // 登入成功後自動關閉彈窗
 
                 // 同步使用者到後端資料庫
-                const profileBefore = loadUserProfile(user.uid, user);
                 const syncData = new FormData();
                 syncData.append('firebase_uid', user.uid);
                 syncData.append('email', user.email || '');
@@ -834,6 +927,7 @@
                         if (userNameDisplay) {
                             userNameDisplay.textContent = `嗨，${profile.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
                         }
+                        if (window.hidePageLoader) window.hidePageLoader();
                     })
                     .catch(err => {
                         console.error("Sync user error:", err);
@@ -845,6 +939,7 @@
                         if (userNameDisplay) {
                             userNameDisplay.textContent = `嗨，${profile.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
                         }
+                        if (window.hidePageLoader) window.hidePageLoader();
                     });
             } else {
                 // 清除本地登入快照
@@ -862,6 +957,7 @@
                     fallbackEl.classList.remove('hidden');
                     fallbackEl.textContent = '9';
                 }
+                if (window.hidePageLoader) window.hidePageLoader();
             }
         });
 
@@ -882,23 +978,42 @@
                     return;
                 }
 
+                // 註冊中狀態樣式
+                registerBtn.disabled = true;
+                const originalRegText = registerBtn.textContent;
+                registerBtn.textContent = "註冊中…";
+                registerBtn.classList.add('btn-loading-gradient');
+                if (window.showPageLoader) window.showPageLoader("正在建立帳號，請稍候...");
+
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
                     // 傳送驗證郵件
                     await sendEmailVerification(user);
-                    alert("註冊成功！系統已發送驗證信。請至信箱點擊連結開通帳號後，再重新登入。");
-
-                    // 強制登出
-                    await signOut(auth);
                     
-                    regEmailInput.value = "";
-                    regPasswordInput.value = "";
-                    if (tabLogin) tabLogin.click();
+                    // 恢復按鈕
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = originalRegText;
+                    registerBtn.classList.remove('btn-loading-gradient');
+                    if (window.hidePageLoader) window.hidePageLoader();
+
+                    alert("註冊成功！系統已發送驗證信。請至信箱點擊連結開通帳號後，再重新登入。", async () => {
+                        // 強制登出
+                        await signOut(auth);
+                        regEmailInput.value = "";
+                        regPasswordInput.value = "";
+                        if (tabLogin) tabLogin.click();
+                    });
 
                 } catch (error) {
                     console.error("註冊異常", error);
+                    // 恢復按鈕
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = originalRegText;
+                    registerBtn.classList.remove('btn-loading-gradient');
+                    if (window.hidePageLoader) window.hidePageLoader();
+
                     if (error.code === 'auth/email-already-in-use') {
                         alert("此信箱已被註冊過！");
                     } else if (error.code === 'auth/weak-password') {
@@ -928,19 +1043,46 @@
                     return;
                 }
 
+                // 登入中狀態樣式
+                emailLoginBtn.disabled = true;
+                const originalText = emailLoginBtn.textContent;
+                emailLoginBtn.textContent = "登入中…";
+                emailLoginBtn.classList.add('btn-loading-gradient');
+                if (window.showPageLoader) window.showPageLoader("正在登入，請稍候...");
+
                 try {
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
                     if (!user.emailVerified) {
                         await signOut(auth);
+                        
+                        // 恢復按鈕
+                        emailLoginBtn.disabled = false;
+                        emailLoginBtn.textContent = originalText;
+                        emailLoginBtn.classList.remove('btn-loading-gradient');
+                        if (window.hidePageLoader) window.hidePageLoader();
+
                         alert("您的信箱尚未驗證！請先至信箱點開驗證連結。");
                     } else {
                         loginEmailInput.value = "";
                         loginPasswordInput.value = "";
+                        // 登入成功後，onAuthStateChanged 的成功回調會重新刷新頭像並關閉 Loader，
+                        // 我們在 500ms 後重置登入按鈕狀態，以備下次開啟彈窗時是乾淨的
+                        setTimeout(() => {
+                            emailLoginBtn.disabled = false;
+                            emailLoginBtn.textContent = originalText;
+                            emailLoginBtn.classList.remove('btn-loading-gradient');
+                        }, 500);
                     }
                 } catch (error) {
                     console.error("信箱登入異常", error);
+                    // 恢復按鈕
+                    emailLoginBtn.disabled = false;
+                    emailLoginBtn.textContent = originalText;
+                    emailLoginBtn.classList.remove('btn-loading-gradient');
+                    if (window.hidePageLoader) window.hidePageLoader();
+
                     if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                         alert("信箱或密碼錯誤！");
                     } else {

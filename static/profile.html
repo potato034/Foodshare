@@ -352,6 +352,7 @@
                     localStorage.removeItem('fs_currentUser');
                 } catch (error) {}
                 applyProfile(normalizeProfile({}, null), null);
+                if (window.hidePageLoader) window.hidePageLoader();
                 return;
             }
             let activeUser = user;
@@ -387,6 +388,7 @@
 
             // 從 API 載入真實的統計資料
             loadApiStats(finalUid);
+            if (window.hidePageLoader) window.hidePageLoader();
 
             const avatarInput = document.getElementById('profile-avatar-input');
             const editProfileBtn = document.getElementById('edit-profile-btn');

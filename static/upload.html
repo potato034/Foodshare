@@ -34,7 +34,7 @@
             <form id="upload-form" class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">上傳食物相片</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-giver hover:bg-orange-50 transition cursor-pointer" onclick="document.getElementById('file-upload').click()">
+                    <div id="drop-zone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-giver hover:bg-orange-50 transition cursor-pointer" onclick="document.getElementById('file-upload').click()">
                         <div class="space-y-1 text-center">
                             <div class="relative inline-block mx-auto mb-4">
                                 <img id="image-preview" class="h-32 object-cover hidden rounded-lg" />
@@ -301,6 +301,72 @@
                 icon.classList.remove('hidden');
             });
         }
+
+        // 拖曳上傳功能
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-upload');
+
+        if (dropZone && fileInput) {
+            // 阻止預設瀏覽器拖曳開啟圖片行為
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            // 使用計數器防止子元素觸發 dragleave 閃爍
+            let dragCounter = 0;
+
+            dropZone.addEventListener('dragenter', (e) => {
+                dragCounter++;
+                dropZone.classList.add('border-giver', 'bg-orange-50');
+                dropZone.classList.remove('border-gray-300');
+            }, false);
+
+            dropZone.addEventListener('dragover', (e) => {
+                // dragover 必須 preventDefault 才能觸發 drop
+                e.preventDefault();
+            }, false);
+
+            dropZone.addEventListener('dragleave', (e) => {
+                dragCounter--;
+                if (dragCounter <= 0) {
+                    dragCounter = 0;
+                    dropZone.classList.remove('border-giver', 'bg-orange-50');
+                    dropZone.classList.add('border-gray-300');
+                }
+            }, false);
+
+            dropZone.addEventListener('drop', (e) => {
+                dragCounter = 0;
+                dropZone.classList.remove('border-giver', 'bg-orange-50');
+                dropZone.classList.add('border-gray-300');
+
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        if (file.size > 5 * 1024 * 1024) {
+                            alert('圖片檔案大小不能超過 5MB！');
+                            return;
+                        }
+                        
+                        // 建立新的 DataTransfer 並指派給 fileInput
+                        const container = new DataTransfer();
+                        container.items.add(file);
+                        fileInput.files = container.files;
+                        
+                        // 觸發預覽
+                        const fakeEvent = { target: { files: container.files } };
+                        previewImage(fakeEvent);
+                    } else {
+                        alert('只支援上傳圖片檔案！');
+                    }
+                }
+            }, false);
+        }
     </script>
 
     <script type="module">
@@ -562,8 +628,9 @@
                     const res    = await fetch(url, { method, body: data });
                     const json   = await res.json();
                     if (!res.ok) throw new Error(json.detail || (isEdit ? '儲存失敗' : '發布失敗'));
-                    alert(isEdit ? '已儲存變更 ✅' : '發布成功！已加入分享清單 🎉');
-                    window.location.href = './share.html';
+                    alert(isEdit ? '已儲存變更 ✅' : '發布成功！已加入分享清單 🎉', () => {
+                        window.location.href = './share.html';
+                    });
                 } catch (err) {
                     alert(`操作失敗：${err.message}`);
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = isEdit ? '儲存變更' : '確認發布分享'; }

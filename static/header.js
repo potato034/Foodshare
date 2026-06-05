@@ -5,7 +5,7 @@
     const root = inStatic ? '../' : './';
     const s = inStatic ? './' : './static/';
 
-    // 動態插入自適應 CSS 樣式
+    // 動態插入自適應 CSS 樣式、自訂彈窗樣式與全螢幕載入動畫樣式
     const style = document.createElement('style');
     style.textContent = `
         @media (max-width: 540px) {
@@ -22,8 +22,260 @@
             opacity: 0.8 !important;
             filter: saturate(0.65) !important;
         }
+
+        /* 自訂 Alert / Confirm 彈窗樣式 */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(28, 25, 23, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999999;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+        }
+        .custom-modal-overlay.show {
+            opacity: 1;
+        }
+        .custom-modal-card {
+            background-color: #ffffff;
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(245, 245, 244, 0.8);
+            width: 90%;
+            max-width: 380px;
+            padding: 1.5rem;
+            transform: scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .custom-modal-overlay.show .custom-modal-card {
+            transform: scale(1);
+        }
+
+        /* 全螢幕加載動畫樣式 */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fcfbf9; /* 溫馨的石子白背景 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999999;
+            transition: opacity 0.35s ease-out, visibility 0.35s ease-out;
+        }
+        .page-loader.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none !important;
+        }
+        .loader-spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(251, 178, 139, 0.25);
+            border-top: 4px solid #A8CBCB; /* 鼠尾草綠 */
+            border-right: 4px solid #FBB28B; /* 暖杏橘 */
+            border-radius: 50%;
+            animation: spin 0.9s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 漸層按鈕載入動畫 */
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .btn-loading-gradient {
+            background: linear-gradient(270deg, #A8CBCB, #FBB28B, #A8CBCB);
+            background-size: 600% 600%;
+            animation: gradient-shift 2s ease infinite !important;
+            pointer-events: none !important;
+            opacity: 0.95;
+        }
     `;
     document.head.appendChild(style);
+
+    // 立即建立並插入全螢幕 Loader DOM
+    const loader = document.createElement('div');
+    loader.className = 'page-loader';
+    loader.innerHTML = `
+        <div class="flex flex-col items-center">
+            <div class="loader-spinner mb-4"></div>
+            <p class="text-xs text-stone-400 font-semibold tracking-wider">溫暖傳遞中，請稍候...</p>
+        </div>
+    `;
+    document.body.appendChild(loader);
+
+    // 定義隱藏 Loader 函數
+    window.hidePageLoader = function() {
+        if (loader && !loader.classList.contains('fade-out')) {
+            loader.classList.add('fade-out');
+            setTimeout(() => {
+                try {
+                    if (loader.parentNode) {
+                        loader.parentNode.removeChild(loader);
+                    }
+                } catch {}
+            }, 350);
+        }
+    };
+
+    // 定義顯示 Loader 函數
+    window.showPageLoader = function(message) {
+        let existingLoader = document.querySelector('.page-loader');
+        if (existingLoader) {
+            existingLoader.classList.remove('fade-out');
+            const p = existingLoader.querySelector('p');
+            if (p) p.textContent = message || '溫暖傳遞中，請稍候...';
+            return;
+        }
+
+        const newLoader = document.createElement('div');
+        newLoader.className = 'page-loader';
+        newLoader.innerHTML = `
+            <div class="flex flex-col items-center">
+                <div class="loader-spinner mb-4"></div>
+                <p class="text-xs text-stone-400 font-semibold tracking-wider">${message || '溫暖傳遞中，請稍候...'}</p>
+            </div>
+        `;
+        document.body.appendChild(newLoader);
+        newLoader.offsetHeight; // 強制 Reflow
+    };
+
+    // 安全防呆機制：最長 2.5 秒後自動解鎖頁面
+    setTimeout(window.hidePageLoader, 2500);
+
+    // 當 window 載入完成，非 Firebase 狀態驅動的靜態頁面可直接淡出 Loader
+    window.addEventListener('load', () => {
+        const path = window.location.pathname;
+        const isAuthDrivenPage = path.endsWith('index.html') || path === '/' || path.endsWith('/') || path.includes('profile.html');
+        if (!isAuthDrivenPage) {
+            window.hidePageLoader();
+        }
+    });
+
+    // 覆寫 window.alert
+    const originalAlert = window.alert;
+    window.alert = function(message, callback) {
+        if (!document.body) {
+            originalAlert(message);
+            if (callback) callback();
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        overlay.innerHTML = `
+            <div class="custom-modal-card flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-teal-50 text-receiver flex items-center justify-center text-2xl mb-3 shadow-inner">
+                    🔔
+                </div>
+                <p class="text-sm font-semibold text-gray-800 leading-relaxed mb-5 whitespace-pre-line">${message}</p>
+                <button class="custom-modal-confirm-btn w-full py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-xl text-xs transition transform hover:-translate-y-0.5 shadow-sm">
+                    確定
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        setTimeout(() => overlay.classList.add('show'), 10);
+
+        const closeAlert = () => {
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.remove();
+                if (callback) callback();
+            }, 200);
+        };
+
+        overlay.querySelector('.custom-modal-confirm-btn').addEventListener('click', closeAlert);
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter' || e.key === 'Escape') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleKeyDown);
+                closeAlert();
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+    };
+
+    // 覆寫 window.confirm
+    const originalConfirm = window.confirm;
+    window.confirm = function(message, onConfirm, onCancel) {
+        if (typeof onConfirm !== 'function') {
+            return originalConfirm(message);
+        }
+
+        if (!document.body) {
+            const result = originalConfirm(message);
+            if (result) onConfirm();
+            else if (onCancel) onCancel();
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        overlay.innerHTML = `
+            <div class="custom-modal-card flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-orange-50 text-giver flex items-center justify-center text-2xl mb-3 shadow-inner">
+                    ❓
+                </div>
+                <p class="text-sm font-semibold text-gray-800 leading-relaxed mb-5 whitespace-pre-line">${message}</p>
+                <div class="flex gap-3 w-full">
+                    <button class="custom-modal-cancel-btn flex-1 py-2 bg-stone-100 hover:bg-stone-200 text-gray-600 font-medium rounded-xl text-xs transition">
+                        取消
+                    </button>
+                    <button class="custom-modal-confirm-btn flex-1 py-2 bg-receiver hover:bg-teal-600 text-white font-medium rounded-xl text-xs transition transform hover:-translate-y-0.5 shadow-sm">
+                        確定
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        setTimeout(() => overlay.classList.add('show'), 10);
+
+        const closeConfirm = (confirmed) => {
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.remove();
+                if (confirmed) {
+                    if (onConfirm) onConfirm();
+                } else {
+                    if (onCancel) onCancel();
+                }
+            }, 200);
+        };
+
+        overlay.querySelector('.custom-modal-confirm-btn').addEventListener('click', () => closeConfirm(true));
+        overlay.querySelector('.custom-modal-cancel-btn').addEventListener('click', () => closeConfirm(false));
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleKeyDown);
+                closeConfirm(true);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                document.removeEventListener('keydown', handleKeyDown);
+                closeConfirm(false);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+    };
 
     const header = document.createElement('header');
     header.className = 'fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-[10000] px-4 py-3 lg:px-6 lg:py-4 flex items-center gap-3 lg:gap-8';
@@ -380,6 +632,12 @@
             const roleColor = item.role === 'sharer' ? '#FBB28B' : '#A8CBCB';
             const href = item.food_post_id ? `${s}detail.html?id=${encodeURIComponent(item.food_post_id)}` : '#';
             const readClass = item.is_read ? 'notification-read' : '';
+            
+            // 只有已讀通知在右下角加上小小的已讀字樣，未讀不加任何狀態
+            const statusLabel = item.is_read 
+                ? '<span class="notification-status-label text-[10px] text-gray-400 font-normal self-center ml-2 shrink-0">已讀</span>' 
+                : '';
+
             return `
                 <a href="${href}" data-id="${item.id}" class="notification-item block border-l-4 ${roleClass} rounded-lg px-3 py-2.5 hover:shadow-sm transition ${readClass}">
                     <div class="flex items-start justify-between gap-3">
@@ -387,7 +645,12 @@
                         <span class="shrink-0 text-[11px] font-semibold text-white px-2 py-0.5 rounded-full" style="background:${roleColor}">${roleLabel}</span>
                     </div>
                     <p class="text-xs text-gray-600 leading-relaxed mt-1">${escapeHtml(item.body)}</p>
-                    <p class="text-[11px] text-gray-400 mt-1.5">${escapeHtml(item.time_ago)}</p>
+                    <div class="flex items-center justify-between mt-1.5">
+                        <p class="text-[11px] text-gray-400">${escapeHtml(item.time_ago)}</p>
+                        <div class="notification-status-container flex items-center justify-end">
+                            ${statusLabel}
+                        </div>
+                    </div>
                 </a>
             `;
         }).join('');
@@ -445,6 +708,10 @@
             
             // visually mark as read immediately
             item.classList.add('notification-read');
+            const container = item.querySelector('.notification-status-container');
+            if (container && !container.querySelector('.notification-status-label')) {
+                container.insertAdjacentHTML('beforeend', '<span class="notification-status-label text-[10px] text-gray-400 font-normal self-center ml-2 shrink-0">已讀</span>');
+            }
 
             // decrement unread count locally
             if (unreadNotificationsCount > 0) {
