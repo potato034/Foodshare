@@ -694,6 +694,19 @@ def complete_food(
 
     r.status = "completed"
     db.flush()
+
+    # 建立系統通知給預約索取者，避免分享者直接按完成但實際上對方沒拿到
+    create_notification(
+        db,
+        r.requester_uid,
+        "requester",
+        "reservation_completed",
+        f"reservation_completed_{r.id}",
+        "分享者已確認交易完成",
+        f"分享者已將「{r.food_post.title}」標記為已領取完成。如果您尚未收到食物，請儘速與分享者聯絡確認！",
+        r.food_post_id,
+    )
+
     # 如果所有 pending 預約都完成，食物標記為 completed
     pending_count = db.query(Reservation).filter(
         Reservation.food_post_id == food_id,
