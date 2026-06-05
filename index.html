@@ -813,13 +813,21 @@
                     return;
                 }
 
+                // 立即更新當前登入者快照與清除前一個使用者的殘留畫面，避免同步 API 延遲造成的 bug
+                syncCurrentUserSnapshot(user);
+                const profileBefore = loadUserProfile(user.uid, user);
+                renderAvatarButton(profileBefore, user);
+                updateAvatarMenu(profileBefore, user);
+                if (userNameDisplay) {
+                    userNameDisplay.textContent = `嗨，${profileBefore.displayName || user.displayName || user.email.split('@')[0] || '同學'}`;
+                }
+
                 // 登入狀態：隱藏登入/註冊按鈕，顯示個人控制項
                 if (headerLoginBtn) headerLoginBtn.classList.add('hidden');
                 if (userControls) userControls.classList.remove('hidden');
                 if (loginView) loginView.classList.add('hidden'); // 登入成功後自動關閉彈窗
 
                 // 同步使用者到後端資料庫
-                const profileBefore = loadUserProfile(user.uid, user);
                 const syncData = new FormData();
                 syncData.append('firebase_uid', user.uid);
                 syncData.append('email', user.email || '');
