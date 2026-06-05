@@ -23,6 +23,12 @@
     <style>
         #campus-map {
             min-height: 450px;
+            background-color: #0f172a !important; /* 深色背景作為遮罩底色 */
+        }
+        /* 讓地圖瓦片半透明並微調亮度對比，使食物標記 (Markers) 在深色背景襯托下更加突出 */
+        .leaflet-tile-pane {
+            opacity: 0.75;
+            filter: brightness(0.9) contrast(1.05);
         }
         .food-card-active {
             box-shadow: 0 0 0 2px rgba(168, 203, 203, 0.65);
